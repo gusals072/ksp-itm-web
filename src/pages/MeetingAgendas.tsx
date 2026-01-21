@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { Calendar as CalendarIcon, Clock, CheckCircle2, Pause, FileText, X } from 'lucide-react';
+import { Priority } from '../types';
+import { Calendar as CalendarIcon, Clock, CheckCircle2, Pause, FileText, X, ChevronLeft, ChevronRight, User, Tag as TagIcon, Users } from 'lucide-react';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 
@@ -9,16 +10,124 @@ const MeetingAgendas: React.FC = () => {
   const navigate = useNavigate();
   const { meetingAgendas, updateMeetingAgenda, issues } = useApp();
   const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'discussed' | 'resolved' | 'on_hold'>('all');
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [showResolveModal, setShowResolveModal] = useState(false);
   const [showHoldModal, setShowHoldModal] = useState(false);
-  const [selectedAgendaId, setSelectedAgendaId] = useState<string | null>(null);
   const [resolveReason, setResolveReason] = useState('');
   const [holdReason, setHoldReason] = useState('');
+  
+  // 드래그 관련 상태
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [currentX, setCurrentX] = useState(0);
 
   const filteredAgendas = meetingAgendas.filter(agenda => {
     if (filterStatus === 'all') return true;
     return agenda.status === filterStatus;
   });
+
+  // 필터 변경 시 인덱스 초기화
+  useEffect(() => {
+    setCurrentIndex(0);
+  }, [filterStatus]);
+
+  // 키보드 화살표 키로 이동
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // 모달이 열려있을 때는 키보드 이벤트 무시
+      if (showResolveModal || showHoldModal) return;
+      
+      if (e.key === 'ArrowLeft' && currentIndex > 0) {
+        setCurrentIndex(prev => prev - 1);
+      } else if (e.key === 'ArrowRight' && currentIndex < filteredAgendas.length - 1) {
+        setCurrentIndex(prev => prev + 1);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [currentIndex, filteredAgendas.length, showResolveModal, showHoldModal]);
+
+  const currentAgenda = filteredAgendas[currentIndex];
+  const currentIssue = currentAgenda ? issues.find(i => i.id === currentAgenda.issueId) : null;
+
+  const handlePrevious = () => {
+    if (currentIndex > 0) {
+      setCurrentIndex(currentIndex - 1);
+    }
+  };
+
+  const handleNext = () => {
+    if (currentIndex < filteredAgendas.length - 1) {
+      setCurrentIndex(currentIndex + 1);
+    }
+  };
+
+  // 드래그 시작
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsDragging(true);
+    setStartX(e.clientX);
+    setCurrentX(e.clientX);
+  };
+
+  // 드래그 중
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging) return;
+    setCurrentX(e.clientX);
+  };
+
+  // 드래그 종료
+  const handleMouseUp = () => {
+    if (!isDragging) return;
+    
+    const diffX = startX - currentX;
+    const threshold = 50; // 50px 이상 드래그해야 인식
+    
+    if (Math.abs(diffX) > threshold) {
+      if (diffX > 0 && currentIndex < filteredAgendas.length - 1) {
+        // 오른쪽으로 드래그 (다음)
+        handleNext();
+      } else if (diffX < 0 && currentIndex > 0) {
+        // 왼쪽으로 드래그 (이전)
+        handlePrevious();
+      }
+    }
+    
+    setIsDragging(false);
+    setStartX(0);
+    setCurrentX(0);
+  };
+
+  // 터치 이벤트 핸들러
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setIsDragging(true);
+    setStartX(e.touches[0].clientX);
+    setCurrentX(e.touches[0].clientX);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging) return;
+    setCurrentX(e.touches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (!isDragging) return;
+    
+    const diffX = startX - currentX;
+    const threshold = 50;
+    
+    if (Math.abs(diffX) > threshold) {
+      if (diffX > 0 && currentIndex < filteredAgendas.length - 1) {
+        handleNext();
+      } else if (diffX < 0 && currentIndex > 0) {
+        handlePrevious();
+      }
+    }
+    
+    setIsDragging(false);
+    setStartX(0);
+    setCurrentX(0);
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -50,9 +159,34 @@ const MeetingAgendas: React.FC = () => {
     }
   };
 
-  const getIssueStatus = (issueId: string) => {
-    const issue = issues.find(i => i.id === issueId);
-    return issue?.status;
+  const getPriorityColor = (priority: Priority) => {
+    switch (priority) {
+      case Priority.URGENT:
+        return 'bg-red-500 text-white';
+      case Priority.HIGH:
+        return 'bg-orange-500 text-white';
+      case Priority.MEDIUM:
+        return 'bg-yellow-500 text-white';
+      case Priority.LOW:
+        return 'bg-green-500 text-white';
+      default:
+        return 'bg-gray-500 text-white';
+    }
+  };
+
+  const getPriorityText = (priority: Priority) => {
+    switch (priority) {
+      case Priority.URGENT:
+        return '긴급';
+      case Priority.HIGH:
+        return '높음';
+      case Priority.MEDIUM:
+        return '보통';
+      case Priority.LOW:
+        return '낮음';
+      default:
+        return priority;
+    }
   };
 
   // 모달 닫기 핸들러
@@ -63,7 +197,6 @@ const MeetingAgendas: React.FC = () => {
         setShowHoldModal(false);
         setResolveReason('');
         setHoldReason('');
-        setSelectedAgendaId(null);
       }
     };
 
@@ -77,49 +210,56 @@ const MeetingAgendas: React.FC = () => {
   }, [showResolveModal, showHoldModal]);
 
   // 해결 버튼 클릭
-  const handleResolveClick = (agendaId: string) => {
-    setSelectedAgendaId(agendaId);
-    setResolveReason('');
-    setShowResolveModal(true);
+  const handleResolveClick = () => {
+    if (currentAgenda) {
+      setResolveReason('');
+      setShowResolveModal(true);
+    }
   };
 
   // 보류 버튼 클릭
-  const handleHoldClick = (agendaId: string) => {
-    setSelectedAgendaId(agendaId);
-    setHoldReason('');
-    setShowHoldModal(true);
+  const handleHoldClick = () => {
+    if (currentAgenda) {
+      setHoldReason('');
+      setShowHoldModal(true);
+    }
   };
 
   // 해결 확인
   const handleResolveConfirm = () => {
-    if (selectedAgendaId && resolveReason.trim()) {
-      updateMeetingAgenda(selectedAgendaId, 'resolved', resolveReason.trim());
+    if (currentAgenda && resolveReason.trim()) {
+      updateMeetingAgenda(currentAgenda.id, 'resolved', resolveReason.trim());
       setShowResolveModal(false);
       setResolveReason('');
-      setSelectedAgendaId(null);
+      // 다음 안건으로 이동
+      if (currentIndex < filteredAgendas.length - 1) {
+        setCurrentIndex(currentIndex + 1);
+      }
     }
   };
 
   // 보류 확인
   const handleHoldConfirm = () => {
-    if (selectedAgendaId && holdReason.trim()) {
-      updateMeetingAgenda(selectedAgendaId, 'on_hold', holdReason.trim());
+    if (currentAgenda && holdReason.trim()) {
+      updateMeetingAgenda(currentAgenda.id, 'on_hold', holdReason.trim());
       setShowHoldModal(false);
       setHoldReason('');
-      setSelectedAgendaId(null);
+      // 다음 안건으로 이동
+      if (currentIndex < filteredAgendas.length - 1) {
+        setCurrentIndex(currentIndex + 1);
+      }
     }
   };
 
   // 논의 완료 처리
-  const handleDiscussed = (agendaId: string) => {
-    updateMeetingAgenda(agendaId, 'discussed');
+  const handleDiscussed = () => {
+    if (currentAgenda) {
+      updateMeetingAgenda(currentAgenda.id, 'discussed');
+    }
   };
 
-  const selectedAgenda = selectedAgendaId ? meetingAgendas.find(a => a.id === selectedAgendaId) : null;
-
   return (
-    <div className="p-6">
-
+    <div className="p-6 min-h-screen">
       {/* 필터 및 통계 */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
         <div className="flex items-center justify-between flex-wrap gap-4">
@@ -168,110 +308,253 @@ const MeetingAgendas: React.FC = () => {
         </div>
       </div>
 
-      {/* 회의 안건 목록 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        {filteredAgendas.map(agenda => {
-          const issueStatus = getIssueStatus(agenda.issueId);
-          return (
-            <div
-              key={agenda.id}
-              className="bg-white rounded-lg border-2 border-purple-200 shadow-md hover:shadow-lg transition-all cursor-pointer hover:border-purple-400 flex flex-col"
-              onClick={() => navigate(`/issues/${agenda.issueId}`)}
-            >
-              <div className="p-4 flex flex-col flex-1">
-                {/* 티켓 스타일 헤더 */}
-                <div className="mb-3 pb-3 border-b-2 border-purple-100">
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="flex-shrink-0 w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                      <CalendarIcon className="w-4 h-4 text-purple-600" />
-                    </div>
-                    <span
-                      className={`px-2.5 py-1 text-xs font-bold rounded-full border ${getStatusColor(agenda.status)} flex-shrink-0 ml-2`}
-                    >
-                      {getStatusText(agenda.status)}
-                    </span>
+      {/* 회의 안건 상세 표시 */}
+      {filteredAgendas.length > 0 && currentAgenda ? (
+        <div className="relative flex justify-center items-center gap-4">
+          {/* 이전 화살표 */}
+          <button
+            onClick={handlePrevious}
+            disabled={currentIndex === 0}
+            className={`w-12 h-12 rounded-full flex items-center justify-center transition-all shrink-0 ${
+              currentIndex === 0
+                ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                : 'bg-white text-gray-700 hover:bg-water-blue-50 hover:text-water-blue-600 shadow-lg border-2 border-gray-200 hover:scale-110'
+            }`}
+          >
+            <ChevronLeft className="w-6 h-6" />
+          </button>
+
+          {/* 안건 카드 */}
+          <div 
+            className={`bg-white rounded-xl shadow-lg border-2 border-purple-200 p-6 min-h-[calc(70vh-180px)] w-full max-w-[40%] transition-transform cursor-grab active:cursor-grabbing select-none ${
+              isDragging ? 'scale-[0.98]' : ''
+            }`}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+            style={{
+              transform: isDragging ? `translateX(${currentX - startX}px)` : undefined,
+              transition: isDragging ? 'none' : 'transform 0.2s ease-out'
+            }}
+          >
+            {/* 헤더 */}
+            <div className="mb-4 pb-4 border-b-2 border-purple-100">
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                    <CalendarIcon className="w-5 h-5 text-purple-600" />
                   </div>
-                  <h3 className="text-sm font-bold text-gray-800 hover:text-purple-600 transition-colors line-clamp-2">{agenda.issueTitle}</h3>
-                </div>
-
-                {/* 티켓 정보 */}
-                <div className="space-y-1.5 mb-3 flex-1">
-                  <div className="flex items-center space-x-2 text-xs text-gray-600">
-                    <Clock className="w-3.5 h-3.5 text-purple-500 flex-shrink-0" />
-                    <span className="font-medium truncate">{format(new Date(agenda.meetingDate), 'yyyy.MM.dd', { locale: ko })}</span>
+                  <div>
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <span className={`px-3 py-1 text-xs font-bold rounded-full border ${getStatusColor(currentAgenda.status)}`}>
+                        {getStatusText(currentAgenda.status)}
+                      </span>
+                      {currentIssue && (
+                        <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${getPriorityColor(currentIssue.priority)}`}>
+                          {getPriorityText(currentIssue.priority)}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3 text-xs text-gray-600 flex-wrap">
+                      <div className="flex items-center gap-1">
+                        <Clock className="w-3.5 h-3.5" />
+                        <span>{format(new Date(currentAgenda.meetingDate), 'yyyy년 MM월 dd일', { locale: ko })}</span>
+                      </div>
+                      <span className="text-gray-400">•</span>
+                      <span>{currentIndex + 1} / {filteredAgendas.length}</span>
+                      {currentIssue && (
+                        <>
+                          <span className="text-gray-400">•</span>
+                          <span className="font-mono text-xs">ID: {currentIssue.id}</span>
+                          <span className="text-gray-400">•</span>
+                          <span className="text-xs">등록: {format(new Date(currentIssue.createdAt), 'yyyy-MM-dd', { locale: ko })}</span>
+                        </>
+                      )}
+                    </div>
                   </div>
-                  {issueStatus && (
-                    <div className="flex items-center space-x-2 text-xs text-gray-600">
-                      <FileText className="w-3.5 h-3.5 text-purple-500 flex-shrink-0" />
-                      <span className="truncate">상태: {issueStatus === 'RESOLVED' ? '해결됨' : issueStatus === 'MEETING' ? '회의 중' : issueStatus === 'ON_HOLD' ? '보류' : issueStatus}</span>
-                    </div>
-                  )}
-                  {agenda.notes && (
-                    <div className="bg-purple-50 border-l-4 border-purple-300 rounded p-2 mt-2">
-                      <p className="text-xs font-medium text-gray-700 mb-1">
-                        {agenda.status === 'resolved' ? '해결 방법' : agenda.status === 'on_hold' ? '보류 사유' : '메모'}
-                      </p>
-                      <p className="text-xs text-gray-600 line-clamp-2">{agenda.notes}</p>
-                    </div>
-                  )}
-                </div>
-
-                {/* 액션 버튼 */}
-                <div className="pt-3 border-t-2 border-purple-100" onClick={(e) => e.stopPropagation()}>
-                  {agenda.status === 'pending' && (
-                    <div className="grid grid-cols-3 gap-2">
-                      <button
-                        onClick={() => handleDiscussed(agenda.id)}
-                        className="flex items-center justify-center space-x-1 px-2 py-1.5 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-xs font-medium"
-                      >
-                        <FileText className="w-3 h-3" />
-                        <span>논의</span>
-                      </button>
-                      <button
-                        onClick={() => handleResolveClick(agenda.id)}
-                        className="flex items-center justify-center space-x-1 px-2 py-1.5 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors text-xs font-medium"
-                      >
-                        <CheckCircle2 className="w-3 h-3" />
-                        <span>해결</span>
-                      </button>
-                      <button
-                        onClick={() => handleHoldClick(agenda.id)}
-                        className="flex items-center justify-center space-x-1 px-2 py-1.5 bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200 transition-colors text-xs font-medium"
-                      >
-                        <Pause className="w-3 h-3" />
-                        <span>보류</span>
-                      </button>
-                    </div>
-                  )}
-
-                  {agenda.status === 'discussed' && (
-                    <div className="grid grid-cols-2 gap-2">
-                      <button
-                        onClick={() => handleResolveClick(agenda.id)}
-                        className="flex items-center justify-center space-x-1 px-2 py-1.5 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors text-xs font-medium"
-                      >
-                        <CheckCircle2 className="w-3 h-3" />
-                        <span>해결</span>
-                      </button>
-                      <button
-                        onClick={() => handleHoldClick(agenda.id)}
-                        className="flex items-center justify-center space-x-1 px-2 py-1.5 bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200 transition-colors text-xs font-medium"
-                      >
-                        <Pause className="w-3 h-3" />
-                        <span>보류</span>
-                      </button>
-                    </div>
-                  )}
                 </div>
               </div>
+              <h1 className="text-2xl font-bold text-gray-800 mb-1.5">{currentAgenda.issueTitle}</h1>
             </div>
-          );
-        })}
-      </div>
 
-      {/* 결과 없음 */}
-      {filteredAgendas.length === 0 && (
-        <div className="text-center py-12 bg-white rounded-xl shadow-sm border border-gray-100">
+            {/* 본문 */}
+            <div className="space-y-4 mb-4">
+              <div className="space-y-4">
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-800 mb-2 flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-purple-600" />
+                    설명
+                  </h2>
+                  <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                    <p className="text-sm text-gray-700 whitespace-pre-line leading-relaxed">
+                      {currentIssue?.description || '설명이 없습니다.'}
+                    </p>
+                  </div>
+                </div>
+
+                {currentIssue && (
+                  <>
+                    {/* 담당자 및 등록자 */}
+                    <div>
+                      <h2 className="text-lg font-semibold text-gray-800 mb-2 flex items-center gap-2">
+                        <User className="w-4 h-4 text-purple-600" />
+                        담당자 정보
+                      </h2>
+                      <div className="bg-gray-50 rounded-lg p-3 border border-gray-200 space-y-2">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-600">담당자:</span>
+                          <span className="font-semibold text-gray-800">{currentIssue.assigneeName || '미지정'}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-600">등록자:</span>
+                          <span className="font-semibold text-gray-800">{currentIssue.reporterName}</span>
+                        </div>
+                        {currentIssue.cc && currentIssue.cc.length > 0 && (
+                          <div>
+                            <span className="text-sm text-gray-600">참조 인원:</span>
+                            <div className="flex flex-wrap gap-1.5 mt-1.5">
+                              {currentIssue.cc.map(ccUser => (
+                                <span key={ccUser.id} className="px-2 py-0.5 bg-water-blue-50 text-water-blue-700 rounded-full text-xs flex items-center gap-1">
+                                  <Users className="w-2.5 h-2.5" />
+                                  {ccUser.name}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* 카테고리 및 태그 */}
+                    <div>
+                      <h2 className="text-lg font-semibold text-gray-800 mb-2 flex items-center gap-2">
+                        <TagIcon className="w-4 h-4 text-purple-600" />
+                        분류
+                      </h2>
+                      <div className="bg-gray-50 rounded-lg p-3 border border-gray-200 space-y-2">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-600">카테고리:</span>
+                          <span className="font-semibold text-gray-800">{currentIssue.category}</span>
+                        </div>
+                        {currentIssue.tags && currentIssue.tags.length > 0 && (
+                          <div>
+                            <span className="text-sm text-gray-600">태그:</span>
+                            <div className="flex flex-wrap gap-1.5 mt-1.5">
+                              {currentIssue.tags.map((tag, idx) => (
+                                <span key={idx} className="px-2 py-0.5 bg-purple-50 text-purple-700 rounded-full text-xs">
+                                  #{tag}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* 메모 / 해결 방법 / 보류 사유 */}
+                {currentAgenda.notes && (
+                  <div>
+                    <h2 className="text-lg font-semibold text-gray-800 mb-2 flex items-center gap-2">
+                      <FileText className="w-4 h-4 text-purple-600" />
+                      {currentAgenda.status === 'resolved' ? '해결 방법' :
+                       currentAgenda.status === 'on_hold' ? '보류 사유' :
+                       '메모'}
+                    </h2>
+                    <div className={`rounded-lg p-3 border-2 ${
+                      currentAgenda.status === 'resolved' ? 'bg-green-50 border-green-200' :
+                      currentAgenda.status === 'on_hold' ? 'bg-orange-50 border-orange-200' :
+                      'bg-blue-50 border-blue-200'
+                    }`}>
+                      <p className="text-sm text-gray-700 whitespace-pre-line leading-relaxed">
+                        {currentAgenda.notes}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* 액션 버튼 */}
+            <div className="border-t-2 border-purple-100 pt-4">
+              <div className="flex items-center justify-center gap-3">
+                {currentAgenda.status === 'pending' && (
+                  <>
+                    <button
+                      onClick={handleDiscussed}
+                      className="flex items-center gap-1.5 px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors font-semibold text-sm"
+                    >
+                      <FileText className="w-4 h-4" />
+                      논의 완료
+                    </button>
+                    <button
+                      onClick={handleResolveClick}
+                      className="flex items-center gap-1.5 px-4 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors font-semibold text-sm"
+                    >
+                      <CheckCircle2 className="w-4 h-4" />
+                      해결하기
+                    </button>
+                    <button
+                      onClick={handleHoldClick}
+                      className="flex items-center gap-1.5 px-4 py-2 bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200 transition-colors font-semibold text-sm"
+                    >
+                      <Pause className="w-4 h-4" />
+                      보류하기
+                    </button>
+                  </>
+                )}
+
+                {currentAgenda.status === 'discussed' && (
+                  <>
+                    <button
+                      onClick={handleResolveClick}
+                      className="flex items-center gap-1.5 px-4 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors font-semibold text-sm"
+                    >
+                      <CheckCircle2 className="w-4 h-4" />
+                      해결하기
+                    </button>
+                    <button
+                      onClick={handleHoldClick}
+                      className="flex items-center gap-1.5 px-4 py-2 bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200 transition-colors font-semibold text-sm"
+                    >
+                      <Pause className="w-4 h-4" />
+                      보류하기
+                    </button>
+                  </>
+                )}
+
+                <button
+                  onClick={() => navigate(`/issues/${currentAgenda.issueId}`)}
+                  className="flex items-center gap-1.5 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-semibold text-sm"
+                >
+                  <FileText className="w-4 h-4" />
+                  상세 보기
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* 다음 화살표 */}
+          <button
+            onClick={handleNext}
+            disabled={currentIndex === filteredAgendas.length - 1}
+            className={`w-12 h-12 rounded-full flex items-center justify-center transition-all shrink-0 ${
+              currentIndex === filteredAgendas.length - 1
+                ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                : 'bg-white text-gray-700 hover:bg-water-blue-50 hover:text-water-blue-600 shadow-lg border-2 border-gray-200 hover:scale-110'
+            }`}
+          >
+            <ChevronRight className="w-6 h-6" />
+          </button>
+        </div>
+      ) : (
+        /* 결과 없음 */
+        <div className="text-center py-16 bg-white rounded-xl shadow-sm border border-gray-200">
           <CalendarIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
           <h3 className="text-xl font-semibold text-gray-800 mb-2">회의 안건이 없습니다</h3>
           <p className="text-gray-500">
@@ -282,14 +565,30 @@ const MeetingAgendas: React.FC = () => {
         </div>
       )}
 
+      {/* 페이지 인디케이터 */}
+      {filteredAgendas.length > 0 && (
+        <div className="mt-6 flex items-center justify-center gap-2">
+          {filteredAgendas.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => setCurrentIndex(index)}
+              className={`h-2 rounded-full transition-all ${
+                index === currentIndex
+                  ? 'bg-water-blue-600 w-8'
+                  : 'bg-gray-300 hover:bg-gray-400 w-2'
+              }`}
+            />
+          ))}
+        </div>
+      )}
+
       {/* 해결 방법 입력 모달 */}
-      {showResolveModal && selectedAgenda && (
+      {showResolveModal && currentAgenda && (
         <div 
           className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
           onClick={() => {
             setShowResolveModal(false);
             setResolveReason('');
-            setSelectedAgendaId(null);
           }}
         >
           <div 
@@ -302,7 +601,6 @@ const MeetingAgendas: React.FC = () => {
                 onClick={() => {
                   setShowResolveModal(false);
                   setResolveReason('');
-                  setSelectedAgendaId(null);
                 }}
                 className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
               >
@@ -311,7 +609,7 @@ const MeetingAgendas: React.FC = () => {
             </div>
 
             <div className="mb-4">
-              <p className="text-sm text-gray-600 mb-2">안건: <span className="font-semibold text-gray-800">{selectedAgenda.issueTitle}</span></p>
+              <p className="text-sm text-gray-600 mb-2">안건: <span className="font-semibold text-gray-800">{currentAgenda.issueTitle}</span></p>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 해결 방법 <span className="text-red-500">*</span>
               </label>
@@ -333,7 +631,6 @@ const MeetingAgendas: React.FC = () => {
                 onClick={() => {
                   setShowResolveModal(false);
                   setResolveReason('');
-                  setSelectedAgendaId(null);
                 }}
                 className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
               >
@@ -352,13 +649,12 @@ const MeetingAgendas: React.FC = () => {
       )}
 
       {/* 보류 사유 입력 모달 */}
-      {showHoldModal && selectedAgenda && (
+      {showHoldModal && currentAgenda && (
         <div 
           className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
           onClick={() => {
             setShowHoldModal(false);
             setHoldReason('');
-            setSelectedAgendaId(null);
           }}
         >
           <div 
@@ -371,7 +667,6 @@ const MeetingAgendas: React.FC = () => {
                 onClick={() => {
                   setShowHoldModal(false);
                   setHoldReason('');
-                  setSelectedAgendaId(null);
                 }}
                 className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
               >
@@ -380,7 +675,7 @@ const MeetingAgendas: React.FC = () => {
             </div>
 
             <div className="mb-4">
-              <p className="text-sm text-gray-600 mb-2">안건: <span className="font-semibold text-gray-800">{selectedAgenda.issueTitle}</span></p>
+              <p className="text-sm text-gray-600 mb-2">안건: <span className="font-semibold text-gray-800">{currentAgenda.issueTitle}</span></p>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 보류 사유 <span className="text-red-500">*</span>
               </label>
@@ -402,7 +697,6 @@ const MeetingAgendas: React.FC = () => {
                 onClick={() => {
                   setShowHoldModal(false);
                   setHoldReason('');
-                  setSelectedAgendaId(null);
                 }}
                 className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
               >
