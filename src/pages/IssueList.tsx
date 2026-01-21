@@ -3,10 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { IssueStatus, Priority, RankLevel, type Issue } from '../types';
 import { Search, Plus, User as UserIcon, Calendar, Filter, CheckCircle, AlertCircle, Clock } from 'lucide-react';
-import { format, differenceInDays } from 'date-fns';
+import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { isOverdue, getDaysSinceCreation } from '../utils/ticket';
 import { isTerminalState } from '../constants/ticket';
+import { motion } from 'framer-motion';
 
 const IssueList: React.FC = () => {
   const navigate = useNavigate();
@@ -149,37 +150,25 @@ const IssueList: React.FC = () => {
     return null;
   };
 
-  const getDDayColor = (issue: Issue): string => {
-    // 종료된 이슈는 색상 없음
-    if (isTerminalState(issue.status as any)) {
-      return '';
-    }
-
-    const createdAt = new Date(issue.createdAt);
-    const daysSinceCreation = getDaysSinceCreation(createdAt);
-
-    if (daysSinceCreation >= 7) {
-      // 7일 이상 경과
-      return 'text-white font-bold bg-red-600 border-2 border-red-700 shadow-lg';
-    } else if (daysSinceCreation >= 5) {
-      // 5일 이상 경과
-      return 'text-white font-bold bg-orange-500 border-2 border-orange-600 shadow-md';
-    } else {
-      // 7일 이내
-      return 'text-blue-700 font-semibold bg-blue-100 border-2 border-blue-300';
-    }
-  };
-
   // 테이블 행 클릭
   const handleRowClick = (issueId: string) => {
     navigate(`/issues/${issueId}`);
   };
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-
+    <motion.div
+      className="p-6 bg-gray-50 min-h-screen"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, ease: "easeOut" }}
+    >
       {/* 검색 및 필터 */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+      <motion.div
+        className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1, duration: 0.4 }}
+      >
         <div className="flex flex-col lg:flex-row gap-4 items-center">
           {/* 검색창 */}
           <div className="flex-1 w-full relative">
@@ -244,10 +233,15 @@ const IssueList: React.FC = () => {
             </button>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* 이슈 테이블 (Jira 스타일) */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <motion.div
+        className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2, duration: 0.4 }}
+      >
         {/* 테이블 헤더 */}
         <div className="bg-gray-50 border-b border-gray-200">
           <div className="grid grid-cols-12 gap-4 px-6 py-4 text-sm font-semibold text-gray-600 uppercase tracking-wide">
@@ -265,11 +259,14 @@ const IssueList: React.FC = () => {
         {/* 테이블 본문 */}
         {filteredIssues.length > 0 ? (
           <div className="divide-y divide-gray-200">
-            {filteredIssues.map((issue) => (
-              <div
+            {filteredIssues.map((issue, index) => (
+              <motion.div
                 key={issue.id}
                 onClick={() => handleRowClick(issue.id)}
                 className="grid grid-cols-12 gap-4 px-6 py-4 hover:bg-blue-50 cursor-pointer transition-colors items-center text-base"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.3 + index * 0.03, duration: 0.3 }}
               >
                 {/* 이슈ID */}
                 <div className="col-span-1">
@@ -366,27 +363,37 @@ const IssueList: React.FC = () => {
                     return <span className="text-sm text-gray-400">-</span>;
                   })()}
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         ) : (
-          <div className="text-center py-16">
+          <motion.div
+            className="text-center py-16"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3, duration: 0.4 }}
+          >
             <AlertCircle className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-gray-800 mb-2">검색 결과가 없습니다</h3>
             <p className="text-gray-500">
               {showMyIssues ? '당신이 담당자인 이슈가 없습니다.' : '다른 검색어나 필터를 시도해보세요.'}
             </p>
-          </div>
+          </motion.div>
         )}
-      </div>
+      </motion.div>
 
       {/* 통계 정보 */}
-      <div className="mt-6 text-center text-lg text-gray-600 bg-white rounded-xl shadow-sm border border-gray-200 py-4">
+      <motion.div
+        className="mt-6 text-center text-lg text-gray-600 bg-white rounded-xl shadow-sm border border-gray-200 py-4"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4, duration: 0.4 }}
+      >
         총 <span className="font-bold text-water-blue-600">{filteredIssues.length}</span>개의 이슈
         (전체 {issues.length}개 중)
         {showMyIssues && <span className="ml-2 text-orange-600 font-medium">| 내 이슈(담당자)만 표시 중</span>}
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 };
 

@@ -5,6 +5,7 @@ import { IssueStatus, Priority } from '../types';
 import { Archive, FileText, User, Calendar, Tag, CheckCircle2, Search, Filter } from 'lucide-react';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
+import { motion } from 'framer-motion';
 
 const Internalizations: React.FC = () => {
   const navigate = useNavigate();
@@ -108,9 +109,19 @@ const Internalizations: React.FC = () => {
 
 
   return (
-    <div className="p-6">
+    <motion.div
+      className="p-6"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, ease: "easeOut" }}
+    >
       {/* 검색 및 필터 */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
+      <motion.div
+        className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1, duration: 0.4 }}
+      >
         <div className="flex flex-col lg:flex-row gap-4">
           {/* 검색창 */}
           <div className="flex-1 relative">
@@ -150,15 +161,24 @@ const Internalizations: React.FC = () => {
             </select>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* 완료된 티켓 목록 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        {filteredTickets.map(ticket => (
-          <div
+      <motion.div
+        className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.2, duration: 0.4 }}
+      >
+        {filteredTickets.map((ticket, index) => (
+          <motion.div
             key={ticket.id}
             className="bg-white rounded-lg border-2 border-gray-200 shadow-md hover:shadow-lg transition-all hover:border-water-blue-400 cursor-pointer flex flex-col"
             onClick={() => navigate(`/issues/${ticket.issueId}`)}
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ delay: 0.3 + index * 0.05, duration: 0.4 }}
+            whileHover={{ scale: 1.02, y: -5 }}
           >
             <div className="p-4 flex flex-col flex-1">
               {/* 티켓 헤더 */}
@@ -243,13 +263,18 @@ const Internalizations: React.FC = () => {
                 </div>
               </div>
             </div>
-          </div>
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
 
       {/* 결과 없음 */}
       {filteredTickets.length === 0 && (
-        <div className="text-center py-12 bg-white rounded-xl shadow-sm border border-gray-200">
+        <motion.div
+          className="text-center py-12 bg-white rounded-xl shadow-sm border border-gray-200"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.3, duration: 0.4 }}
+        >
           <Archive className="w-16 h-16 text-gray-300 mx-auto mb-4" />
           <h3 className="text-xl font-semibold text-gray-800 mb-2">완료된 티켓이 없습니다</h3>
           <p className="text-gray-500">
@@ -257,9 +282,9 @@ const Internalizations: React.FC = () => {
               ? '검색 조건에 맞는 완료된 티켓이 없습니다.'
               : '아직 완료된 티켓이 없습니다. 이슈 목록이나 주간 회의에서 티켓을 종료하면 여기에 보관됩니다.'}
           </p>
-        </div>
+        </motion.div>
       )}
-    </div>
+    </motion.div>
   );
 };
 

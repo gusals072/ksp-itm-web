@@ -38,3 +38,23 @@ body {
 * {
   box-sizing: border-box;
 }
+
+/* 스크롤바 숨기기 */
+* {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+*::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+html, body {
+  overflow-x: hidden; /* 가로 스크롤 방지 */
+}
+
+/* 스크롤은 가능하지만 스크롤바는 보이지 않음 */
+body {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch; /* iOS 부드러운 스크롤 */
+}

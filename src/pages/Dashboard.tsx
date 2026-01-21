@@ -5,6 +5,7 @@ import { IssueStatus, RankLevel } from '../types';
 import { Droplets, FileText, Clock, CheckCircle2, TrendingUp, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
+import { motion } from 'framer-motion';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -111,12 +112,27 @@ const Dashboard: React.FC = () => {
   };
 
   return (
-    <div className="p-4 max-h-[calc(100vh-4rem)] overflow-y-auto">
+    <motion.div
+      className="p-4 max-h-[calc(100vh-4rem)] overflow-y-auto"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6, ease: "easeOut" }}
+    >
       <div className="max-w-[1920px] mx-auto space-y-4">
         {/* 상단: 환영 메시지 + 통계 카드 */}
-        <div className="grid grid-cols-1 lg:grid-cols-6 gap-4">
+        <motion.div
+          className="grid grid-cols-1 lg:grid-cols-6 gap-4"
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2, duration: 0.5 }}
+        >
           {/* 환영 메시지 (축소) */}
-          <div className="lg:col-span-2 bg-gradient-to-r from-water-blue-600 to-water-teal-600 rounded-xl p-4 text-white shadow-lg">
+          <motion.div
+            className="lg:col-span-2 bg-gradient-to-r from-water-blue-600 to-water-teal-600 rounded-xl p-4 text-white shadow-lg"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.3, duration: 0.4 }}
+          >
             <div className="flex flex-col items-center justify-center w-full text-center space-y-2">
               <div className="flex items-center justify-center space-x-3 w-full">
                 <div className="p-2 bg-white/20 rounded-lg">
@@ -128,10 +144,15 @@ const Dashboard: React.FC = () => {
                 <p className="text-xs text-water-blue-100">Issue Ticket Management System</p>
               </div>
             </div>
-          </div>
+          </motion.div>
 
           {/* 통계 카드 (축소) */}
-          <div className="lg:col-span-4 grid grid-cols-5 gap-3">
+          <motion.div
+            className="lg:col-span-4 grid grid-cols-5 gap-3"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.4, duration: 0.5 }}
+          >
             <div 
               className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer"
               onClick={() => navigate('/issues')}
@@ -182,11 +203,16 @@ const Dashboard: React.FC = () => {
                 <span className="text-xs text-gray-500">완료됨</span>
               </div>
             </div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
 
         {/* 주요 섹션: 2열 레이아웃 */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <motion.div
+          className="grid grid-cols-1 lg:grid-cols-3 gap-4"
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5, duration: 0.5 }}
+        >
           {/* 왼쪽: 나에게 할당된 이슈 (강조) */}
           {user && (
             <div className="bg-white rounded-xl shadow-sm border-2 border-water-teal-200 flex flex-col">
@@ -301,10 +327,15 @@ const Dashboard: React.FC = () => {
               </div>
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* 하단: 기타 섹션 */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <motion.div
+          className="grid grid-cols-1 lg:grid-cols-3 gap-4"
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6, duration: 0.5 }}
+        >
           {/* 내가 제기한 이슈 */}
           {user && (
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col">
@@ -391,9 +422,9 @@ const Dashboard: React.FC = () => {
               )}
             </div>
           </div>
-        </div>
+        </motion.div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 

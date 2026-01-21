@@ -6,6 +6,7 @@ import { Calendar as CalendarIcon, CheckCircle2, FileText, Clock } from 'lucide-
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { getDaysSinceCreation } from '../utils/ticket';
+import { motion } from 'framer-motion';
 import {
   Dialog,
   DialogContent,
@@ -77,24 +78,40 @@ const MeetingAgendas: React.FC = () => {
   };
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
+    <motion.div
+      className="p-6 max-w-6xl mx-auto"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, ease: "easeOut" }}
+    >
       {/* 헤더 */}
-      <div className="mb-6">
+      <motion.div
+        className="mb-6"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1, duration: 0.4 }}
+      >
         <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
           <CalendarIcon className="w-8 h-8 text-blue-600" />
           주간 회의 안건
         </h1>
         <p className="text-gray-600 mt-2">7일 이상 해결되지 않은 티켓들이 자동으로 이동되었습니다.</p>
-      </div>
+      </motion.div>
 
       {/* 티켓 목록 */}
       {meetingTickets.length > 0 ? (
         <div className="space-y-4">
-          {meetingTickets.map((ticket) => {
+          {meetingTickets.map((ticket, index) => {
             const daysSinceCreation = getDaysSinceCreation(new Date(ticket.createdAt));
 
             return (
-              <div key={ticket.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <motion.div
+                key={ticket.id}
+                className="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2 + index * 0.1, duration: 0.4 }}
+              >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     {/* 제목과 우선순위 */}
@@ -139,16 +156,21 @@ const MeetingAgendas: React.FC = () => {
                     </button>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             );
           })}
         </div>
       ) : (
-        <div className="text-center py-16 bg-white rounded-lg shadow-sm border border-gray-200">
+        <motion.div
+          className="text-center py-16 bg-white rounded-lg shadow-sm border border-gray-200"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.2, duration: 0.4 }}
+        >
           <CalendarIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
           <h3 className="text-xl font-semibold text-gray-800 mb-2">회의 안건이 없습니다</h3>
           <p className="text-gray-500">현재 진행 중인 티켓들 중 7일이 경과한 티켓이 없습니다.</p>
-        </div>
+        </motion.div>
       )}
 
       {/* 완료 모달 */}
@@ -197,7 +219,7 @@ const MeetingAgendas: React.FC = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </motion.div>
   );
 };
 
