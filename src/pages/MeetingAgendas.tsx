@@ -6,6 +6,14 @@ import { Calendar as CalendarIcon, CheckCircle2, FileText, Clock } from 'lucide-
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { getDaysSinceCreation } from '../utils/ticket';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '../components/ui/dialog';
 
 const MeetingAgendas: React.FC = () => {
   const navigate = useNavigate();
@@ -144,41 +152,51 @@ const MeetingAgendas: React.FC = () => {
       )}
 
       {/* 완료 모달 */}
-      {showCompleteModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-semibold mb-4">회의 완료 처리</h3>
-            <p className="text-sm text-gray-600 mb-4">
+      <Dialog open={showCompleteModal} onOpenChange={setShowCompleteModal}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CheckCircle2 className="w-5 h-5 text-green-600" />
+              회의 완료 처리
+            </DialogTitle>
+            <DialogDescription>
               이 티켓을 어떻게 완료했는지 설명해주세요.
-            </p>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
             <textarea
-              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              rows={4}
+              className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-water-blue-500 focus:border-transparent resize-none transition-all"
+              rows={5}
               placeholder="완료 방법을 입력하세요..."
               value={completionReason}
               onChange={(e) => setCompletionReason(e.target.value)}
             />
-            <div className="flex justify-end space-x-2 mt-4">
-              <button
-                onClick={() => {
-                  setShowCompleteModal(false);
-                  setSelectedTicketId(null);
-                  setCompletionReason('');
-                }}
-                className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
-              >
-                취소
-              </button>
-              <button
-                onClick={handleCompleteConfirm}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-              >
-                완료
-              </button>
-            </div>
+            {!completionReason.trim() && (
+              <p className="text-xs text-red-500 mt-2">완료 사유를 입력해주세요.</p>
+            )}
           </div>
-        </div>
-      )}
+          <DialogFooter>
+            <button
+              onClick={() => {
+                setShowCompleteModal(false);
+                setSelectedTicketId(null);
+                setCompletionReason('');
+              }}
+              className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+            >
+              취소
+            </button>
+            <button
+              onClick={handleCompleteConfirm}
+              disabled={!completionReason.trim()}
+              className="px-4 py-2 bg-water-blue-600 text-white rounded-lg hover:bg-water-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center gap-2"
+            >
+              <CheckCircle2 className="w-4 h-4" />
+              완료하기
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

@@ -18,6 +18,14 @@ import {
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { AssigneeAssignment } from '../components/AssigneeAssignment';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '../components/ui/dialog';
 
 const IssueDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -425,67 +433,82 @@ const IssueDetail: React.FC = () => {
       </div>
 
       {/* 완료 사유 입력 모달 */}
-      {showCompletionModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">티켓 완료 처리</h3>
-            <p className="text-sm text-gray-600 mb-4">
+      <Dialog open={showCompletionModal} onOpenChange={setShowCompletionModal}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CheckCircle2 className="w-5 h-5 text-green-600" />
+              티켓 완료 처리
+            </DialogTitle>
+            <DialogDescription>
               이 티켓을 어떻게 완료했는지 설명해주세요.
-            </p>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
             <textarea
-              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-water-blue-500 mb-4"
-              rows={4}
+              className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-water-blue-500 focus:border-transparent resize-none transition-all"
+              rows={5}
               placeholder="완료 방법을 입력하세요..."
               value={completionReason}
               onChange={(e) => setCompletionReason(e.target.value)}
             />
-            <div className="flex items-center justify-end space-x-3">
-              <button
-                onClick={() => {
-                  setShowCompletionModal(false);
-                  setCompletionReason('');
-                }}
-                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
-              >
-                취소
-              </button>
-              <button
-                onClick={handleCompleteConfirm}
-                className="px-4 py-2 bg-water-blue-600 text-white rounded-lg hover:bg-water-blue-700"
-              >
-                완료하기
-              </button>
-            </div>
+            {!completionReason.trim() && (
+              <p className="text-xs text-red-500 mt-2">완료 사유를 입력해주세요.</p>
+            )}
           </div>
-        </div>
-      )}
+          <DialogFooter>
+            <button
+              onClick={() => {
+                setShowCompletionModal(false);
+                setCompletionReason('');
+              }}
+              className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+            >
+              취소
+            </button>
+            <button
+              onClick={handleCompleteConfirm}
+              disabled={!completionReason.trim()}
+              className="px-4 py-2 bg-water-blue-600 text-white rounded-lg hover:bg-water-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center gap-2"
+            >
+              <CheckCircle2 className="w-4 h-4" />
+              완료하기
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* 삭제 확인 모달 */}
-      {showDeleteModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">이슈 삭제 확인</h3>
-            <p className="text-gray-600 mb-6">
-              정말로 이 이슈를 삭제하시겠습니까?<br />
-              <span className="text-sm text-gray-500">이 작업은 되돌릴 수 없습니다.</span>
-            </p>
-            <div className="flex items-center justify-end space-x-3">
-              <button
-                onClick={() => setShowDeleteModal(false)}
-                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
-              >
-                취소
-              </button>
-              <button
-                onClick={handleDelete}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-              >
-                삭제
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <Dialog open={showDeleteModal} onOpenChange={setShowDeleteModal}>
+        <DialogContent className="sm:max-w-[450px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <Trash2 className="w-5 h-5" />
+              이슈 삭제 확인
+            </DialogTitle>
+            <DialogDescription className="pt-2">
+              정말로 이 이슈를 삭제하시겠습니까?
+              <br />
+              <span className="text-sm text-red-500 font-medium">이 작업은 되돌릴 수 없습니다.</span>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <button
+              onClick={() => setShowDeleteModal(false)}
+              className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+            >
+              취소
+            </button>
+            <button
+              onClick={handleDelete}
+              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium flex items-center gap-2"
+            >
+              <Trash2 className="w-4 h-4" />
+              삭제하기
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
