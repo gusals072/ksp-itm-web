@@ -119,10 +119,6 @@ const MeetingAgendas: React.FC = () => {
 
   return (
     <div className="p-6">
-      {/* 페이지 설명 */}
-      <div className="mb-4">
-        <p className="text-gray-600">주간 회의에서 논의할 안건을 관리하고 추적합니다.</p>
-      </div>
 
       {/* 필터 및 통계 */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">

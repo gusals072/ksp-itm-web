@@ -213,10 +213,6 @@ const IssueList: React.FC = () => {
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
-      {/* 페이지 헤더 */}
-      <div className="mb-6">
-        <p className="text-gray-600 text-lg">모든 이슈를 확인하고 관리할 수 있습니다.</p>
-      </div>
 
       {/* 검색 및 필터 */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">

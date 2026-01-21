@@ -137,27 +137,6 @@ const Internalizations: React.FC = () => {
 
   return (
     <div className="p-6">
-      {/* 페이지 설명 */}
-      <div className="mb-4">
-        <div className="flex items-center gap-2">
-          <p className="text-gray-600 text-lg">완료된 모든 티켓의 처리 이력을 확인하고 참고할 수 있습니다.</p>
-          <div className="relative group">
-            <button className="p-1.5 text-water-blue-600 hover:text-water-blue-700 hover:bg-water-blue-50 rounded-full transition-colors">
-              <Info className="w-4 h-4" />
-            </button>
-            <div className="absolute left-0 top-full mt-2 w-72 bg-gray-900 text-white text-xs rounded-lg p-3 shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 pointer-events-none">
-              <div className="font-semibold mb-2 text-white">완료된 티켓 이력 안내</div>
-              <ul className="space-y-1 text-gray-200">
-                <li>• 이슈 목록이나 주간 회의에서 종료된 티켓은 자동으로 보관됩니다.</li>
-                <li>• 해결됨, 보류됨, 차단됨, 취소됨 등 종료 상태의 모든 티켓을 확인할 수 있습니다.</li>
-                <li>• 나중에 필요할 때 처리 이력을 참고하여 유사한 이슈에 대응할 수 있습니다.</li>
-              </ul>
-              <div className="absolute bottom-full left-4 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-gray-900"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* 통계 카드 */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
