@@ -8,7 +8,7 @@ import { ko } from 'date-fns/locale';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { issues, meetingAgendas, user } = useApp();
+  const { issues, meetingAgendas, closedTickets, user } = useApp();
 
   // 권한 기준 필터링 함수
   const canViewIssue = (issue: typeof issues[0]) => {
@@ -25,12 +25,27 @@ const Dashboard: React.FC = () => {
   const visibleIssues = issues.filter(issue => canViewIssue(issue));
 
   // 통계 계산 (보이는 이슈 기준)
-  const stats = {
+  // 진행 중인 티켓 통계
+  const activeStats = {
     total: visibleIssues.length,
     pending: visibleIssues.filter(i => i.status === IssueStatus.PENDING).length,
     inProgress: visibleIssues.filter(i => i.status === IssueStatus.IN_PROGRESS).length,
-    meeting: visibleIssues.filter(i => i.status === IssueStatus.MEETING).length,
-    resolved: visibleIssues.filter(i => i.status === IssueStatus.RESOLVED).length
+    meeting: visibleIssues.filter(i => i.status === IssueStatus.MEETING).length
+  };
+
+  // 완료된 티켓 통계 (closedTickets 기준)
+  const completedStats = {
+    resolved: closedTickets.filter(t => t.finalStatus === IssueStatus.RESOLVED).length,
+    totalCompleted: closedTickets.length
+  };
+
+  // 전체 통계 (진행 중 + 완료)
+  const stats = {
+    total: activeStats.total + completedStats.totalCompleted,
+    pending: activeStats.pending,
+    inProgress: activeStats.inProgress,
+    meeting: activeStats.meeting,
+    resolved: completedStats.resolved
   };
 
   // 최근 이슈 (최근 4개, 긴급 우선 표시, 권한 체크 후)
@@ -54,28 +69,12 @@ const Dashboard: React.FC = () => {
     switch (status) {
       case IssueStatus.PENDING:
         return 'bg-gray-100 text-gray-800 border-gray-300';
-      case IssueStatus.ASSIGNED:
-        return 'bg-indigo-100 text-indigo-800 border-indigo-300';
       case IssueStatus.IN_PROGRESS:
         return 'bg-blue-100 text-blue-800 border-blue-300';
-      case IssueStatus.REVIEW:
-        return 'bg-amber-100 text-amber-800 border-amber-300';
-      case IssueStatus.BLOCKED:
-        return 'bg-red-100 text-red-800 border-red-300';
-      case IssueStatus.ON_HOLD:
-        return 'bg-orange-100 text-orange-800 border-orange-300';
       case IssueStatus.MEETING:
         return 'bg-purple-100 text-purple-800 border-purple-300';
       case IssueStatus.RESOLVED:
         return 'bg-green-100 text-green-800 border-green-300';
-      case IssueStatus.VERIFICATION:
-        return 'bg-cyan-100 text-cyan-800 border-cyan-300';
-      case IssueStatus.REOPENED:
-        return 'bg-pink-100 text-pink-800 border-pink-300';
-      case IssueStatus.CANCELLED:
-        return 'bg-slate-100 text-slate-600 border-slate-300';
-      case IssueStatus.INTERNALIZED:
-        return 'bg-teal-100 text-teal-800 border-teal-300';
       default:
         return 'bg-gray-100 text-gray-800 border-gray-300';
     }
@@ -85,28 +84,12 @@ const Dashboard: React.FC = () => {
     switch (status) {
       case IssueStatus.PENDING:
         return '이슈 제기';
-      case IssueStatus.ASSIGNED:
-        return '배정됨';
       case IssueStatus.IN_PROGRESS:
         return '처리 중';
-      case IssueStatus.REVIEW:
-        return '검토 중';
-      case IssueStatus.BLOCKED:
-        return '차단됨';
-      case IssueStatus.ON_HOLD:
-        return '보류';
       case IssueStatus.MEETING:
         return '회의 예정';
       case IssueStatus.RESOLVED:
-        return '해결됨';
-      case IssueStatus.VERIFICATION:
-        return '검증 중';
-      case IssueStatus.REOPENED:
-        return '재오픈';
-      case IssueStatus.CANCELLED:
-        return '취소됨';
-      case IssueStatus.INTERNALIZED:
-        return '내재화 완료';
+        return '완료됨';
       default:
         return status;
     }
@@ -196,7 +179,7 @@ const Dashboard: React.FC = () => {
               <div className="flex flex-col items-center">
                 <CheckCircle2 className="w-5 h-5 text-green-600 mb-2" />
                 <p className="text-2xl font-bold text-gray-800">{stats.resolved}</p>
-                <span className="text-xs text-gray-500">해결됨</span>
+                <span className="text-xs text-gray-500">완료됨</span>
               </div>
             </div>
           </div>

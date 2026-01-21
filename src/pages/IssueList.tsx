@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { IssueStatus, Priority, RankLevel, type Issue } from '../types';
-import { Search, Plus, User as UserIcon, Calendar, Filter, CheckCircle, AlertCircle } from 'lucide-react';
+import { Search, Plus, User as UserIcon, Calendar, Filter, CheckCircle, AlertCircle, Clock } from 'lucide-react';
 import { format, differenceInDays } from 'date-fns';
 import { ko } from 'date-fns/locale';
+import { isOverdue, getDaysSinceCreation } from '../utils/ticket';
+import { isTerminalState } from '../constants/ticket';
 
 const IssueList: React.FC = () => {
   const navigate = useNavigate();
@@ -17,16 +19,12 @@ const IssueList: React.FC = () => {
   // 필터링 및 정렬
   const filteredIssues = issues
     .filter(issue => {
-      // 종료된 티켓 제외 (해결됨, 보류됨, 차단됨, 취소됨)
-      const isClosed = [
-        IssueStatus.RESOLVED,
-        IssueStatus.ON_HOLD,
-        IssueStatus.BLOCKED,
-        IssueStatus.CANCELLED
-      ].includes(issue.status);
+      // 종료된 티켓과 회의 예정 티켓 제외
+      const isClosed = isTerminalState(issue.status as any);
+      const isInMeeting = issue.status === ('MEETING_SCHEDULED' as any);
 
-      if (isClosed) {
-        return false; // 종료된 티켓은 이슈 목록에서 제외
+      if (isClosed || isInMeeting) {
+        return false; // 종료된 티켓과 회의 예정 티켓은 이슈 목록에서 제외
       }
 
       // 검색
@@ -66,28 +64,12 @@ const IssueList: React.FC = () => {
     switch (status) {
       case IssueStatus.PENDING:
         return 'bg-gray-100 text-gray-800 border-gray-300';
-      case IssueStatus.ASSIGNED:
-        return 'bg-indigo-100 text-indigo-800 border-indigo-300';
       case IssueStatus.IN_PROGRESS:
         return 'bg-blue-100 text-blue-800 border-blue-300';
-      case IssueStatus.REVIEW:
-        return 'bg-amber-100 text-amber-800 border-amber-300';
-      case IssueStatus.BLOCKED:
-        return 'bg-red-100 text-red-800 border-red-300';
-      case IssueStatus.ON_HOLD:
-        return 'bg-orange-100 text-orange-800 border-orange-300';
       case IssueStatus.MEETING:
         return 'bg-purple-100 text-purple-800 border-purple-300';
       case IssueStatus.RESOLVED:
         return 'bg-green-100 text-green-800 border-green-300';
-      case IssueStatus.VERIFICATION:
-        return 'bg-cyan-100 text-cyan-800 border-cyan-300';
-      case IssueStatus.REOPENED:
-        return 'bg-pink-100 text-pink-800 border-pink-300';
-      case IssueStatus.CANCELLED:
-        return 'bg-slate-100 text-slate-600 border-slate-300';
-      case IssueStatus.INTERNALIZED:
-        return 'bg-teal-100 text-teal-800 border-teal-300';
       default:
         return 'bg-gray-100 text-gray-800 border-gray-300';
     }
@@ -97,28 +79,12 @@ const IssueList: React.FC = () => {
     switch (status) {
       case IssueStatus.PENDING:
         return '이슈 제기';
-      case IssueStatus.ASSIGNED:
-        return '배정됨';
       case IssueStatus.IN_PROGRESS:
         return '처리 중';
-      case IssueStatus.REVIEW:
-        return '검토 중';
-      case IssueStatus.BLOCKED:
-        return '차단됨';
-      case IssueStatus.ON_HOLD:
-        return '보류';
       case IssueStatus.MEETING:
         return '회의 예정';
       case IssueStatus.RESOLVED:
-        return '해결됨';
-      case IssueStatus.VERIFICATION:
-        return '검증 중';
-      case IssueStatus.REOPENED:
-        return '재오픈';
-      case IssueStatus.CANCELLED:
-        return '취소됨';
-      case IssueStatus.INTERNALIZED:
-        return '내재화 완료';
+        return '완료됨';
       default:
         return status;
     }
@@ -154,55 +120,53 @@ const IssueList: React.FC = () => {
     }
   };
 
-  // 디데이 계산 (등록일 기준 일주일)
-  const getDDay = (issue: Issue): string | null => {
-    // 해결되거나 내재화 완료된 이슈는 D-Day 표시 안함
-    if (issue.status === IssueStatus.RESOLVED || issue.status === IssueStatus.INTERNALIZED) {
-      return null;
+  // Overdue 표시
+  const getOverdueStatus = (issue: Issue) => {
+    if (isTerminalState(issue.status as any)) {
+      return null; // 종료된 티켓은 표시하지 않음
     }
 
     const createdAt = new Date(issue.createdAt);
-    const deadlineDate = new Date(createdAt);
-    deadlineDate.setDate(deadlineDate.getDate() + 7); // 등록일로부터 7일 후
+    const daysSinceCreation = getDaysSinceCreation(createdAt);
+    const isIssueOverdue = isOverdue(createdAt);
 
-    const daysLeft = differenceInDays(deadlineDate, new Date());
-    
-    if (daysLeft > 0) {
-      return `D-${daysLeft}`;
-    } else if (daysLeft === 0) {
-      return 'D-Day';
-    } else {
-      return `D+${Math.abs(daysLeft)}`;
+    if (isIssueOverdue) {
+      return {
+        type: 'overdue' as const,
+        text: `${daysSinceCreation}일 경과`,
+        className: 'bg-red-100 text-red-800 border-red-300',
+        icon: <AlertCircle className="w-3 h-3" />
+      };
+    } else if (daysSinceCreation >= 5) {
+      return {
+        type: 'warning' as const,
+        text: `${daysSinceCreation}일 경과`,
+        className: 'bg-yellow-100 text-yellow-800 border-yellow-300',
+        icon: <Clock className="w-3 h-3" />
+      };
     }
+
+    return null;
   };
 
   const getDDayColor = (issue: Issue): string => {
-    // 해결되거나 내재화 완료된 이슈는 색상 없음
-    if (issue.status === IssueStatus.RESOLVED || issue.status === IssueStatus.INTERNALIZED) {
+    // 종료된 이슈는 색상 없음
+    if (isTerminalState(issue.status as any)) {
       return '';
     }
 
     const createdAt = new Date(issue.createdAt);
-    const deadlineDate = new Date(createdAt);
-    deadlineDate.setDate(deadlineDate.getDate() + 7); // 등록일로부터 7일 후
+    const daysSinceCreation = getDaysSinceCreation(createdAt);
 
-    const daysLeft = differenceInDays(deadlineDate, new Date());
-    
-    if (daysLeft < 0) {
-      // 지난 날짜 (이미 자동으로 회의 안건으로 넘어갔을 것)
-      return 'text-gray-500 bg-gray-100 border border-gray-300';
-    } else if (daysLeft === 0) {
-      // 오늘 (D-Day)
+    if (daysSinceCreation >= 7) {
+      // 7일 이상 경과
       return 'text-white font-bold bg-red-600 border-2 border-red-700 shadow-lg';
-    } else if (daysLeft <= 3) {
-      // 3일 이내
-      return 'text-white font-bold bg-red-500 border-2 border-red-600 shadow-md';
-    } else if (daysLeft <= 7) {
-      // 7일 이내
-      return 'text-white font-semibold bg-orange-500 border-2 border-orange-600 shadow-sm';
+    } else if (daysSinceCreation >= 5) {
+      // 5일 이상 경과
+      return 'text-white font-bold bg-orange-500 border-2 border-orange-600 shadow-md';
     } else {
-      // 7일 이상 (이론적으로는 나올 수 없지만 안전을 위해)
-      return 'text-water-blue-700 font-semibold bg-water-blue-100 border-2 border-water-blue-300';
+      // 7일 이내
+      return 'text-blue-700 font-semibold bg-blue-100 border-2 border-blue-300';
     }
   };
 
@@ -252,17 +216,9 @@ const IssueList: React.FC = () => {
             >
               <option value="all">전체 상태</option>
               <option value="PENDING">이슈 제기</option>
-              <option value="ASSIGNED">배정됨</option>
               <option value="IN_PROGRESS">처리 중</option>
-              <option value="REVIEW">검토 중</option>
-              <option value="BLOCKED">차단됨</option>
-              <option value="ON_HOLD">보류</option>
               <option value="MEETING">회의 예정</option>
-              <option value="RESOLVED">해결됨</option>
-              <option value="VERIFICATION">검증 중</option>
-              <option value="REOPENED">재오픈</option>
-              <option value="CANCELLED">취소됨</option>
-              <option value="INTERNALIZED">내재화 완료</option>
+              <option value="RESOLVED">완료됨</option>
             </select>
 
             {/* 우선순위 필터 */}
@@ -395,14 +351,15 @@ const IssueList: React.FC = () => {
                   </div>
                 </div>
 
-                {/* D-Day */}
+                {/* Overdue Status */}
                 <div className="col-span-1">
                   {(() => {
-                    const dDay = getDDay(issue);
-                    if (dDay) {
+                    const overdueInfo = getOverdueStatus(issue);
+                    if (overdueInfo) {
                       return (
-                        <span className={`px-3 py-2 rounded-lg text-sm font-bold ${getDDayColor(issue)} inline-block text-center min-w-[100px]`}>
-                          {dDay}
+                        <span className={`px-2 py-1 rounded-md text-xs font-medium border ${overdueInfo.className} flex items-center space-x-1 inline-flex`}>
+                          {overdueInfo.icon}
+                          <span>{overdueInfo.text}</span>
                         </span>
                       );
                     }

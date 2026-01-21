@@ -292,7 +292,7 @@ const Header: React.FC<HeaderProps> = ({ title, onMenuClick }) => {
                     </div>
                     <div className="text-center p-4 bg-green-50 rounded-lg">
                       <p className="text-2xl font-bold text-green-700">{userStats.resolved}</p>
-                      <p className="text-xs text-gray-500 mt-1">해결 완료</p>
+                      <p className="text-xs text-gray-500 mt-1">완료됨</p>
                     </div>
                   </div>
                 </div>

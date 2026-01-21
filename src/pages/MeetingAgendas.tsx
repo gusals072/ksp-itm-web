@@ -1,176 +1,55 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { Priority } from '../types';
-import { Calendar as CalendarIcon, Clock, CheckCircle2, Pause, FileText, X, ChevronLeft, ChevronRight, User, Tag as TagIcon, Users } from 'lucide-react';
+import { Priority, IssueStatus } from '../types';
+import { Calendar as CalendarIcon, CheckCircle2, FileText, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
+import { getDaysSinceCreation } from '../utils/ticket';
 
 const MeetingAgendas: React.FC = () => {
   const navigate = useNavigate();
-  const { meetingAgendas, updateMeetingAgenda, issues } = useApp();
-  const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'discussed' | 'resolved' | 'on_hold'>('all');
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [showResolveModal, setShowResolveModal] = useState(false);
-  const [showHoldModal, setShowHoldModal] = useState(false);
-  const [resolveReason, setResolveReason] = useState('');
-  const [holdReason, setHoldReason] = useState('');
-  
-  // 드래그 관련 상태
-  const [isDragging, setIsDragging] = useState(false);
-  const [startX, setStartX] = useState(0);
-  const [currentX, setCurrentX] = useState(0);
+  const { issues, updateIssueStatus } = useApp();
+  const [showCompleteModal, setShowCompleteModal] = useState(false);
+  const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
+  const [completionReason, setCompletionReason] = useState('');
 
-  const filteredAgendas = meetingAgendas.filter(agenda => {
-    if (filterStatus === 'all') return true;
-    return agenda.status === filterStatus;
-  });
+  // 회의 예정 상태의 티켓들만 필터링
+  const meetingTickets = issues.filter(issue => issue.status === IssueStatus.MEETING);
 
-  // 필터 변경 시 인덱스 초기화
-  useEffect(() => {
-    setCurrentIndex(0);
-  }, [filterStatus]);
+  const handleCompleteClick = (ticketId: string) => {
+    setSelectedTicketId(ticketId);
+    setShowCompleteModal(true);
+  };
 
-  // 키보드 화살표 키로 이동
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // 모달이 열려있을 때는 키보드 이벤트 무시
-      if (showResolveModal || showHoldModal) return;
-      
-      if (e.key === 'ArrowLeft' && currentIndex > 0) {
-        setCurrentIndex(prev => prev - 1);
-      } else if (e.key === 'ArrowRight' && currentIndex < filteredAgendas.length - 1) {
-        setCurrentIndex(prev => prev + 1);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentIndex, filteredAgendas.length, showResolveModal, showHoldModal]);
-
-  const currentAgenda = filteredAgendas[currentIndex];
-  const currentIssue = currentAgenda ? issues.find(i => i.id === currentAgenda.issueId) : null;
-
-  const handlePrevious = () => {
-    if (currentIndex > 0) {
-      setCurrentIndex(currentIndex - 1);
+  const handleCompleteConfirm = () => {
+    if (!selectedTicketId || !completionReason.trim()) {
+      alert('완료 사유를 입력해주세요.');
+      return;
     }
+
+    updateIssueStatus(selectedTicketId, IssueStatus.RESOLVED, completionReason);
+    setShowCompleteModal(false);
+    setSelectedTicketId(null);
+    setCompletionReason('');
   };
 
-  const handleNext = () => {
-    if (currentIndex < filteredAgendas.length - 1) {
-      setCurrentIndex(currentIndex + 1);
-    }
-  };
-
-  // 드래그 시작
-  const handleMouseDown = (e: React.MouseEvent) => {
-    setIsDragging(true);
-    setStartX(e.clientX);
-    setCurrentX(e.clientX);
-  };
-
-  // 드래그 중
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging) return;
-    setCurrentX(e.clientX);
-  };
-
-  // 드래그 종료
-  const handleMouseUp = () => {
-    if (!isDragging) return;
-    
-    const diffX = startX - currentX;
-    const threshold = 50; // 50px 이상 드래그해야 인식
-    
-    if (Math.abs(diffX) > threshold) {
-      if (diffX > 0 && currentIndex < filteredAgendas.length - 1) {
-        // 오른쪽으로 드래그 (다음)
-        handleNext();
-      } else if (diffX < 0 && currentIndex > 0) {
-        // 왼쪽으로 드래그 (이전)
-        handlePrevious();
-      }
-    }
-    
-    setIsDragging(false);
-    setStartX(0);
-    setCurrentX(0);
-  };
-
-  // 터치 이벤트 핸들러
-  const handleTouchStart = (e: React.TouchEvent) => {
-    setIsDragging(true);
-    setStartX(e.touches[0].clientX);
-    setCurrentX(e.touches[0].clientX);
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isDragging) return;
-    setCurrentX(e.touches[0].clientX);
-  };
-
-  const handleTouchEnd = () => {
-    if (!isDragging) return;
-    
-    const diffX = startX - currentX;
-    const threshold = 50;
-    
-    if (Math.abs(diffX) > threshold) {
-      if (diffX > 0 && currentIndex < filteredAgendas.length - 1) {
-        handleNext();
-      } else if (diffX < 0 && currentIndex > 0) {
-        handlePrevious();
-      }
-    }
-    
-    setIsDragging(false);
-    setStartX(0);
-    setCurrentX(0);
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-300';
-      case 'discussed':
-        return 'bg-blue-100 text-blue-800 border-blue-300';
-      case 'resolved':
-        return 'bg-green-100 text-green-800 border-green-300';
-      case 'on_hold':
-        return 'bg-orange-100 text-orange-800 border-orange-300';
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-300';
-    }
-  };
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return '대기 중';
-      case 'discussed':
-        return '논의 완료';
-      case 'resolved':
-        return '해결됨';
-      case 'on_hold':
-        return '보류됨';
-      default:
-        return status;
-    }
+  const handleDetailClick = (ticketId: string) => {
+    navigate(`/issues/${ticketId}`);
   };
 
   const getPriorityColor = (priority: Priority) => {
     switch (priority) {
       case Priority.URGENT:
-        return 'bg-red-500 text-white';
+        return 'bg-red-500';
       case Priority.HIGH:
-        return 'bg-orange-500 text-white';
+        return 'bg-orange-500';
       case Priority.MEDIUM:
-        return 'bg-yellow-500 text-white';
+        return 'bg-yellow-500';
       case Priority.LOW:
-        return 'bg-green-500 text-white';
+        return 'bg-green-500';
       default:
-        return 'bg-gray-500 text-white';
+        return 'bg-gray-500';
     }
   };
 
@@ -189,525 +68,112 @@ const MeetingAgendas: React.FC = () => {
     }
   };
 
-  // 모달 닫기 핸들러
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setShowResolveModal(false);
-        setShowHoldModal(false);
-        setResolveReason('');
-        setHoldReason('');
-      }
-    };
-
-    if (showResolveModal || showHoldModal) {
-      document.addEventListener('keydown', handleEscape);
-    }
-
-    return () => {
-      document.removeEventListener('keydown', handleEscape);
-    };
-  }, [showResolveModal, showHoldModal]);
-
-  // 해결 버튼 클릭
-  const handleResolveClick = () => {
-    if (currentAgenda) {
-      setResolveReason('');
-      setShowResolveModal(true);
-    }
-  };
-
-  // 보류 버튼 클릭
-  const handleHoldClick = () => {
-    if (currentAgenda) {
-      setHoldReason('');
-      setShowHoldModal(true);
-    }
-  };
-
-  // 해결 확인
-  const handleResolveConfirm = () => {
-    if (currentAgenda && resolveReason.trim()) {
-      updateMeetingAgenda(currentAgenda.id, 'resolved', resolveReason.trim());
-      setShowResolveModal(false);
-      setResolveReason('');
-      // 다음 안건으로 이동
-      if (currentIndex < filteredAgendas.length - 1) {
-        setCurrentIndex(currentIndex + 1);
-      }
-    }
-  };
-
-  // 보류 확인
-  const handleHoldConfirm = () => {
-    if (currentAgenda && holdReason.trim()) {
-      updateMeetingAgenda(currentAgenda.id, 'on_hold', holdReason.trim());
-      setShowHoldModal(false);
-      setHoldReason('');
-      // 다음 안건으로 이동
-      if (currentIndex < filteredAgendas.length - 1) {
-        setCurrentIndex(currentIndex + 1);
-      }
-    }
-  };
-
-  // 논의 완료 처리
-  const handleDiscussed = () => {
-    if (currentAgenda) {
-      updateMeetingAgenda(currentAgenda.id, 'discussed');
-    }
-  };
-
   return (
-    <div className="p-6 min-h-screen">
-      {/* 필터 및 통계 */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
-        <div className="flex items-center justify-between flex-wrap gap-4">
-          {/* 필터 */}
-          <div className="flex flex-wrap gap-2">
-            {[
-              { value: 'all', label: '전체' },
-              { value: 'pending', label: '대기 중' },
-              { value: 'discussed', label: '논의 완료' },
-              { value: 'resolved', label: '해결됨' },
-              { value: 'on_hold', label: '보류됨' }
-            ].map(item => (
-              <button
-                key={item.value}
-                onClick={() => setFilterStatus(item.value as any)}
-                className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
-                  filterStatus === item.value
-                    ? 'bg-water-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
-
-          {/* 통계 */}
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 text-sm text-gray-700">
-              <span className="font-semibold">총:</span>
-              <span className="px-3 py-1 bg-gray-100 rounded-lg font-bold text-base">{meetingAgendas.length}</span>
-            </div>
-            <div className="flex items-center gap-2 text-sm text-yellow-700">
-              <span className="font-semibold">대기:</span>
-              <span className="px-3 py-1 bg-yellow-50 rounded-lg font-bold text-base">{meetingAgendas.filter(a => a.status === 'pending').length}</span>
-            </div>
-            <div className="flex items-center gap-2 text-sm text-green-700">
-              <span className="font-semibold">해결:</span>
-              <span className="px-3 py-1 bg-green-50 rounded-lg font-bold text-base">{meetingAgendas.filter(a => a.status === 'resolved').length}</span>
-            </div>
-            <div className="flex items-center gap-2 text-sm text-orange-700">
-              <span className="font-semibold">보류:</span>
-              <span className="px-3 py-1 bg-orange-50 rounded-lg font-bold text-base">{meetingAgendas.filter(a => a.status === 'on_hold').length}</span>
-            </div>
-          </div>
-        </div>
+    <div className="p-6 max-w-6xl mx-auto">
+      {/* 헤더 */}
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
+          <CalendarIcon className="w-8 h-8 text-blue-600" />
+          주간 회의 안건
+        </h1>
+        <p className="text-gray-600 mt-2">7일 이상 해결되지 않은 티켓들이 자동으로 이동되었습니다.</p>
       </div>
 
-      {/* 회의 안건 상세 표시 */}
-      {filteredAgendas.length > 0 && currentAgenda ? (
-        <div className="relative flex justify-center items-center gap-4">
-          {/* 이전 화살표 */}
-          <button
-            onClick={handlePrevious}
-            disabled={currentIndex === 0}
-            className={`w-12 h-12 rounded-full flex items-center justify-center transition-all shrink-0 ${
-              currentIndex === 0
-                ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                : 'bg-white text-gray-700 hover:bg-water-blue-50 hover:text-water-blue-600 shadow-lg border-2 border-gray-200 hover:scale-110'
-            }`}
-          >
-            <ChevronLeft className="w-6 h-6" />
-          </button>
+      {/* 티켓 목록 */}
+      {meetingTickets.length > 0 ? (
+        <div className="space-y-4">
+          {meetingTickets.map((ticket) => {
+            const daysSinceCreation = getDaysSinceCreation(new Date(ticket.createdAt));
 
-          {/* 안건 카드 */}
-          <div 
-            className={`bg-white rounded-xl shadow-lg border-2 border-purple-200 p-6 min-h-[calc(70vh-180px)] w-full max-w-[40%] transition-transform cursor-grab active:cursor-grabbing select-none ${
-              isDragging ? 'scale-[0.98]' : ''
-            }`}
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseUp}
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
-            style={{
-              transform: isDragging ? `translateX(${currentX - startX}px)` : undefined,
-              transition: isDragging ? 'none' : 'transform 0.2s ease-out'
-            }}
-          >
-            {/* 헤더 */}
-            <div className="mb-4 pb-4 border-b-2 border-purple-100">
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-                    <CalendarIcon className="w-5 h-5 text-purple-600" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2 mb-1.5">
-                      <span className={`px-3 py-1 text-xs font-bold rounded-full border ${getStatusColor(currentAgenda.status)}`}>
-                        {getStatusText(currentAgenda.status)}
+            return (
+              <div key={ticket.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    {/* 제목과 우선순위 */}
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className={`w-3 h-3 rounded-full ${getPriorityColor(ticket.priority)}`} />
+                      <h3 className="text-lg font-semibold text-gray-800">{ticket.title}</h3>
+                      <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+                        {getPriorityText(ticket.priority)}
                       </span>
-                      {currentIssue && (
-                        <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${getPriorityColor(currentIssue.priority)}`}>
-                          {getPriorityText(currentIssue.priority)}
-                        </span>
-                      )}
                     </div>
-                    <div className="flex items-center gap-3 text-xs text-gray-600 flex-wrap">
+
+                    {/* 설명 */}
+                    <p className="text-gray-600 mb-3 line-clamp-2">{ticket.description}</p>
+
+                    {/* 메타 정보 */}
+                    <div className="flex items-center gap-6 text-sm text-gray-500">
                       <div className="flex items-center gap-1">
-                        <Clock className="w-3.5 h-3.5" />
-                        <span>{format(new Date(currentAgenda.meetingDate), 'yyyy년 MM월 dd일', { locale: ko })}</span>
+                        <Clock className="w-4 h-4" />
+                        <span>{daysSinceCreation}일 경과</span>
                       </div>
-                      <span className="text-gray-400">•</span>
-                      <span>{currentIndex + 1} / {filteredAgendas.length}</span>
-                      {currentIssue && (
-                        <>
-                          <span className="text-gray-400">•</span>
-                          <span className="font-mono text-xs">ID: {currentIssue.id}</span>
-                          <span className="text-gray-400">•</span>
-                          <span className="text-xs">등록: {format(new Date(currentIssue.createdAt), 'yyyy-MM-dd', { locale: ko })}</span>
-                        </>
-                      )}
+                      <span>등록자: {ticket.reporterName}</span>
+                      <span>담당자: {ticket.assigneeName || '미지정'}</span>
+                      <span>등록일: {format(new Date(ticket.createdAt), 'yyyy-MM-dd', { locale: ko })}</span>
                     </div>
                   </div>
-                </div>
-              </div>
-              <h1 className="text-2xl font-bold text-gray-800 mb-1.5">{currentAgenda.issueTitle}</h1>
-            </div>
 
-            {/* 본문 */}
-            <div className="space-y-4 mb-4">
-              <div className="space-y-4">
-                <div>
-                  <h2 className="text-lg font-semibold text-gray-800 mb-2 flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-purple-600" />
-                    설명
-                  </h2>
-                  <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                    <p className="text-sm text-gray-700 whitespace-pre-line leading-relaxed">
-                      {currentIssue?.description || '설명이 없습니다.'}
-                    </p>
-                  </div>
-                </div>
-
-                {currentIssue && (
-                  <>
-                    {/* 담당자 및 등록자 */}
-                    <div>
-                      <h2 className="text-lg font-semibold text-gray-800 mb-2 flex items-center gap-2">
-                        <User className="w-4 h-4 text-purple-600" />
-                        담당자 정보
-                      </h2>
-                      <div className="bg-gray-50 rounded-lg p-3 border border-gray-200 space-y-2">
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-gray-600">담당자:</span>
-                          <span className="font-semibold text-gray-800">{currentIssue.assigneeName || '미지정'}</span>
-                        </div>
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-gray-600">등록자:</span>
-                          <span className="font-semibold text-gray-800">{currentIssue.reporterName}</span>
-                        </div>
-                        {currentIssue.cc && currentIssue.cc.length > 0 && (
-                          <div>
-                            <span className="text-sm text-gray-600">참조 인원:</span>
-                            <div className="flex flex-wrap gap-1.5 mt-1.5">
-                              {currentIssue.cc.map(ccUser => (
-                                <span key={ccUser.id} className="px-2 py-0.5 bg-water-blue-50 text-water-blue-700 rounded-full text-xs flex items-center gap-1">
-                                  <Users className="w-2.5 h-2.5" />
-                                  {ccUser.name}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* 카테고리 및 태그 */}
-                    <div>
-                      <h2 className="text-lg font-semibold text-gray-800 mb-2 flex items-center gap-2">
-                        <TagIcon className="w-4 h-4 text-purple-600" />
-                        분류
-                      </h2>
-                      <div className="bg-gray-50 rounded-lg p-3 border border-gray-200 space-y-2">
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-gray-600">카테고리:</span>
-                          <span className="font-semibold text-gray-800">{currentIssue.category}</span>
-                        </div>
-                        {currentIssue.tags && currentIssue.tags.length > 0 && (
-                          <div>
-                            <span className="text-sm text-gray-600">태그:</span>
-                            <div className="flex flex-wrap gap-1.5 mt-1.5">
-                              {currentIssue.tags.map((tag, idx) => (
-                                <span key={idx} className="px-2 py-0.5 bg-purple-50 text-purple-700 rounded-full text-xs">
-                                  #{tag}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </>
-                )}
-
-                {/* 메모 / 해결 방법 / 보류 사유 */}
-                {currentAgenda.notes && (
-                  <div>
-                    <h2 className="text-lg font-semibold text-gray-800 mb-2 flex items-center gap-2">
-                      <FileText className="w-4 h-4 text-purple-600" />
-                      {currentAgenda.status === 'resolved' ? '해결 방법' :
-                       currentAgenda.status === 'on_hold' ? '보류 사유' :
-                       '메모'}
-                    </h2>
-                    <div className={`rounded-lg p-3 border-2 ${
-                      currentAgenda.status === 'resolved' ? 'bg-green-50 border-green-200' :
-                      currentAgenda.status === 'on_hold' ? 'bg-orange-50 border-orange-200' :
-                      'bg-blue-50 border-blue-200'
-                    }`}>
-                      <p className="text-sm text-gray-700 whitespace-pre-line leading-relaxed">
-                        {currentAgenda.notes}
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* 액션 버튼 */}
-            <div className="border-t-2 border-purple-100 pt-4">
-              <div className="flex items-center justify-center gap-3">
-                {currentAgenda.status === 'pending' && (
-                  <>
+                  {/* 액션 버튼 */}
+                  <div className="flex gap-2 ml-6">
                     <button
-                      onClick={handleDiscussed}
-                      className="flex items-center gap-1.5 px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors font-semibold text-sm"
+                      onClick={() => handleDetailClick(ticket.id)}
+                      className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
                     >
                       <FileText className="w-4 h-4" />
-                      논의 완료
+                      상세보기
                     </button>
                     <button
-                      onClick={handleResolveClick}
-                      className="flex items-center gap-1.5 px-4 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors font-semibold text-sm"
+                      onClick={() => handleCompleteClick(ticket.id)}
+                      className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                     >
                       <CheckCircle2 className="w-4 h-4" />
-                      해결하기
+                      완료하기
                     </button>
-                    <button
-                      onClick={handleHoldClick}
-                      className="flex items-center gap-1.5 px-4 py-2 bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200 transition-colors font-semibold text-sm"
-                    >
-                      <Pause className="w-4 h-4" />
-                      보류하기
-                    </button>
-                  </>
-                )}
-
-                {currentAgenda.status === 'discussed' && (
-                  <>
-                    <button
-                      onClick={handleResolveClick}
-                      className="flex items-center gap-1.5 px-4 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors font-semibold text-sm"
-                    >
-                      <CheckCircle2 className="w-4 h-4" />
-                      해결하기
-                    </button>
-                    <button
-                      onClick={handleHoldClick}
-                      className="flex items-center gap-1.5 px-4 py-2 bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200 transition-colors font-semibold text-sm"
-                    >
-                      <Pause className="w-4 h-4" />
-                      보류하기
-                    </button>
-                  </>
-                )}
-
-                <button
-                  onClick={() => navigate(`/issues/${currentAgenda.issueId}`)}
-                  className="flex items-center gap-1.5 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-semibold text-sm"
-                >
-                  <FileText className="w-4 h-4" />
-                  상세 보기
-                </button>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
-
-          {/* 다음 화살표 */}
-          <button
-            onClick={handleNext}
-            disabled={currentIndex === filteredAgendas.length - 1}
-            className={`w-12 h-12 rounded-full flex items-center justify-center transition-all shrink-0 ${
-              currentIndex === filteredAgendas.length - 1
-                ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                : 'bg-white text-gray-700 hover:bg-water-blue-50 hover:text-water-blue-600 shadow-lg border-2 border-gray-200 hover:scale-110'
-            }`}
-          >
-            <ChevronRight className="w-6 h-6" />
-          </button>
+            );
+          })}
         </div>
       ) : (
-        /* 결과 없음 */
-        <div className="text-center py-16 bg-white rounded-xl shadow-sm border border-gray-200">
+        <div className="text-center py-16 bg-white rounded-lg shadow-sm border border-gray-200">
           <CalendarIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
           <h3 className="text-xl font-semibold text-gray-800 mb-2">회의 안건이 없습니다</h3>
-          <p className="text-gray-500">
-            {filterStatus === 'all'
-              ? '현재 예정된 회의 안건이 없습니다.'
-              : `선택한 상태('${getStatusText(filterStatus)}')의 회의 안건이 없습니다.`}
-          </p>
+          <p className="text-gray-500">현재 진행 중인 티켓들 중 7일이 경과한 티켓이 없습니다.</p>
         </div>
       )}
 
-      {/* 페이지 인디케이터 */}
-      {filteredAgendas.length > 0 && (
-        <div className="mt-6 flex items-center justify-center gap-2">
-          {filteredAgendas.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => setCurrentIndex(index)}
-              className={`h-2 rounded-full transition-all ${
-                index === currentIndex
-                  ? 'bg-water-blue-600 w-8'
-                  : 'bg-gray-300 hover:bg-gray-400 w-2'
-              }`}
+      {/* 완료 모달 */}
+      {showCompleteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold mb-4">회의 완료 처리</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              이 티켓을 어떻게 완료했는지 설명해주세요.
+            </p>
+            <textarea
+              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              rows={4}
+              placeholder="완료 방법을 입력하세요..."
+              value={completionReason}
+              onChange={(e) => setCompletionReason(e.target.value)}
             />
-          ))}
-        </div>
-      )}
-
-      {/* 해결 방법 입력 모달 */}
-      {showResolveModal && currentAgenda && (
-        <div 
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
-          onClick={() => {
-            setShowResolveModal(false);
-            setResolveReason('');
-          }}
-        >
-          <div 
-            className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-bold text-gray-800">해결 방법 입력</h3>
+            <div className="flex justify-end space-x-2 mt-4">
               <button
                 onClick={() => {
-                  setShowResolveModal(false);
-                  setResolveReason('');
+                  setShowCompleteModal(false);
+                  setSelectedTicketId(null);
+                  setCompletionReason('');
                 }}
-                className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <X className="w-5 h-5 text-gray-600" />
-              </button>
-            </div>
-
-            <div className="mb-4">
-              <p className="text-sm text-gray-600 mb-2">안건: <span className="font-semibold text-gray-800">{currentAgenda.issueTitle}</span></p>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                해결 방법 <span className="text-red-500">*</span>
-              </label>
-              <textarea
-                value={resolveReason}
-                onChange={(e) => setResolveReason(e.target.value)}
-                placeholder="이슈를 해결한 방법을 입력해주세요..."
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-water-blue-500 focus:border-transparent resize-none"
-                rows={5}
-                autoFocus
-              />
-              {resolveReason.trim().length === 0 && (
-                <p className="text-xs text-red-500 mt-1">해결 방법을 입력해주세요.</p>
-              )}
-            </div>
-
-            <div className="flex items-center justify-end gap-2">
-              <button
-                onClick={() => {
-                  setShowResolveModal(false);
-                  setResolveReason('');
-                }}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
               >
                 취소
               </button>
               <button
-                onClick={handleResolveConfirm}
-                disabled={!resolveReason.trim()}
-                className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+                onClick={handleCompleteConfirm}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
               >
-                확인
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 보류 사유 입력 모달 */}
-      {showHoldModal && currentAgenda && (
-        <div 
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
-          onClick={() => {
-            setShowHoldModal(false);
-            setHoldReason('');
-          }}
-        >
-          <div 
-            className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-bold text-gray-800">보류 사유 입력</h3>
-              <button
-                onClick={() => {
-                  setShowHoldModal(false);
-                  setHoldReason('');
-                }}
-                className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <X className="w-5 h-5 text-gray-600" />
-              </button>
-            </div>
-
-            <div className="mb-4">
-              <p className="text-sm text-gray-600 mb-2">안건: <span className="font-semibold text-gray-800">{currentAgenda.issueTitle}</span></p>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                보류 사유 <span className="text-red-500">*</span>
-              </label>
-              <textarea
-                value={holdReason}
-                onChange={(e) => setHoldReason(e.target.value)}
-                placeholder="이슈를 보류하는 사유를 입력해주세요..."
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none"
-                rows={5}
-                autoFocus
-              />
-              {holdReason.trim().length === 0 && (
-                <p className="text-xs text-red-500 mt-1">보류 사유를 입력해주세요.</p>
-              )}
-            </div>
-
-            <div className="flex items-center justify-end gap-2">
-              <button
-                onClick={() => {
-                  setShowHoldModal(false);
-                  setHoldReason('');
-                }}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-              >
-                취소
-              </button>
-              <button
-                onClick={handleHoldConfirm}
-                disabled={!holdReason.trim()}
-                className="px-4 py-2 text-sm font-medium text-white bg-orange-600 rounded-lg hover:bg-orange-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
-              >
-                확인
+                완료
               </button>
             </div>
           </div>

@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { IssueStatus, Priority, RankLevel } from '../types';
-import { Archive, FileText, User, Calendar, Tag, CheckCircle2, XCircle, Pause, Ban, Search, Filter, Info } from 'lucide-react';
+import { IssueStatus, Priority } from '../types';
+import { Archive, FileText, User, Calendar, Tag, CheckCircle2, Search, Filter } from 'lucide-react';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 
@@ -14,7 +14,7 @@ const Internalizations: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
 
   // 권한 체크: 사용자가 볼 수 있는 티켓만 필터링
-  const canViewTicket = (ticket: typeof closedTickets[0]) => {
+  const canViewTicket = (_ticket: typeof closedTickets[0]) => {
     if (!user) return false;
     // 원본 이슈의 readLevel을 확인할 수 없으므로 모든 사용자가 볼 수 있도록 함
     // 실제로는 ticket에 readLevel 정보를 포함해야 함
@@ -49,12 +49,6 @@ const Internalizations: React.FC = () => {
     switch (status) {
       case IssueStatus.RESOLVED:
         return 'bg-green-100 text-green-800 border-green-300';
-      case IssueStatus.ON_HOLD:
-        return 'bg-orange-100 text-orange-800 border-orange-300';
-      case IssueStatus.BLOCKED:
-        return 'bg-red-100 text-red-800 border-red-300';
-      case IssueStatus.CANCELLED:
-        return 'bg-gray-100 text-gray-800 border-gray-300';
       default:
         return 'bg-gray-100 text-gray-800 border-gray-300';
     }
@@ -63,13 +57,7 @@ const Internalizations: React.FC = () => {
   const getStatusText = (status: IssueStatus) => {
     switch (status) {
       case IssueStatus.RESOLVED:
-        return '해결됨';
-      case IssueStatus.ON_HOLD:
-        return '보류됨';
-      case IssueStatus.BLOCKED:
-        return '차단됨';
-      case IssueStatus.CANCELLED:
-        return '취소됨';
+        return '완료됨';
       default:
         return status;
     }
@@ -79,12 +67,6 @@ const Internalizations: React.FC = () => {
     switch (status) {
       case IssueStatus.RESOLVED:
         return <CheckCircle2 className="w-4 h-4" />;
-      case IssueStatus.ON_HOLD:
-        return <Pause className="w-4 h-4" />;
-      case IssueStatus.BLOCKED:
-        return <Ban className="w-4 h-4" />;
-      case IssueStatus.CANCELLED:
-        return <XCircle className="w-4 h-4" />;
       default:
         return <FileText className="w-4 h-4" />;
     }
@@ -124,59 +106,9 @@ const Internalizations: React.FC = () => {
     return source === 'issue' ? '이슈 목록' : '주간 회의';
   };
 
-  // 통계 계산
-  const stats = {
-    total: closedTickets.length,
-    resolved: closedTickets.filter(t => t.finalStatus === IssueStatus.RESOLVED).length,
-    onHold: closedTickets.filter(t => t.finalStatus === IssueStatus.ON_HOLD).length,
-    blocked: closedTickets.filter(t => t.finalStatus === IssueStatus.BLOCKED).length,
-    cancelled: closedTickets.filter(t => t.finalStatus === IssueStatus.CANCELLED).length,
-    fromIssue: closedTickets.filter(t => t.source === 'issue').length,
-    fromMeeting: closedTickets.filter(t => t.source === 'meeting').length
-  };
 
   return (
     <div className="p-6">
-      {/* 통계 카드 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 mb-1">전체 티켓</p>
-              <p className="text-2xl font-bold text-gray-800">{stats.total}</p>
-            </div>
-            <Archive className="w-8 h-8 text-gray-400" />
-          </div>
-        </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 mb-1">해결됨</p>
-              <p className="text-2xl font-bold text-green-600">{stats.resolved}</p>
-            </div>
-            <CheckCircle2 className="w-8 h-8 text-green-400" />
-          </div>
-        </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 mb-1">보류됨</p>
-              <p className="text-2xl font-bold text-orange-600">{stats.onHold}</p>
-            </div>
-            <Pause className="w-8 h-8 text-orange-400" />
-          </div>
-        </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 mb-1">차단/취소</p>
-              <p className="text-2xl font-bold text-red-600">{stats.blocked + stats.cancelled}</p>
-            </div>
-            <Ban className="w-8 h-8 text-red-400" />
-          </div>
-        </div>
-      </div>
-
       {/* 검색 및 필터 */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
         <div className="flex flex-col lg:flex-row gap-4">
@@ -201,10 +133,7 @@ const Internalizations: React.FC = () => {
               className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-water-blue-500 focus:border-transparent outline-none bg-white"
             >
               <option value="all">전체 상태</option>
-              <option value={IssueStatus.RESOLVED}>해결됨</option>
-              <option value={IssueStatus.ON_HOLD}>보류됨</option>
-              <option value={IssueStatus.BLOCKED}>차단됨</option>
-              <option value={IssueStatus.CANCELLED}>취소됨</option>
+              <option value={IssueStatus.RESOLVED}>완료됨</option>
             </select>
           </div>
 
@@ -299,10 +228,7 @@ const Internalizations: React.FC = () => {
                 {ticket.closedReason && (
                   <div className="bg-gray-50 border-l-4 border-water-blue-300 rounded p-2 mt-2">
                     <p className="text-xs font-medium text-gray-700 mb-1">
-                      {ticket.finalStatus === IssueStatus.RESOLVED ? '해결 방법' :
-                       ticket.finalStatus === IssueStatus.ON_HOLD ? '보류 사유' :
-                       ticket.finalStatus === IssueStatus.BLOCKED ? '차단 사유' :
-                       '취소 사유'}
+                      완료 방법
                     </p>
                     <p className="text-xs text-gray-600 line-clamp-3">{ticket.closedReason}</p>
                   </div>

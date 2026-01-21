@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { IssueStatus, Priority, RankLevel, Rank } from '../types';
@@ -17,16 +17,20 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
+import { AssigneeAssignment } from '../components/AssigneeAssignment';
 
 const IssueDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { issues, updateIssueStatus, deleteIssue, user } = useApp();
+  const { issues, updateIssueStatus, deleteIssue, updateIssue, updateIssueAssignee, user } = useApp();
 
   const issue = issues.find(i => i.id === id);
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<IssueStatus | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showCompletionModal, setShowCompletionModal] = useState(false);
+  const [completionReason, setCompletionReason] = useState('');
+  const [showAssignmentModal, setShowAssignmentModal] = useState(false);
 
   const handleDelete = () => {
     if (issue) {
@@ -56,28 +60,12 @@ const IssueDetail: React.FC = () => {
     switch (status) {
       case IssueStatus.PENDING:
         return 'bg-gray-100 text-gray-800 border-gray-300';
-      case IssueStatus.ASSIGNED:
-        return 'bg-indigo-100 text-indigo-800 border-indigo-300';
       case IssueStatus.IN_PROGRESS:
         return 'bg-blue-100 text-blue-800 border-blue-300';
-      case IssueStatus.REVIEW:
-        return 'bg-amber-100 text-amber-800 border-amber-300';
-      case IssueStatus.BLOCKED:
-        return 'bg-red-100 text-red-800 border-red-300';
-      case IssueStatus.ON_HOLD:
-        return 'bg-orange-100 text-orange-800 border-orange-300';
       case IssueStatus.MEETING:
         return 'bg-purple-100 text-purple-800 border-purple-300';
       case IssueStatus.RESOLVED:
         return 'bg-green-100 text-green-800 border-green-300';
-      case IssueStatus.VERIFICATION:
-        return 'bg-cyan-100 text-cyan-800 border-cyan-300';
-      case IssueStatus.REOPENED:
-        return 'bg-pink-100 text-pink-800 border-pink-300';
-      case IssueStatus.CANCELLED:
-        return 'bg-slate-100 text-slate-600 border-slate-300';
-      case IssueStatus.INTERNALIZED:
-        return 'bg-teal-100 text-teal-800 border-teal-300';
       default:
         return 'bg-gray-100 text-gray-800 border-gray-300';
     }
@@ -87,28 +75,12 @@ const IssueDetail: React.FC = () => {
     switch (status) {
       case IssueStatus.PENDING:
         return '이슈 제기';
-      case IssueStatus.ASSIGNED:
-        return '배정됨';
       case IssueStatus.IN_PROGRESS:
         return '처리 중';
-      case IssueStatus.REVIEW:
-        return '검토 중';
-      case IssueStatus.BLOCKED:
-        return '차단됨';
-      case IssueStatus.ON_HOLD:
-        return '보류';
       case IssueStatus.MEETING:
         return '회의 예정';
       case IssueStatus.RESOLVED:
-        return '해결됨';
-      case IssueStatus.VERIFICATION:
-        return '검증 중';
-      case IssueStatus.REOPENED:
-        return '재오픈';
-      case IssueStatus.CANCELLED:
-        return '취소됨';
-      case IssueStatus.INTERNALIZED:
-        return '내재화 완료';
+        return '완료됨';
       default:
         return status;
     }
@@ -144,17 +116,41 @@ const IssueDetail: React.FC = () => {
     }
   };
 
-  const handleStatusChange = (newStatus: IssueStatus) => {
-    setSelectedStatus(newStatus);
-    setShowStatusModal(true);
+  // 담당자/참조자 배정 여부 확인
+  useEffect(() => {
+    if (issue && !issue.assigneeId && !showAssignmentModal) {
+      setShowAssignmentModal(true);
+    }
+  }, [issue, showAssignmentModal]);
+
+  const handleAssignmentComplete = (assignee: { id: string; name: string } | null, cc: Array<{ id: string; name: string }>) => {
+    if (assignee) {
+      updateIssueAssignee(issue.id, assignee.id, assignee.name);
+      // 담당자 배정 시 상태를 처리중으로 변경
+      if (issue.status === IssueStatus.PENDING) {
+        updateIssueStatus(issue.id, IssueStatus.IN_PROGRESS);
+      }
+      // CC 업데이트
+      updateIssue(issue.id, { cc });
+      setShowAssignmentModal(false);
+    }
   };
 
-  const confirmStatusChange = () => {
-    if (selectedStatus) {
-      updateIssueStatus(issue.id, selectedStatus);
-      setShowStatusModal(false);
-      setSelectedStatus(null);
+  const handleCompleteClick = () => {
+    if (issue.status === IssueStatus.IN_PROGRESS) {
+      setShowCompletionModal(true);
     }
+  };
+
+  const handleCompleteConfirm = () => {
+    if (!completionReason.trim()) {
+      alert('완료 사유를 입력해주세요.');
+      return;
+    }
+
+    updateIssueStatus(issue.id, IssueStatus.RESOLVED, completionReason);
+    setShowCompletionModal(false);
+    setCompletionReason('');
   };
 
   // 주간 회의 안건으로 바로 이동
@@ -162,25 +158,21 @@ const IssueDetail: React.FC = () => {
     updateIssueStatus(issue.id, IssueStatus.MEETING);
   };
 
-  const statusFlow: IssueStatus[] = [
-    IssueStatus.PENDING,
-    IssueStatus.ASSIGNED,
-    IssueStatus.IN_PROGRESS,
-    IssueStatus.REVIEW,
-    IssueStatus.BLOCKED,
-    IssueStatus.ON_HOLD,
-    IssueStatus.MEETING,
-    IssueStatus.RESOLVED,
-    IssueStatus.VERIFICATION,
-    IssueStatus.REOPENED,
-    IssueStatus.CANCELLED,
-    IssueStatus.INTERNALIZED
-  ];
-
-  const currentStatusIndex = statusFlow.indexOf(issue.status);
-
   return (
     <div className="p-6 max-w-7xl mx-auto">
+      {/* 담당자/참조자 배정 모달 (z-index 최상위) - 배정되지 않은 경우에만 표시 */}
+      {issue && !issue.assigneeId && showAssignmentModal && (
+        <div className="fixed inset-0 z-[9999] bg-black/20 flex items-center justify-center">
+          <AssigneeAssignment
+            ticketId={issue.id}
+            currentAssignee={null}
+            currentCC={[]}
+            onAssignmentChange={handleAssignmentComplete}
+            isModal={true}
+          />
+        </div>
+      )}
+
       {/* 헤더 */}
       <div className="mb-6 flex items-center justify-between">
         <div className="flex items-center space-x-4">
@@ -241,9 +233,11 @@ const IssueDetail: React.FC = () => {
                 />
                 <h2 className="text-2xl font-bold text-gray-800">{issue.title}</h2>
               </div>
-              <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium">
-                배정팀
-              </button>
+               {issue.assigneeId && (
+                 <div className="px-4 py-2 bg-blue-50 text-blue-700 rounded-lg text-sm font-medium">
+                   담당자: {issue.assigneeName}
+                 </div>
+               )}
             </div>
 
             <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
@@ -346,26 +340,41 @@ const IssueDetail: React.FC = () => {
 
         {/* 오른쪽: 사이드바 */}
         <div className="space-y-6 w-full lg:min-w-[400px]">
-          {/* 상태 변경 */}
+          {/* 상태 표시 및 완료 버튼 */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 w-full">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">상태 변경</h3>
-            <div className="grid grid-cols-3 gap-2.5 w-full">
-              {statusFlow.map((status) => {
-                const isActive = status === issue.status;
-                return (
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">티켓 상태</h3>
+            
+            {/* 현재 상태 표시 */}
+            <div className="mb-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">현재 상태</span>
+                <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(issue.status)}`}>
+                  {getStatusText(issue.status)}
+                </span>
+              </div>
+            </div>
+
+            {/* 처리중 상태에서만 완료 버튼 표시 */}
+            {issue.status === IssueStatus.IN_PROGRESS && (
+              <div className="border-t border-gray-200 pt-4">
+                <div className="flex justify-center">
                   <button
-                    key={status}
-                    onClick={() => handleStatusChange(status)}
-                    className={`text-center px-2 py-2.5 rounded-lg transition-all flex flex-col items-center justify-center gap-1 text-xs w-full min-h-[60px] ${
-                      isActive
-                        ? 'bg-water-blue-600 text-white font-medium'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
+                    onClick={handleCompleteClick}
+                    className="flex items-center gap-2 px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
                   >
-                    <span className="leading-tight">{getStatusText(status)}</span>
+                    <CheckCircle2 className="w-4 h-4" />
+                    완료 처리
                   </button>
-                );
-              })}
+                </div>
+              </div>
+            )}
+
+            {/* 상태 설명 */}
+            <div className="mt-4 text-xs text-gray-500">
+              {issue.status === IssueStatus.PENDING && '담당자를 배정하면 처리중 상태로 변경됩니다.'}
+              {issue.status === IssueStatus.IN_PROGRESS && '티켓을 완료하려면 완료 처리 버튼을 클릭하세요.'}
+              {issue.status === IssueStatus.MEETING && '주간 회의에서 처리될 예정입니다.'}
+              {issue.status === IssueStatus.RESOLVED && '이 티켓은 완료되었습니다.'}
             </div>
           </div>
 
@@ -398,7 +407,7 @@ const IssueDetail: React.FC = () => {
               </div>
               {issue.resolvedDate && (
                 <div>
-                  <p className="text-xs text-gray-500 mb-1">해결일</p>
+                  <p className="text-xs text-gray-500 mb-1">완료일</p>
                   <p className="text-sm text-gray-800">
                     {format(new Date(issue.resolvedDate), 'yyyy-MM-dd HH:mm', { locale: ko })}
                   </p>
@@ -415,29 +424,36 @@ const IssueDetail: React.FC = () => {
         </div>
       </div>
 
-      {/* 상태 변경 확인 모달 */}
-      {showStatusModal && selectedStatus && (
+      {/* 완료 사유 입력 모달 */}
+      {showCompletionModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">상태 변경 확인</h3>
-            <p className="text-gray-600 mb-6">
-              이슈 상태를 <strong>"{getStatusText(selectedStatus)}"</strong>로 변경하시겠습니까?
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">티켓 완료 처리</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              이 티켓을 어떻게 완료했는지 설명해주세요.
             </p>
+            <textarea
+              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-water-blue-500 mb-4"
+              rows={4}
+              placeholder="완료 방법을 입력하세요..."
+              value={completionReason}
+              onChange={(e) => setCompletionReason(e.target.value)}
+            />
             <div className="flex items-center justify-end space-x-3">
               <button
                 onClick={() => {
-                  setShowStatusModal(false);
-                  setSelectedStatus(null);
+                  setShowCompletionModal(false);
+                  setCompletionReason('');
                 }}
                 className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
               >
                 취소
               </button>
               <button
-                onClick={confirmStatusChange}
+                onClick={handleCompleteConfirm}
                 className="px-4 py-2 bg-water-blue-600 text-white rounded-lg hover:bg-water-blue-700"
               >
-                확인
+                완료하기
               </button>
             </div>
           </div>

@@ -1,32 +1,16 @@
 // 이슈 상태 타입
 export type IssueStatus = 
   | 'PENDING'        // 이슈 제기
-  | 'ASSIGNED'       // 배정됨
   | 'IN_PROGRESS'    // 처리 중
-  | 'REVIEW'         // 검토 중
-  | 'BLOCKED'        // 차단됨
-  | 'ON_HOLD'        // 보류
   | 'MEETING'        // 회의 예정
-  | 'RESOLVED'       // 해결됨
-  | 'VERIFICATION'   // 검증 중
-  | 'REOPENED'       // 재오픈
-  | 'CANCELLED'      // 취소됨
-  | 'INTERNALIZED';  // 내재화 완료
+  | 'RESOLVED';      // 완료됨
 
 // 이슈 상태 상수
 export const IssueStatus = {
   PENDING: 'PENDING' as IssueStatus,
-  ASSIGNED: 'ASSIGNED' as IssueStatus,
   IN_PROGRESS: 'IN_PROGRESS' as IssueStatus,
-  REVIEW: 'REVIEW' as IssueStatus,
-  BLOCKED: 'BLOCKED' as IssueStatus,
-  ON_HOLD: 'ON_HOLD' as IssueStatus,
   MEETING: 'MEETING' as IssueStatus,
-  RESOLVED: 'RESOLVED' as IssueStatus,
-  VERIFICATION: 'VERIFICATION' as IssueStatus,
-  REOPENED: 'REOPENED' as IssueStatus,
-  CANCELLED: 'CANCELLED' as IssueStatus,
-  INTERNALIZED: 'INTERNALIZED' as IssueStatus
+  RESOLVED: 'RESOLVED' as IssueStatus
 } as const;
 
 // 우선순위 타입
@@ -125,7 +109,7 @@ export interface Issue {
   createdAt: Date;
   updatedAt: Date;
   meetingDate?: Date;      // 주간 회의 예정일
-  resolvedDate?: Date;     // 해결일
+  resolvedDate?: Date;     // 완료일
   internalizedDate?: Date; // 내재화 완료일
   tags: string[];
   category: string;
@@ -136,7 +120,7 @@ export interface MeetingAgenda {
   id: string;
   issueId: string;
   issueTitle: string;
-  status: 'pending' | 'discussed' | 'resolved' | 'on_hold';
+  status: 'pending' | 'discussed' | 'resolved';
   meetingDate: Date;
   notes?: string;
 }
@@ -159,9 +143,9 @@ export interface ClosedTicket {
   issueId: string;
   issueTitle: string;
   issueDescription: string;
-  finalStatus: IssueStatus; // 최종 상태 (RESOLVED, ON_HOLD, BLOCKED, CANCELLED 등)
+  finalStatus: IssueStatus; // 최종 상태 (RESOLVED)
   closedDate: Date; // 종료 일자
-  closedReason?: string; // 종료 사유 (해결 방법, 보류 사유, 차단 사유 등)
+  closedReason?: string; // 종료 사유 (완료 방법)
   source: 'issue' | 'meeting'; // 출처: 이슈 목록에서 직접 종료 or 주간 회의 안건에서 종료
   // 원본 이슈 정보
   priority: Priority;

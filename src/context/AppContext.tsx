@@ -256,12 +256,10 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         const issuesToMoveToMeeting: Array<{ issueId: string; issueTitle: string }> = [];
         
         const updatedIssues = prevIssues.map(issue => {
-          // 이미 해결되었거나 내재화 완료되었거나 회의 예정 상태이거나 취소된 이슈는 제외
+          // 이미 완료되었거나 회의 예정 상태인 이슈는 제외
           if (
             issue.status === IssueStatus.RESOLVED ||
-            issue.status === IssueStatus.INTERNALIZED ||
-            issue.status === IssueStatus.MEETING ||
-            issue.status === IssueStatus.CANCELLED
+            issue.status === IssueStatus.MEETING
           ) {
             return issue;
           }
@@ -270,7 +268,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
           const createdAt = new Date(issue.createdAt).getTime();
           const daysSinceCreation = (now.getTime() - createdAt) / oneWeekInMs;
 
-          if (daysSinceCreation >= 1) {
+          if (daysSinceCreation >= 7) {
             // 일주일이 지났으므로 회의 예정 상태로 변경
             issuesToMoveToMeeting.push({
               issueId: issue.id,
@@ -355,12 +353,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
 
   // 티켓 종료 상태인지 확인
   const isClosedStatus = (status: IssueStatus): boolean => {
-    return [
-      IssueStatus.RESOLVED,
-      IssueStatus.ON_HOLD,
-      IssueStatus.BLOCKED,
-      IssueStatus.CANCELLED
-    ].includes(status);
+    return status === IssueStatus.RESOLVED;
   };
 
   // 티켓을 보관소에 추가하는 함수
@@ -491,15 +484,9 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         // 회의 안건 상태에 따라 관련 이슈 상태도 업데이트
         if (status === 'resolved') {
           updateIssueStatus(agenda.issueId, IssueStatus.RESOLVED, notes);
-          // 회의 안건에서 해결된 경우 티켓 보관 (중복 방지를 위해 직접 보관)
+          // 회의 안건에서 완료된 경우 티켓 보관 (중복 방지를 위해 직접 보관)
           if (isClosedStatus(IssueStatus.RESOLVED)) {
             archiveTicket(issue, IssueStatus.RESOLVED, notes, 'meeting', agendaId);
-          }
-        } else if (status === 'on_hold') {
-          updateIssueStatus(agenda.issueId, IssueStatus.ON_HOLD, notes);
-          // 회의 안건에서 보류된 경우 티켓 보관
-          if (isClosedStatus(IssueStatus.ON_HOLD)) {
-            archiveTicket(issue, IssueStatus.ON_HOLD, notes, 'meeting', agendaId);
           }
         }
       }

@@ -1,5 +1,10 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Provider } from 'react-redux';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import { AppProvider } from './context/AppContext';
+import { ReactQueryProvider } from './lib/ReactQueryProvider';
+import { store } from './store/store';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import LoginPage from './pages/LoginPage';
@@ -50,106 +55,122 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
 function App() {
   return (
-    <Router>
-      <AppProvider>
-        <Routes>
-          {/* 로그인 페이지 */}
-          <Route path="/login" element={<LoginPage />} />
+    <ReactQueryProvider>
+      <Provider store={store}>
+        <Router>
+          <AppProvider>
+            <Routes>
+              {/* 로그인 페이지 */}
+              <Route path="/login" element={<LoginPage />} />
 
-          {/* 보호된 라우트 */}
-          <Route
-            path="/"
-            element={
-              <ProtectedRoute>
-                <MainLayout>
-                  <Navigate to="/dashboard" replace />
-                </MainLayout>
-              </ProtectedRoute>
-            }
-          />
+              {/* 보호된 라우트 */}
+              <Route
+                path="/"
+                element={
+                  <ProtectedRoute>
+                    <MainLayout>
+                      <Navigate to="/dashboard" replace />
+                    </MainLayout>
+                  </ProtectedRoute>
+                }
+              />
 
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <MainLayout>
-                  <Dashboard />
-                </MainLayout>
-              </ProtectedRoute>
-            }
-          />
+              <Route
+                path="/dashboard"
+                element={
+                  <ProtectedRoute>
+                    <MainLayout>
+                      <Dashboard />
+                    </MainLayout>
+                  </ProtectedRoute>
+                }
+              />
 
-          <Route
-            path="/issues"
-            element={
-              <ProtectedRoute>
-                <MainLayout>
-                  <IssueList />
-                </MainLayout>
-              </ProtectedRoute>
-            }
-          />
+              <Route
+                path="/issues"
+                element={
+                  <ProtectedRoute>
+                    <MainLayout>
+                      <IssueList />
+                    </MainLayout>
+                  </ProtectedRoute>
+                }
+              />
 
-          <Route
-            path="/issues/new"
-            element={
-              <ProtectedRoute>
-                <MainLayout>
-                  <CreateIssue />
-                </MainLayout>
-              </ProtectedRoute>
-            }
-          />
+              <Route
+                path="/issues/new"
+                element={
+                  <ProtectedRoute>
+                    <MainLayout>
+                      <CreateIssue />
+                    </MainLayout>
+                  </ProtectedRoute>
+                }
+              />
 
-          <Route
-            path="/issues/:id/edit"
-            element={
-              <ProtectedRoute>
-                <MainLayout>
-                  <EditIssue />
-                </MainLayout>
-              </ProtectedRoute>
-            }
-          />
+              <Route
+                path="/issues/:id/edit"
+                element={
+                  <ProtectedRoute>
+                    <MainLayout>
+                      <EditIssue />
+                    </MainLayout>
+                  </ProtectedRoute>
+                }
+              />
 
-          <Route
-            path="/issues/:id"
-            element={
-              <ProtectedRoute>
-                <MainLayout>
-                  <IssueDetail />
-                </MainLayout>
-              </ProtectedRoute>
-            }
-          />
+              <Route
+                path="/issues/:id"
+                element={
+                  <ProtectedRoute>
+                    <MainLayout>
+                      <IssueDetail />
+                    </MainLayout>
+                  </ProtectedRoute>
+                }
+              />
 
-          <Route
-            path="/meetings"
-            element={
-              <ProtectedRoute>
-                <MainLayout>
-                  <MeetingAgendas />
-                </MainLayout>
-              </ProtectedRoute>
-            }
-          />
+              <Route
+                path="/meetings"
+                element={
+                  <ProtectedRoute>
+                    <MainLayout>
+                      <MeetingAgendas />
+                    </MainLayout>
+                  </ProtectedRoute>
+                }
+              />
 
-          <Route
-            path="/internalizations"
-            element={
-              <ProtectedRoute>
-                <MainLayout>
-                  <Internalizations />
-                </MainLayout>
-              </ProtectedRoute>
-            }
-          />
+              <Route
+                path="/internalizations"
+                element={
+                  <ProtectedRoute>
+                    <MainLayout>
+                      <Internalizations />
+                    </MainLayout>
+                  </ProtectedRoute>
+                }
+              />
 
-          {/* 404 처리 */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </AppProvider>
-    </Router>
+              {/* 404 처리 */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+            <ToastContainer
+              position="top-right"
+              autoClose={5000}
+              hideProgressBar={false}
+              newestOnTop={false}
+              closeOnClick
+              rtl={false}
+              pauseOnFocusLoss
+              draggable
+              pauseOnHover
+              theme="light"
+            />
+          </AppProvider>
+        </Router>
+      </Provider>
+    </ReactQueryProvider>
   );
 }
 

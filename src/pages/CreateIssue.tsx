@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { Priority, Rank, RankLabel } from '../types';
-import { ArrowLeft, Save, X, Plus, Tag as TagIcon, User as UserIcon, Users, Image as ImageIcon, Upload } from 'lucide-react';
+import { ArrowLeft, Save, X, Plus, Tag as TagIcon, Image as ImageIcon, Upload } from 'lucide-react';
 
 const CreateIssue: React.FC = () => {
   const navigate = useNavigate();
@@ -14,15 +14,12 @@ const CreateIssue: React.FC = () => {
     priority: Priority.MEDIUM,
     category: '',
     tags: [] as string[],
-    assigneeId: '',
-    assigneeName: '',
-    cc: [] as Array<{ id: string; name: string }>,
     readLevel: Rank.SAWON
   });
 
   const [tagInput, setTagInput] = useState('');
   const [images, setImages] = useState<File[]>([]);
-  const [errors, setErrors] = useState<{ title?: string; description?: string; category?: string; assignee?: string }>({});
+  const [errors, setErrors] = useState<{ title?: string; description?: string; category?: string }>({});
 
   // 더미 사용자 목록 (실제로는 AppContext에서 가져와야 함)
   const dummyUsers = [
@@ -78,32 +75,7 @@ const CreateIssue: React.FC = () => {
     }
   };
 
-  const handleAssigneeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedUser = dummyUsers.find(u => u.id === e.target.value);
-    if (selectedUser) {
-      setFormData(prev => ({
-        ...prev,
-        assigneeId: selectedUser.id,
-        assigneeName: selectedUser.name
-      }));
-    }
-  };
 
-  const handleAddCC = (userId: string, userName: string) => {
-    if (!formData.cc.find(cc => cc.id === userId)) {
-      setFormData(prev => ({
-        ...prev,
-        cc: [...prev.cc, { id: userId, name: userName }]
-      }));
-    }
-  };
-
-  const handleRemoveCC = (userId: string) => {
-    setFormData(prev => ({
-      ...prev,
-      cc: prev.cc.filter(cc => cc.id !== userId)
-    }));
-  };
 
   const validateForm = () => {
     const newErrors: typeof errors = {};
@@ -116,9 +88,6 @@ const CreateIssue: React.FC = () => {
     }
     if (!formData.category) {
       newErrors.category = '카테고리를 선택해주세요.';
-    }
-    if (!formData.assigneeId) {
-      newErrors.assignee = '담당자를 지정해주세요.';
     }
 
     setErrors(newErrors);
@@ -138,7 +107,9 @@ const CreateIssue: React.FC = () => {
       ...formData,
       reporterId: user?.id || '',
       reporterName: user?.name || '',
-      cc: formData.cc,
+      assigneeId: '', // 담당자는 추후 배정
+      assigneeName: '',
+      cc: [], // 참조자는 추후 배정
       readLevel: formData.readLevel
     });
 
@@ -274,7 +245,7 @@ const CreateIssue: React.FC = () => {
           <p className="text-sm text-gray-500 mt-1">* 실제 업로드 기능은 아직 구현되지 않았습니다.</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           {/* 우선순위 */}
           <div>
             <label htmlFor="priority" className="block text-lg font-semibold text-gray-700 mb-2">
@@ -316,82 +287,10 @@ const CreateIssue: React.FC = () => {
             {errors.category && <p className="text-red-500 text-base mt-1">{errors.category}</p>}
           </div>
 
-          {/* 담당자 */}
-          <div>
-            <label htmlFor="assignee" className="block text-lg font-semibold text-gray-700 mb-2">
-              담당자 <span className="text-red-500">*</span>
-            </label>
-            <select
-              id="assignee"
-              name="assigneeId"
-              value={formData.assigneeId}
-              onChange={handleAssigneeChange}
-              className={`w-full px-4 py-3 text-lg border-2 rounded-lg focus:ring-2 focus:ring-water-blue-500 focus:border-transparent outline-none transition-all bg-white ${
-                errors.assignee ? 'border-red-500' : 'border-gray-300'
-              }`}
-            >
-              <option value="">담당자 선택</option>
-              {dummyUsers.map(u => (
-                <option key={u.id} value={u.id}>
-                  {u.name} ({RankLabel[u.rank]})
-                </option>
-              ))}
-            </select>
-            {errors.assignee && <p className="text-red-500 text-base mt-1">{errors.assignee}</p>}
-          </div>
+
         </div>
 
-        {/* 참조 인원 */}
-        <div className="mb-6">
-          <label className="block text-lg font-semibold text-gray-700 mb-2">
-            참조 인원 (이슈를 함께 확인할 사람들)
-          </label>
-          <div className="flex items-center space-x-2 mb-3">
-            <UserIcon className="w-5 h-5 text-gray-400" />
-            <select
-              value=""
-              onChange={(e) => {
-                if (e.target.value) {
-                  const selectedUser = dummyUsers.find(u => u.id === e.target.value);
-                  if (selectedUser) {
-                    handleAddCC(selectedUser.id, selectedUser.name);
-                  }
-                  e.target.value = '';
-                }
-              }}
-              className="flex-1 px-4 py-3 text-lg border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-water-blue-500 focus:border-transparent outline-none bg-white"
-            >
-              <option value="">참조 인원 추가</option>
-              {dummyUsers.filter(u => u.id !== formData.assigneeId).map(u => (
-                <option key={u.id} value={u.id}>
-                  {u.name} ({RankLabel[u.rank]})
-                </option>
-              ))}
-            </select>
-          </div>
 
-          {/* 참조 인원 목록 */}
-          {formData.cc.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {formData.cc.map((cc) => (
-                <span
-                  key={cc.id}
-                  className="inline-flex items-center space-x-1 px-4 py-2 bg-water-blue-50 text-water-blue-700 rounded-full text-base"
-                >
-                  <Users className="w-4 h-4" />
-                  <span>{cc.name}</span>
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveCC(cc.id)}
-                    className="ml-2 hover:text-water-blue-900"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
 
         {/* 열람 권한 */}
         <div className="mb-8">
