@@ -33,7 +33,7 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     if (path.includes('/edit')) return '이슈 수정';
     if (path.startsWith('/issues/')) return '이슈 상세';
     if (path === '/meetings') return '주간 회의 안건';
-    if (path === '/internalizations') return '내재화 관리';
+    if (path === '/internalizations') return '완료된 티켓';
     return 'K-SMARTPIA 이슈 티켓 매니지먼트 시스템';
   };
 

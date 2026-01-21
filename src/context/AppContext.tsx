@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
-import type { User, Issue, MeetingAgenda, Internalization } from '../types';
+import type { User, Issue, MeetingAgenda, Internalization, ClosedTicket } from '../types';
 import { Priority, IssueStatus, Rank } from '../types';
 
 interface AppContextType {
@@ -14,7 +14,7 @@ interface AppContextType {
   addIssue: (issue: Omit<Issue, 'id' | 'createdAt' | 'updatedAt' | 'status'>) => void;
   updateIssue: (issueId: string, issueData: Partial<Issue>) => void;
   deleteIssue: (issueId: string) => void;
-  updateIssueStatus: (issueId: string, status: IssueStatus) => void;
+  updateIssueStatus: (issueId: string, status: IssueStatus, closedReason?: string) => void;
   updateIssueAssignee: (issueId: string, assigneeId: string, assigneeName: string) => void;
 
   // Meeting Agendas
@@ -26,6 +26,9 @@ interface AppContextType {
   internalizations: Internalization[];
   addInternalization: (internalization: Omit<Internalization, 'id'>) => void;
   updateInternalization: (internalizationId: string, status: Internalization['status'], reason?: string) => void;
+
+  // Closed Tickets (완료된 티켓 보관)
+  closedTickets: ClosedTicket[];
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -233,6 +236,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const [issues, setIssues] = useState<Issue[]>(dummyIssues);
   const [meetingAgendas, setMeetingAgendas] = useState<MeetingAgenda[]>(dummyMeetingAgendas);
   const [internalizations, setInternalizations] = useState<Internalization[]>(dummyInternalizations);
+  const [closedTickets, setClosedTickets] = useState<ClosedTicket[]>([]);
 
   // 세션 복구
   useEffect(() => {
@@ -349,7 +353,52 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     setIssues(prev => [newIssue, ...prev]);
   };
 
-  const updateIssueStatus = (issueId: string, status: IssueStatus) => {
+  // 티켓 종료 상태인지 확인
+  const isClosedStatus = (status: IssueStatus): boolean => {
+    return [
+      IssueStatus.RESOLVED,
+      IssueStatus.ON_HOLD,
+      IssueStatus.BLOCKED,
+      IssueStatus.CANCELLED
+    ].includes(status);
+  };
+
+  // 티켓을 보관소에 추가하는 함수
+  const archiveTicket = (issue: Issue, finalStatus: IssueStatus, closedReason?: string, source: 'issue' | 'meeting' = 'issue', meetingAgendaId?: string) => {
+    setClosedTickets(prev => {
+      // 이미 보관된 티켓인지 확인 (중복 방지)
+      const existingTicket = prev.find(t => t.issueId === issue.id && t.finalStatus === finalStatus);
+      if (existingTicket) {
+        return prev; // 이미 보관된 경우 스킵
+      }
+
+      const closedTicket: ClosedTicket = {
+        id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+        issueId: issue.id,
+        issueTitle: issue.title,
+        issueDescription: issue.description,
+        finalStatus,
+        closedDate: new Date(),
+        closedReason,
+        source,
+        priority: issue.priority,
+        reporterId: issue.reporterId,
+        reporterName: issue.reporterName,
+        assigneeId: issue.assigneeId,
+        assigneeName: issue.assigneeName,
+        cc: issue.cc,
+        category: issue.category,
+        tags: issue.tags,
+        createdAt: issue.createdAt,
+        meetingAgendaId,
+        meetingDate: issue.meetingDate
+      };
+
+      return [closedTicket, ...prev];
+    });
+  };
+
+  const updateIssueStatus = (issueId: string, status: IssueStatus, closedReason?: string) => {
     setIssues(prev => prev.map(issue => {
       if (issue.id === issueId) {
         const updatedIssue = {
@@ -378,6 +427,11 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
               meetingDate: new Date()
             }]);
           }
+        }
+
+        // 종료 상태로 변경된 경우 티켓 보관
+        if (isClosedStatus(status)) {
+          archiveTicket(updatedIssue, status, closedReason, 'issue');
         }
 
         return updatedIssue;
@@ -432,11 +486,22 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const updateMeetingAgenda = (agendaId: string, status: MeetingAgenda['status'], notes?: string) => {
     const agenda = meetingAgendas.find(a => a.id === agendaId);
     if (agenda) {
-      // 회의 안건 상태에 따라 관련 이슈 상태도 업데이트
-      if (status === 'resolved') {
-        updateIssueStatus(agenda.issueId, IssueStatus.RESOLVED);
-      } else if (status === 'on_hold') {
-        updateIssueStatus(agenda.issueId, IssueStatus.ON_HOLD);
+      const issue = issues.find(i => i.id === agenda.issueId);
+      if (issue) {
+        // 회의 안건 상태에 따라 관련 이슈 상태도 업데이트
+        if (status === 'resolved') {
+          updateIssueStatus(agenda.issueId, IssueStatus.RESOLVED, notes);
+          // 회의 안건에서 해결된 경우 티켓 보관 (중복 방지를 위해 직접 보관)
+          if (isClosedStatus(IssueStatus.RESOLVED)) {
+            archiveTicket(issue, IssueStatus.RESOLVED, notes, 'meeting', agendaId);
+          }
+        } else if (status === 'on_hold') {
+          updateIssueStatus(agenda.issueId, IssueStatus.ON_HOLD, notes);
+          // 회의 안건에서 보류된 경우 티켓 보관
+          if (isClosedStatus(IssueStatus.ON_HOLD)) {
+            archiveTicket(issue, IssueStatus.ON_HOLD, notes, 'meeting', agendaId);
+          }
+        }
       }
     }
 
@@ -491,7 +556,8 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         updateMeetingAgenda,
         internalizations,
         addInternalization,
-        updateInternalization
+        updateInternalization,
+        closedTickets
       }}
     >
       {children}

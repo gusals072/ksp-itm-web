@@ -153,6 +153,34 @@ export interface Internalization {
   reason?: string;
 }
 
+// 완료된 티켓 보관 타입 (종료된 이슈 및 회의 안건의 이력 관리)
+export interface ClosedTicket {
+  id: string;
+  issueId: string;
+  issueTitle: string;
+  issueDescription: string;
+  finalStatus: IssueStatus; // 최종 상태 (RESOLVED, ON_HOLD, BLOCKED, CANCELLED 등)
+  closedDate: Date; // 종료 일자
+  closedReason?: string; // 종료 사유 (해결 방법, 보류 사유, 차단 사유 등)
+  source: 'issue' | 'meeting'; // 출처: 이슈 목록에서 직접 종료 or 주간 회의 안건에서 종료
+  // 원본 이슈 정보
+  priority: Priority;
+  reporterId: string;
+  reporterName: string;
+  assigneeId?: string;
+  assigneeName?: string;
+  cc?: Array<{
+    id: string;
+    name: string;
+  }>;
+  category: string;
+  tags: string[];
+  createdAt: Date; // 원본 이슈 생성일
+  // 회의 안건 관련 정보 (source가 'meeting'인 경우)
+  meetingAgendaId?: string;
+  meetingDate?: Date;
+}
+
 // 로그인 폼 타입
 export interface LoginForm {
   username: string;

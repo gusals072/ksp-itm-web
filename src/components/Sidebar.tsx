@@ -4,7 +4,7 @@ import {
   LayoutDashboard,
   FileText,
   Calendar,
-  CheckCircle2,
+  Archive,
   User,
   Droplets,
   LogOut
@@ -32,9 +32,9 @@ const Sidebar: React.FC = () => {
       icon: Calendar
     },
     {
-      title: '내재화 관리',
+      title: '완료된 티켓',
       path: '/internalizations',
-      icon: CheckCircle2
+      icon: Archive
     }
   ];
 

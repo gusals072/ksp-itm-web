@@ -17,6 +17,18 @@ const IssueList: React.FC = () => {
   // 필터링 및 정렬
   const filteredIssues = issues
     .filter(issue => {
+      // 종료된 티켓 제외 (해결됨, 보류됨, 차단됨, 취소됨)
+      const isClosed = [
+        IssueStatus.RESOLVED,
+        IssueStatus.ON_HOLD,
+        IssueStatus.BLOCKED,
+        IssueStatus.CANCELLED
+      ].includes(issue.status);
+
+      if (isClosed) {
+        return false; // 종료된 티켓은 이슈 목록에서 제외
+      }
+
       // 검색
       const matchesSearch =
         issue.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
