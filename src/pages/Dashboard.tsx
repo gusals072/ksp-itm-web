@@ -15,11 +15,10 @@ const Dashboard: React.FC = () => {
   const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // 권한 기준 필터링 함수
+  // 권한 기준 필터링 함수 (생성자, 담당자, 참조자만 확인 가능)
   const canViewIssue = (issue: typeof issues[0]) => {
     if (!user) return false;
     return (
-      RankLevel[user.rank] >= RankLevel[issue.readLevel] ||
       issue.reporterId === user.id ||
       issue.assigneeId === user.id ||
       issue.cc?.some(ccUser => ccUser.id === user.id)
@@ -411,7 +410,7 @@ const Dashboard: React.FC = () => {
             onClick={() => navigate('/meetings')}
           >
             <div className="p-4 border-b border-gray-100 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-800">주간 회의 안건</h3>
+              <h3 className="text-lg font-semibold text-gray-800">회의 안건</h3>
               <span className="text-xs text-gray-500 hover:text-purple-600 transition-colors">전체 보기 →</span>
             </div>
             <div className="p-4">

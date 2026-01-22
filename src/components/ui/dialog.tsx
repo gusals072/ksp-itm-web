@@ -56,19 +56,21 @@ const DialogContent = React.forwardRef<
           "fixed z-50 grid w-full gap-4 border border-gray-200 bg-white p-6 shadow-lg rounded-lg",
           className
         )}
-        style={className?.includes('max-w-4xl') ? {
-          left: 'calc(50% - 38.25rem)', // 두 컨테이너 합친 기준 중앙 정렬: 50% - (56rem + 0.5rem + 20rem) / 2
-          top: '15%',
-          transform: 'translateY(-50%)'
-        } : {
-          left: '50%',
-          top: '50%',
-          transform: 'translateX(-50%) translateY(-50%)'
-        }}
-        initial={{ opacity: 0, scale: 0.95, y: -20 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.95, y: -20 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
         transition={{ duration: 0.2, ease: "easeOut" }}
+        style={{
+          ...(className?.includes('max-w-4xl') ? {
+            left: 'calc(50% - 38.25rem + 8rem)', // 사이드바(16rem)의 절반인 8rem을 더함
+            top: '15%',
+            transform: 'translateY(-50%)'
+          } : {
+            left: 'calc(50% + 8rem)', // 사이드바(16rem)의 절반인 8rem을 더해서 콘텐츠 영역 중앙에 위치
+            top: '50%',
+            transform: 'translate(-50%, -50%)'
+          })
+        }}
       >
         {children}
         {!hideClose && (

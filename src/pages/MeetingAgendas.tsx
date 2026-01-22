@@ -97,9 +97,9 @@ const MeetingAgendas: React.FC = () => {
       >
         <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
           <CalendarIcon className="w-8 h-8 text-blue-600" />
-          주간 회의 안건
+          회의 안건
         </h1>
-        <p className="text-gray-600 mt-2">7일 이상 해결되지 않은 티켓들이 자동으로 이동되었습니다.</p>
+        <p className="text-gray-600 mt-2">2주 이상 해결되지 않은 티켓들이 자동으로 이동되었습니다.</p>
       </motion.div>
 
       {/* 티켓 목록 */}

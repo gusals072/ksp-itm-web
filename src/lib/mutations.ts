@@ -86,8 +86,6 @@ export const useAssignTicket = () => {
     onSuccess: (_, { ticketId }) => {
       queryClient.invalidateQueries({ queryKey: ['tickets'] })
       queryClient.invalidateQueries({ queryKey: ['ticket', ticketId] })
-
-      toast.success('성공적으로 배정되었습니다.')
     },
     onError: (error) => {
       console.error('Assignment failed:', error)

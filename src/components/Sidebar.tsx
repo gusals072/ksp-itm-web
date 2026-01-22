@@ -27,7 +27,7 @@ const Sidebar: React.FC = () => {
       icon: FileText
     },
     {
-      title: '주간 회의 안건',
+      title: '회의 안건',
       path: '/meetings',
       icon: Calendar
     },

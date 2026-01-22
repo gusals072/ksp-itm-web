@@ -6,7 +6,6 @@ import { IssueStatus, Priority, RankLevel, Rank } from '../types';
 import {
   User,
   Calendar as CalendarIcon,
-  Tag as TagIcon,
   CheckCircle2,
   Edit,
   Send,
@@ -270,25 +269,6 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
                   </div>
                 </div>
 
-                {/* 태그 */}
-                {issue.tags.length > 0 && (
-                  <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                    <div className="flex items-center space-x-2 mb-4">
-                      <TagIcon className="w-5 h-5 text-gray-600" />
-                      <h3 className="text-lg font-semibold text-gray-800">태그</h3>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {issue.tags.map((tag, index) => (
-                        <span
-                          key={index}
-                          className="px-3 py-1.5 bg-water-blue-50 text-water-blue-700 rounded-full text-sm"
-                        >
-                          #{tag}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
 
               </div>
 
@@ -383,12 +363,6 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
                         </p>
                       </div>
                     )}
-                    <div>
-                      <p className="text-xs text-gray-500 mb-1">열람 권한</p>
-                      <p className="text-sm text-gray-800 font-medium">
-                        {issue.readLevel === 'JUIM' ? 'JUIM' : issue.readLevel} 이상
-                      </p>
-                    </div>
                   </div>
                 </div>
               </div>

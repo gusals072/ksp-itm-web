@@ -42,9 +42,8 @@ const IssueList: React.FC = () => {
       // 우선순위 필터
       const matchesPriority = filterPriority === 'all' || issue.priority === filterPriority;
 
-      // 권한 체크 (자신의 직급이 readLevel 이상이거나, 자신이 작성자/담당자/참조인원인 경우)
+      // 권한 체크 (생성자, 담당자, 참조자만 확인 가능)
       const canView = user && (
-        RankLevel[user.rank] >= RankLevel[issue.readLevel] ||
         issue.reporterId === user.id ||
         issue.assigneeId === user.id ||
         issue.cc?.some(ccUser => ccUser.id === user.id)

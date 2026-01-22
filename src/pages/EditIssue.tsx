@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { Priority, Rank, RankLabel } from '../types';
-import { ArrowLeft, Save, X, Plus, Tag as TagIcon, User as UserIcon, Users, Image as ImageIcon, Upload } from 'lucide-react';
+import { ArrowLeft, Save, X, User as UserIcon, Users, Image as ImageIcon, Upload } from 'lucide-react';
 
 const EditIssue: React.FC = () => {
   const navigate = useNavigate();
@@ -16,14 +16,11 @@ const EditIssue: React.FC = () => {
     description: '',
     priority: Priority.MEDIUM,
     category: '',
-    tags: [] as string[],
     assigneeId: '',
     assigneeName: '',
     cc: [] as Array<{ id: string; name: string }>,
     readLevel: Rank.SAWON
   });
-
-  const [tagInput, setTagInput] = useState('');
   const [images, setImages] = useState<File[]>([]);
   const [errors, setErrors] = useState<{ title?: string; description?: string; category?: string; assignee?: string }>({});
 
@@ -58,7 +55,7 @@ const EditIssue: React.FC = () => {
         description: issue.description,
         priority: issue.priority,
         category: issue.category,
-        tags: issue.tags || [],
+        tags: [],
         assigneeId: issue.assigneeId || '',
         assigneeName: issue.assigneeName || '',
         cc: issue.cc || [],
@@ -93,27 +90,6 @@ const EditIssue: React.FC = () => {
     }
   };
 
-  const handleAddTag = () => {
-    const trimmedTag = tagInput.trim();
-    if (trimmedTag && !formData.tags.includes(trimmedTag)) {
-      setFormData(prev => ({ ...prev, tags: [...prev.tags, trimmedTag] }));
-      setTagInput('');
-    }
-  };
-
-  const handleRemoveTag = (tagToRemove: string) => {
-    setFormData(prev => ({
-      ...prev,
-      tags: prev.tags.filter(tag => tag !== tagToRemove)
-    }));
-  };
-
-  const handleTagInputKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      handleAddTag();
-    }
-  };
 
   const handleAssigneeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedUser = dummyUsers.find(u => u.id === e.target.value);
@@ -176,7 +152,7 @@ const EditIssue: React.FC = () => {
       description: formData.description,
       priority: formData.priority,
       category: formData.category,
-      tags: formData.tags,
+      tags: [],
       assigneeId: formData.assigneeId,
       assigneeName: formData.assigneeName,
       cc: formData.cc,
@@ -432,76 +408,7 @@ const EditIssue: React.FC = () => {
           )}
         </div>
 
-        {/* 열람 권한 */}
-        <div className="mb-8">
-          <label htmlFor="readLevel" className="block text-lg font-semibold text-gray-700 mb-2">
-            열람 권한
-          </label>
-          <select
-            id="readLevel"
-            name="readLevel"
-            value={formData.readLevel}
-            onChange={handleInputChange}
-            className="w-full px-4 py-3 text-lg border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-water-blue-500 focus:border-transparent outline-none bg-white"
-          >
-            {Object.entries(RankLabel).map(([key, label]) => (
-              <option key={key} value={key}>
-                {label} 이상
-              </option>
-            ))}
-          </select>
-          <p className="text-sm text-gray-500 mt-1">
-            이슈는 지정된 직급 이상의 사용자만 볼 수 있습니다.
-          </p>
-        </div>
 
-        {/* 태그 */}
-        <div className="mb-8">
-          <label className="block text-lg font-semibold text-gray-700 mb-2">
-            태그
-          </label>
-          <div className="flex items-center space-x-2 mb-3">
-            <div className="flex-1 relative">
-              <TagIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="text"
-                value={tagInput}
-                onChange={(e) => setTagInput(e.target.value)}
-                onKeyDown={handleTagInputKeyDown}
-                placeholder="태그 입력 후 Enter 또는 추가 버튼 클릭"
-                className="w-full pl-10 pr-4 py-3 text-lg border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-water-blue-500 focus:border-transparent outline-none"
-              />
-            </div>
-            <button
-              type="button"
-              onClick={handleAddTag}
-              className="px-4 py-3 bg-water-blue-100 text-water-blue-700 rounded-lg hover:bg-water-blue-200 transition-colors"
-            >
-              <Plus className="w-5 h-5" />
-            </button>
-          </div>
-
-          {/* 태그 목록 */}
-          {formData.tags.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {formData.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="inline-flex items-center space-x-1 px-4 py-2 bg-water-blue-50 text-water-blue-700 rounded-full text-base"
-                >
-                  <span>#{tag}</span>
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveTag(tag)}
-                    className="hover:text-water-blue-900"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
 
         {/* 버튼 그룹 */}
         <div className="flex items-center justify-end space-x-3 pt-6 border-t border-gray-200">

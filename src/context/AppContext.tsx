@@ -5,6 +5,7 @@ import { Priority, IssueStatus, Rank } from '../types';
 interface AppContextType {
   // Auth
   user: User | null;
+  users: User[]; // 모든 사용자 목록
   login: (username: string, password: string) => Promise<boolean>;
   logout: () => void;
   isAuthenticated: boolean;
@@ -529,6 +530,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     <AppContext.Provider
       value={{
         user,
+        users: dummyUsers,
         login,
         logout,
         isAuthenticated: !!user,

@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { Priority, Rank, RankLabel } from '../types';
-import { ArrowLeft, Save, X, Plus, Tag as TagIcon, Image as ImageIcon, Upload, User, Users, Link as LinkIcon } from 'lucide-react';
+import { ArrowLeft, Save, X, Upload, User, Users, Link as LinkIcon, Paperclip, File } from 'lucide-react';
 import { AssigneeAssignment } from '../components/AssigneeAssignment';
 import RelatedIssuesSelector from '../components/RelatedIssuesSelector';
+import { toast } from 'react-toastify';
 
 const CreateIssue: React.FC = () => {
   const navigate = useNavigate();
@@ -14,17 +15,15 @@ const CreateIssue: React.FC = () => {
     title: '',
     description: '',
     priority: Priority.MEDIUM,
-    category: '',
-    tags: [] as string[],
-    readLevel: Rank.SAWON
+    category: ''
   });
 
-  const [tagInput, setTagInput] = useState('');
-  const [images, setImages] = useState<File[]>([]);
+  const [attachments, setAttachments] = useState<File[]>([]);
   const [errors, setErrors] = useState<{ title?: string; description?: string; category?: string }>({});
   const [selectedAssignee, setSelectedAssignee] = useState<{ id: string; name: string } | null>(null);
   const [selectedCC, setSelectedCC] = useState<Array<{ id: string; name: string }>>([]);
   const [selectedRelatedIssues, setSelectedRelatedIssues] = useState<string[]>([]);
+  const [isAssigneeModalOpen, setIsAssigneeModalOpen] = useState(false);
 
   // 더미 사용자 목록 (실제로는 AppContext에서 가져와야 함)
   const dummyUsers = [
@@ -58,27 +57,6 @@ const CreateIssue: React.FC = () => {
     }
   };
 
-  const handleAddTag = () => {
-    const trimmedTag = tagInput.trim();
-    if (trimmedTag && !formData.tags.includes(trimmedTag)) {
-      setFormData(prev => ({ ...prev, tags: [...prev.tags, trimmedTag] }));
-      setTagInput('');
-    }
-  };
-
-  const handleRemoveTag = (tagToRemove: string) => {
-    setFormData(prev => ({
-      ...prev,
-      tags: prev.tags.filter(tag => tag !== tagToRemove)
-    }));
-  };
-
-  const handleTagInputKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      handleAddTag();
-    }
-  };
 
 
 
@@ -110,15 +88,17 @@ const CreateIssue: React.FC = () => {
     // 현재는 Context API 사용
     addIssue({
       ...formData,
+      tags: [], // 태그 기능 제거
       reporterId: user?.id || '',
       reporterName: user?.name || '',
       assigneeId: selectedAssignee?.id || '',
       assigneeName: selectedAssignee?.name || '',
       cc: selectedCC,
-      readLevel: formData.readLevel,
+      readLevel: Rank.SAWON, // 하위 호환성을 위해 기본값 설정 (사용되지 않음)
       relatedIssues: selectedRelatedIssues.length > 0 ? selectedRelatedIssues : undefined
     });
 
+    toast.success('이슈가 성공적으로 등록되었습니다.');
     navigate('/issues');
   };
 
@@ -188,61 +168,62 @@ const CreateIssue: React.FC = () => {
           {errors.description && <p className="text-red-500 text-base mt-1">{errors.description}</p>}
         </div>
 
-        {/* 이미지 첨부 (UI만) */}
+        {/* 첨부 파일 */}
         <div className="mb-6">
           <label className="block text-lg font-semibold text-gray-700 mb-2">
-            이미지 첨부
+            <Paperclip className="w-5 h-5 inline mr-2" />
+            첨부 파일
           </label>
           <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-water-blue-500 transition-colors">
             <input
               type="file"
-              id="images"
+              id="attachments"
               multiple
-              accept="image/*"
               className="hidden"
               onChange={(e) => {
                 if (e.target.files) {
-                  setImages(Array.from(e.target.files));
+                  setAttachments(prev => [...prev, ...Array.from(e.target.files!)]);
                 }
               }}
             />
             <label
-              htmlFor="images"
+              htmlFor="attachments"
               className="cursor-pointer block"
             >
               <Upload className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-              <p className="text-base text-gray-600 mb-1">이미지를 드래그하거나 클릭하여 업로드하세요</p>
-              <p className="text-sm text-gray-400">PNG, JPG, GIF (최대 10MB)</p>
+              <p className="text-base text-gray-600 mb-1">파일을 드래그하거나 클릭하여 업로드하세요</p>
+              <p className="text-sm text-gray-400">모든 파일 형식 지원 (최대 10MB)</p>
             </label>
 
-            {/* 업로드된 이미지 미리보기 */}
-            {images.length > 0 && (
-              <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
-                {images.map((image, idx) => (
-                  <div key={idx} className="relative group">
-                    <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden">
-                      {image.type.startsWith('image/') ? (
-                        <img
-                          src={URL.createObjectURL(image)}
-                          alt={`preview-${idx}`}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <ImageIcon className="w-8 h-8 text-gray-400" />
-                        </div>
-                      )}
+            {/* 업로드된 파일 목록 */}
+            {attachments.length > 0 && (
+              <div className="mt-4 space-y-2">
+                {attachments.map((file, idx) => (
+                  <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <div className="flex items-center space-x-3 flex-1 min-w-0">
+                      <div className="flex-shrink-0">
+                        {file.type.startsWith('image/') ? (
+                          <File className="w-5 h-5 text-blue-500" />
+                        ) : (
+                          <File className="w-5 h-5 text-gray-500" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-800 truncate">{file.name}</p>
+                        <p className="text-xs text-gray-500">
+                          {(file.size / 1024 / 1024).toFixed(2)} MB
+                        </p>
+                      </div>
                     </div>
                     <button
                       type="button"
                       onClick={() => {
-                        setImages(images.filter((_, i) => i !== idx));
+                        setAttachments(attachments.filter((_, i) => i !== idx));
                       }}
-                      className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-xs font-bold hover:bg-red-600 transition-colors"
+                      className="ml-3 flex-shrink-0 p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
                     >
-                      X
+                      <X className="w-4 h-4" />
                     </button>
-                    <p className="mt-1 text-xs text-gray-500 truncate">{image.name}</p>
                   </div>
                 ))}
               </div>
@@ -298,76 +279,7 @@ const CreateIssue: React.FC = () => {
 
 
 
-        {/* 열람 권한 */}
-        <div className="mb-8">
-          <label htmlFor="readLevel" className="block text-lg font-semibold text-gray-700 mb-2">
-            열람 권한
-          </label>
-          <select
-            id="readLevel"
-            name="readLevel"
-            value={formData.readLevel}
-            onChange={handleInputChange}
-            className="w-full px-4 py-3 text-lg border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-water-blue-500 focus:border-transparent outline-none bg-white"
-          >
-            {Object.entries(RankLabel).map(([key, label]) => (
-              <option key={key} value={key}>
-                {label} 이상
-              </option>
-            ))}
-          </select>
-          <p className="text-sm text-gray-500 mt-1">
-            이슈는 지정된 직급 이상의 사용자만 볼 수 있습니다.
-          </p>
-        </div>
 
-        {/* 태그 */}
-        <div className="mb-8">
-          <label className="block text-lg font-semibold text-gray-700 mb-2">
-            태그
-          </label>
-          <div className="flex items-center space-x-2 mb-3">
-            <div className="flex-1 relative">
-              <TagIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="text"
-                value={tagInput}
-                onChange={(e) => setTagInput(e.target.value)}
-                onKeyDown={handleTagInputKeyDown}
-                placeholder="태그 입력 후 Enter 또는 추가 버튼 클릭"
-                className="w-full pl-10 pr-4 py-3 text-lg border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-water-blue-500 focus:border-transparent outline-none"
-              />
-            </div>
-            <button
-              type="button"
-              onClick={handleAddTag}
-              className="px-4 py-3 bg-water-blue-100 text-water-blue-700 rounded-lg hover:bg-water-blue-200 transition-colors"
-            >
-              <Plus className="w-5 h-5" />
-            </button>
-          </div>
-
-          {/* 태그 목록 */}
-          {formData.tags.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {formData.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="inline-flex items-center space-x-1 px-4 py-2 bg-water-blue-50 text-water-blue-700 rounded-full text-base"
-                >
-                  <span>#{tag}</span>
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveTag(tag)}
-                    className="hover:text-water-blue-900"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
 
         {/* 담당자/참조자 배정 */}
         <div className="mb-8">
@@ -375,18 +287,58 @@ const CreateIssue: React.FC = () => {
             담당자 및 참조자 배정
           </label>
           <div className="border-2 border-gray-300 rounded-lg p-4">
-            <AssigneeAssignment
-              ticketId="new"
-              currentAssignee={selectedAssignee}
-              currentCC={selectedCC}
-              onAssignmentChange={(assignee, cc) => {
-                setSelectedAssignee(assignee);
-                setSelectedCC(cc);
-              }}
-              isModal={false}
-            />
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                {selectedAssignee ? (
+                  <div className="mb-2">
+                    <div className="text-sm text-gray-600 mb-1">담당자</div>
+                    <div className="flex items-center space-x-2">
+                      <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                      <span className="font-medium">{selectedAssignee.name}</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-sm text-gray-400 mb-2">담당자가 배정되지 않았습니다</div>
+                )}
+                {selectedCC.length > 0 && (
+                  <div>
+                    <div className="text-sm text-gray-600 mb-1">참조자 ({selectedCC.length})</div>
+                    <div className="flex flex-wrap gap-1">
+                      {selectedCC.map((cc) => (
+                        <span
+                          key={cc.id}
+                          className="inline-flex items-center space-x-1 px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs"
+                        >
+                          <span>{cc.name}</span>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsAssigneeModalOpen(true)}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+              >
+                배정하기
+              </button>
+            </div>
           </div>
         </div>
+
+        {/* 담당자 및 참조자 배정 모달 */}
+        <AssigneeAssignment
+          ticketId="new"
+          currentAssignee={selectedAssignee}
+          currentCC={selectedCC}
+          onAssignmentChange={(assignee, cc) => {
+            setSelectedAssignee(assignee);
+            setSelectedCC(cc);
+          }}
+          isOpen={isAssigneeModalOpen}
+          onClose={() => setIsAssigneeModalOpen(false)}
+        />
 
         {/* 연관 이슈 링크 */}
         <div className="mb-8">
