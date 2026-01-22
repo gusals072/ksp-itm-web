@@ -139,7 +139,11 @@ const dummyIssues: Issue[] = [
     createdAt: new Date('2026-01-07'),
     updatedAt: new Date('2026-01-08'),
     tags: ['설비', '센서', '개선'],
-    category: '설비관리'
+    category: '설비관리',
+    attachments: [
+      { id: 'att1', name: '누수감지시스템_현황보고서.pdf', size: 2048576, type: 'application/pdf' },
+      { id: 'att2', name: '센서_사양서.xlsx', size: 512000, type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }
+    ]
   },
   {
     id: '2',
@@ -160,7 +164,11 @@ const dummyIssues: Issue[] = [
     updatedAt: new Date('2026-01-10'),
     meetingDate: new Date('2026-01-12'),
     tags: ['시스템', '보고서', '자동화'],
-    category: '시스템개선'
+    category: '시스템개선',
+    attachments: [
+      { id: 'att3', name: '수질모니터링_데이터샘플.xlsx', size: 1024000, type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' },
+      { id: 'att4', name: '시스템연동_제안서.docx', size: 1536000, type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' }
+    ]
   },
   {
     id: '3',

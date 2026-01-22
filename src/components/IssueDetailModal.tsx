@@ -9,7 +9,11 @@ import {
   CheckCircle2,
   Edit,
   Send,
-  Trash2
+  Trash2,
+  Link as LinkIcon,
+  Paperclip,
+  File,
+  Download
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
@@ -28,9 +32,10 @@ interface IssueDetailModalProps {
   issueId: string | null;
   isOpen: boolean;
   onClose: () => void;
+  onIssueChange?: (newIssueId: string) => void; // 연관된 이슈 클릭 시 호출
 }
 
-const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, onClose }) => {
+const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, onClose, onIssueChange }) => {
   const navigate = useNavigate();
   const { issues, updateIssueStatus, deleteIssue, updateIssue, updateIssueAssignee, user } = useApp();
 
@@ -38,7 +43,6 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
   const [completionReason, setCompletionReason] = useState('');
-
   // 모달이 닫힐 때 상태 초기화
   useEffect(() => {
     if (!isOpen) {
@@ -159,15 +163,19 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
           className="fixed bg-white shadow-2xl z-[100] border border-gray-200 rounded-xl flex flex-col"
           style={{ 
             pointerEvents: 'auto',
-            left: 'calc(50% + 18.25rem)', // 두 컨테이너 합친 기준 중앙 정렬: 50% - 38.25rem + 56rem + 0.5rem
-            top: '51%',
+            // 메인 모달과 동일한 top 위치, 메인 모달 오른쪽에 배치
+            // 메인 모달 left: calc(50% - 30.25rem), 너비: 56rem, top: 15%
+            // 댓글 컨테이너 left: 메인 모달 left + 메인 모달 너비 + 간격(0.5rem)
+            left: 'calc(50% - 30.25rem + 56rem + 0.5rem)',
+            top: '15%',
             width: '20rem', // w-80 (320px)
             height: '72vh',
-            maxHeight: '72vh'
+            maxHeight: '72vh',
+            transform: 'translateY(0)'
           }}
-          initial={{ opacity: 0, scale: 0.95, y: '-45%' }}
-          animate={{ opacity: 1, scale: 1, y: '-50%' }}
-          exit={{ opacity: 0, scale: 0.95, y: '-45%' }}
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.95 }}
           transition={{ duration: 0.2, ease: "easeOut" }}
         >
           <IssueComments issue={issue} user={user} />
@@ -269,6 +277,109 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
                   </div>
                 </div>
 
+                {/* 첨부파일 */}
+                {issue.attachments && issue.attachments.length > 0 && (
+                  <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                    <div className="flex items-center space-x-2 mb-4">
+                      <Paperclip className="w-5 h-5 text-gray-600" />
+                      <h3 className="text-lg font-semibold text-gray-800">첨부파일</h3>
+                      <span className="text-sm text-gray-500">({issue.attachments.length}개)</span>
+                    </div>
+                    <div className="space-y-2">
+                      {issue.attachments.map(attachment => {
+                        const formatFileSize = (bytes: number) => {
+                          if (bytes < 1024) return bytes + ' B';
+                          if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
+                          return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+                        };
+
+                        const getFileIcon = (type: string) => {
+                          if (type.includes('pdf')) return 'text-red-500';
+                          if (type.includes('word') || type.includes('document')) return 'text-blue-500';
+                          if (type.includes('excel') || type.includes('spreadsheet')) return 'text-green-500';
+                          if (type.includes('image')) return 'text-purple-500';
+                          return 'text-gray-500';
+                        };
+
+                        return (
+                          <div
+                            key={attachment.id}
+                            className="flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors group"
+                          >
+                            <div className="flex items-center space-x-3 flex-1 min-w-0">
+                              <div className={`flex-shrink-0 ${getFileIcon(attachment.type)}`}>
+                                <File className="w-5 h-5" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-gray-800 truncate">{attachment.name}</p>
+                                <p className="text-xs text-gray-500">{formatFileSize(attachment.size)}</p>
+                              </div>
+                            </div>
+                            <button
+                              onClick={() => {
+                                if (attachment.url) {
+                                  window.open(attachment.url, '_blank');
+                                } else {
+                                  // 실제 다운로드 기능은 구현되지 않았으므로 알림만 표시
+                                  alert(`파일 다운로드: ${attachment.name}\n(실제 다운로드 기능은 구현되지 않았습니다.)`);
+                                }
+                              }}
+                              className="ml-3 flex-shrink-0 p-2 text-water-blue-600 hover:bg-water-blue-50 rounded-lg transition-colors"
+                              title="다운로드"
+                            >
+                              <Download className="w-4 h-4" />
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* 연관된 이슈 */}
+                {issue.relatedIssues && issue.relatedIssues.length > 0 && (
+                  <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                    <div className="flex items-center space-x-2 mb-4">
+                      <LinkIcon className="w-5 h-5 text-gray-600" />
+                      <h3 className="text-lg font-semibold text-gray-800">연관된 이슈</h3>
+                    </div>
+                    <div className="space-y-2">
+                      {issue.relatedIssues.map(relatedIssueId => {
+                        const relatedIssue = issues.find(i => i.id === relatedIssueId);
+                        if (!relatedIssue) return null;
+                        return (
+                          <div
+                            key={relatedIssueId}
+                            onClick={() => {
+                              if (onIssueChange) {
+                                onIssueChange(relatedIssueId);
+                              }
+                            }}
+                            className="flex items-center space-x-3 p-3 bg-gray-50 hover:bg-gray-100 rounded-lg cursor-pointer transition-colors border border-gray-200"
+                          >
+                            <LinkIcon className="w-4 h-4 text-water-blue-600 flex-shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-800 truncate">{relatedIssue.title}</p>
+                              <p className="text-xs text-gray-500">ID: {relatedIssue.id}</p>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <span className={`px-2 py-1 text-xs font-medium rounded ${
+                                relatedIssue.status === IssueStatus.PENDING ? 'bg-yellow-100 text-yellow-800' :
+                                relatedIssue.status === IssueStatus.IN_PROGRESS ? 'bg-blue-100 text-blue-800' :
+                                relatedIssue.status === IssueStatus.MEETING ? 'bg-purple-100 text-purple-800' :
+                                'bg-green-100 text-green-800'
+                              }`}>
+                                {relatedIssue.status === IssueStatus.PENDING ? '대기' :
+                                 relatedIssue.status === IssueStatus.IN_PROGRESS ? '처리중' :
+                                 relatedIssue.status === IssueStatus.MEETING ? '회의예정' : '완료'}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
 
               </div>
 

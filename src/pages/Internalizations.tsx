@@ -299,6 +299,10 @@ const Internalizations: React.FC = () => {
           setIsModalOpen(false);
           setSelectedIssueId(null);
         }}
+        onIssueChange={(newIssueId) => {
+          setSelectedIssueId(newIssueId);
+          setIsModalOpen(true);
+        }}
       />
     </motion.div>
   );

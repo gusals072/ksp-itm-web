@@ -393,7 +393,6 @@ const IssueList: React.FC = () => {
         transition={{ delay: 0.4, duration: 0.4 }}
       >
         총 <span className="font-bold text-water-blue-600">{filteredIssues.length}</span>개의 이슈
-        (전체 {issues.length}개 중)
         {showMyIssues && <span className="ml-2 text-orange-600 font-medium">| 내 이슈(담당자)만 표시 중</span>}
       </motion.div>
 
@@ -404,6 +403,10 @@ const IssueList: React.FC = () => {
         onClose={() => {
           setIsModalOpen(false);
           setSelectedIssueId(null);
+        }}
+        onIssueChange={(newIssueId) => {
+          setSelectedIssueId(newIssueId);
+          setIsModalOpen(true);
         }}
       />
     </motion.div>

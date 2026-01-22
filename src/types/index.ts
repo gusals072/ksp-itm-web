@@ -114,6 +114,13 @@ export interface Issue {
   tags: string[];
   category: string;
   relatedIssues?: string[]; // 연관된 이슈 ID 목록
+  attachments?: Array<{ // 첨부 파일
+    id: string;
+    name: string;
+    size: number; // 바이트 단위
+    type: string; // MIME 타입
+    url?: string; // 파일 다운로드 URL (선택)
+  }>;
 }
 
 // 회의 안건 타입

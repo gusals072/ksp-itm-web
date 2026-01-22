@@ -151,7 +151,6 @@ const Header: React.FC<HeaderProps> = ({ title, onMenuClick }) => {
         )}
         <div>
           <h1 className="text-xl font-bold text-gray-800">{title}</h1>
-          <p className="text-xs text-gray-500">현재 시간: {new Date().toLocaleString('ko-KR')}</p>
         </div>
       </div>
 
