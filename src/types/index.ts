@@ -113,6 +113,7 @@ export interface Issue {
   internalizedDate?: Date; // 내재화 완료일
   tags: string[];
   category: string;
+  relatedIssues?: string[]; // 연관된 이슈 ID 목록
 }
 
 // 회의 안건 타입

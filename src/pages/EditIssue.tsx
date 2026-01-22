@@ -183,12 +183,12 @@ const EditIssue: React.FC = () => {
       readLevel: formData.readLevel
     });
 
-    navigate(`/issues/${id}`);
+    navigate('/issues');
   };
 
   const handleCancel = () => {
     if (id) {
-      navigate(`/issues/${id}`);
+      navigate('/issues');
     } else {
       navigate('/issues');
     }

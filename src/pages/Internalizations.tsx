@@ -6,6 +6,7 @@ import { Archive, FileText, User, Calendar, Tag, CheckCircle2, Search, Filter } 
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { motion } from 'framer-motion';
+import IssueDetailModal from '../components/IssueDetailModal';
 
 const Internalizations: React.FC = () => {
   const navigate = useNavigate();
@@ -13,6 +14,8 @@ const Internalizations: React.FC = () => {
   const [filterStatus, setFilterStatus] = useState<'all' | IssueStatus>('all');
   const [filterSource, setFilterSource] = useState<'all' | 'issue' | 'meeting'>('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // 권한 체크: 사용자가 볼 수 있는 티켓만 필터링
   const canViewTicket = (_ticket: typeof closedTickets[0]) => {
@@ -174,7 +177,10 @@ const Internalizations: React.FC = () => {
           <motion.div
             key={ticket.id}
             className="bg-white rounded-lg border-2 border-gray-200 shadow-md hover:shadow-lg transition-all hover:border-water-blue-400 cursor-pointer flex flex-col"
-            onClick={() => navigate(`/issues/${ticket.issueId}`)}
+            onClick={() => {
+              setSelectedIssueId(ticket.issueId);
+              setIsModalOpen(true);
+            }}
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             transition={{ delay: 0.3 + index * 0.05, duration: 0.4 }}
@@ -284,6 +290,16 @@ const Internalizations: React.FC = () => {
           </p>
         </motion.div>
       )}
+
+      {/* 이슈 상세 모달 */}
+      <IssueDetailModal
+        issueId={selectedIssueId}
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedIssueId(null);
+        }}
+      />
     </motion.div>
   );
 };

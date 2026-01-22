@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { Priority, Rank, RankLabel } from '../types';
-import { ArrowLeft, Save, X, Plus, Tag as TagIcon, Image as ImageIcon, Upload } from 'lucide-react';
+import { ArrowLeft, Save, X, Plus, Tag as TagIcon, Image as ImageIcon, Upload, User, Users, Link as LinkIcon } from 'lucide-react';
+import { AssigneeAssignment } from '../components/AssigneeAssignment';
+import RelatedIssuesSelector from '../components/RelatedIssuesSelector';
 
 const CreateIssue: React.FC = () => {
   const navigate = useNavigate();
-  const { user, addIssue } = useApp();
+  const { user, addIssue, issues } = useApp();
 
   const [formData, setFormData] = useState({
     title: '',
@@ -20,6 +22,9 @@ const CreateIssue: React.FC = () => {
   const [tagInput, setTagInput] = useState('');
   const [images, setImages] = useState<File[]>([]);
   const [errors, setErrors] = useState<{ title?: string; description?: string; category?: string }>({});
+  const [selectedAssignee, setSelectedAssignee] = useState<{ id: string; name: string } | null>(null);
+  const [selectedCC, setSelectedCC] = useState<Array<{ id: string; name: string }>>([]);
+  const [selectedRelatedIssues, setSelectedRelatedIssues] = useState<string[]>([]);
 
   // 더미 사용자 목록 (실제로는 AppContext에서 가져와야 함)
   const dummyUsers = [
@@ -107,10 +112,11 @@ const CreateIssue: React.FC = () => {
       ...formData,
       reporterId: user?.id || '',
       reporterName: user?.name || '',
-      assigneeId: '', // 담당자는 추후 배정
-      assigneeName: '',
-      cc: [], // 참조자는 추후 배정
-      readLevel: formData.readLevel
+      assigneeId: selectedAssignee?.id || '',
+      assigneeName: selectedAssignee?.name || '',
+      cc: selectedCC,
+      readLevel: formData.readLevel,
+      relatedIssues: selectedRelatedIssues.length > 0 ? selectedRelatedIssues : undefined
     });
 
     navigate('/issues');
@@ -361,6 +367,41 @@ const CreateIssue: React.FC = () => {
               ))}
             </div>
           )}
+        </div>
+
+        {/* 담당자/참조자 배정 */}
+        <div className="mb-8">
+          <label className="block text-lg font-semibold text-gray-700 mb-2">
+            담당자 및 참조자 배정
+          </label>
+          <div className="border-2 border-gray-300 rounded-lg p-4">
+            <AssigneeAssignment
+              ticketId="new"
+              currentAssignee={selectedAssignee}
+              currentCC={selectedCC}
+              onAssignmentChange={(assignee, cc) => {
+                setSelectedAssignee(assignee);
+                setSelectedCC(cc);
+              }}
+              isModal={false}
+            />
+          </div>
+        </div>
+
+        {/* 연관 이슈 링크 */}
+        <div className="mb-8">
+          <label className="block text-lg font-semibold text-gray-700 mb-2">
+            <LinkIcon className="w-5 h-5 inline mr-2" />
+            연관 이슈 링크
+          </label>
+          <p className="text-sm text-gray-500 mb-3">
+            이 이슈와 관련된 다른 이슈를 연결할 수 있습니다.
+          </p>
+          <RelatedIssuesSelector
+            selectedIssues={selectedRelatedIssues}
+            onSelectionChange={setSelectedRelatedIssues}
+            allIssues={issues}
+          />
         </div>
 
         {/* 버튼 그룹 */}

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { IssueStatus, RankLevel } from '../types';
@@ -7,10 +7,13 @@ import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { motion } from 'framer-motion';
 import Calendar from '../components/Calendar';
+import IssueDetailModal from '../components/IssueDetailModal';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const { issues, meetingAgendas, closedTickets, user } = useApp();
+  const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // 권한 기준 필터링 함수
   const canViewIssue = (issue: typeof issues[0]) => {
@@ -235,7 +238,10 @@ const Dashboard: React.FC = () => {
                       <div
                         key={issue.id}
                         className="flex items-center justify-between p-3 bg-water-teal-50 rounded-lg hover:bg-water-teal-100 transition-colors border border-water-teal-200 cursor-pointer"
-                        onClick={() => navigate(`/issues/${issue.id}`)}
+                        onClick={() => {
+                          setSelectedIssueId(issue.id);
+                          setIsModalOpen(true);
+                        }}
                       >
                         <div className="flex items-center space-x-2 flex-1 min-w-0">
                           <CalendarIcon className="w-4 h-4 text-water-teal-600 flex-shrink-0" />
@@ -293,7 +299,8 @@ const Dashboard: React.FC = () => {
                       }`}
                       onClick={(e) => {
                         e.stopPropagation();
-                        navigate(`/issues/${issue.id}`);
+                        setSelectedIssueId(issue.id);
+                        setIsModalOpen(true);
                       }}
                     >
                       <div
@@ -358,7 +365,10 @@ const Dashboard: React.FC = () => {
                       <div
                         key={issue.id}
                         className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
-                        onClick={() => navigate(`/issues/${issue.id}`)}
+                        onClick={() => {
+                          setSelectedIssueId(issue.id);
+                          setIsModalOpen(true);
+                        }}
                       >
                         <div className="flex items-center space-x-2 flex-1 min-w-0">
                           <FileText className="w-4 h-4 text-water-blue-600 flex-shrink-0" />
@@ -413,7 +423,8 @@ const Dashboard: React.FC = () => {
                       className="p-3 bg-purple-50 border border-purple-200 rounded-lg hover:bg-purple-100 transition-colors cursor-pointer"
                       onClick={(e) => {
                         e.stopPropagation();
-                        navigate(`/issues/${agenda.issueId}`);
+                        setSelectedIssueId(agenda.issueId);
+                        setIsModalOpen(true);
                       }}
                     >
                       <p className="text-sm font-medium text-gray-800 mb-1 line-clamp-2">{agenda.issueTitle}</p>
@@ -430,6 +441,16 @@ const Dashboard: React.FC = () => {
           </div>
         </motion.div>
       </div>
+
+      {/* 이슈 상세 모달 */}
+      <IssueDetailModal
+        issueId={selectedIssueId}
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedIssueId(null);
+        }}
+      />
     </motion.div>
   );
 };

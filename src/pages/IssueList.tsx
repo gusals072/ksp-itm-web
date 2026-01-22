@@ -8,9 +8,12 @@ import { ko } from 'date-fns/locale';
 import { isOverdue, getDaysSinceCreation } from '../utils/ticket';
 import { isTerminalState } from '../constants/ticket';
 import { motion } from 'framer-motion';
+import IssueDetailModal from '../components/IssueDetailModal';
 
 const IssueList: React.FC = () => {
   const navigate = useNavigate();
+  const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const { issues, user } = useApp();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
@@ -152,7 +155,8 @@ const IssueList: React.FC = () => {
 
   // 테이블 행 클릭
   const handleRowClick = (issueId: string) => {
-    navigate(`/issues/${issueId}`);
+    setSelectedIssueId(issueId);
+    setIsModalOpen(true);
   };
 
   return (
@@ -393,6 +397,16 @@ const IssueList: React.FC = () => {
         (전체 {issues.length}개 중)
         {showMyIssues && <span className="ml-2 text-orange-600 font-medium">| 내 이슈(담당자)만 표시 중</span>}
       </motion.div>
+
+      {/* 이슈 상세 모달 */}
+      <IssueDetailModal
+        issueId={selectedIssueId}
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedIssueId(null);
+        }}
+      />
     </motion.div>
   );
 };

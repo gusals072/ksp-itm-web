@@ -11,7 +11,6 @@ import LoginPage from './pages/LoginPage';
 import Dashboard from './pages/Dashboard';
 import IssueList from './pages/IssueList';
 import CreateIssue from './pages/CreateIssue';
-import IssueDetail from './pages/IssueDetail';
 import EditIssue from './pages/EditIssue';
 import MeetingAgendas from './pages/MeetingAgendas';
 import Internalizations from './pages/Internalizations';
@@ -36,7 +35,6 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     if (path === '/issues') return '이슈 목록';
     if (path === '/issues/new') return '이슈 등록';
     if (path.includes('/edit')) return '이슈 수정';
-    if (path.startsWith('/issues/')) return '이슈 상세';
     if (path === '/meetings') return '주간 회의 안건';
     if (path === '/internalizations') return '완료된 티켓';
     return 'K-SMARTPIA 이슈 티켓 매니지먼트 시스템';
@@ -119,16 +117,6 @@ function App() {
                 }
               />
 
-              <Route
-                path="/issues/:id"
-                element={
-                  <ProtectedRoute>
-                    <MainLayout>
-                      <IssueDetail />
-                    </MainLayout>
-                  </ProtectedRoute>
-                }
-              />
 
               <Route
                 path="/meetings"

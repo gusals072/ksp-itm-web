@@ -15,6 +15,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '../components/ui/dialog';
+import IssueDetailModal from '../components/IssueDetailModal';
 
 const MeetingAgendas: React.FC = () => {
   const navigate = useNavigate();
@@ -22,6 +23,8 @@ const MeetingAgendas: React.FC = () => {
   const [showCompleteModal, setShowCompleteModal] = useState(false);
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
   const [completionReason, setCompletionReason] = useState('');
+  const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // 회의 예정 상태의 티켓들만 필터링
   const meetingTickets = issues.filter(issue => issue.status === IssueStatus.MEETING);
@@ -44,7 +47,8 @@ const MeetingAgendas: React.FC = () => {
   };
 
   const handleDetailClick = (ticketId: string) => {
-    navigate(`/issues/${ticketId}`);
+    setSelectedIssueId(ticketId);
+    setIsModalOpen(true);
   };
 
   const getPriorityColor = (priority: Priority) => {
@@ -219,6 +223,16 @@ const MeetingAgendas: React.FC = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* 이슈 상세 모달 */}
+      <IssueDetailModal
+        issueId={selectedIssueId}
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedIssueId(null);
+        }}
+      />
     </motion.div>
   );
 };

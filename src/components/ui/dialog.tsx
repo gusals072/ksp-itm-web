@@ -36,10 +36,14 @@ const DialogOverlay = React.forwardRef<
 ))
 DialogOverlay.displayName = DialogPrimitive.Overlay.displayName
 
+interface DialogContentProps extends React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> {
+  hideClose?: boolean;
+}
+
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
->(({ className, children, ...props }, ref) => (
+  DialogContentProps
+>(({ className, children, hideClose = false, ...props }, ref) => (
   <DialogPortal>
     <DialogOverlay />
     <DialogPrimitive.Content
@@ -49,19 +53,30 @@ const DialogContent = React.forwardRef<
     >
       <motion.div
         className={cn(
-          "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border border-gray-200 bg-white p-6 shadow-lg rounded-lg",
+          "fixed z-50 grid w-full gap-4 border border-gray-200 bg-white p-6 shadow-lg rounded-lg",
           className
         )}
+        style={className?.includes('max-w-4xl') ? {
+          left: 'calc(50% - 38.25rem)', // 두 컨테이너 합친 기준 중앙 정렬: 50% - (56rem + 0.5rem + 20rem) / 2
+          top: '15%',
+          transform: 'translateY(-50%)'
+        } : {
+          left: '50%',
+          top: '50%',
+          transform: 'translateX(-50%) translateY(-50%)'
+        }}
         initial={{ opacity: 0, scale: 0.95, y: -20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: -20 }}
         transition={{ duration: 0.2, ease: "easeOut" }}
       >
         {children}
-        <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-white transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-water-blue-500 focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-gray-100 data-[state=open]:text-gray-500">
-          <X className="h-4 w-4" />
-          <span className="sr-only">Close</span>
-        </DialogPrimitive.Close>
+        {!hideClose && (
+          <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-white transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-water-blue-500 focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-gray-100 data-[state=open]:text-gray-500">
+            <X className="h-4 w-4" />
+            <span className="sr-only">Close</span>
+          </DialogPrimitive.Close>
+        )}
       </motion.div>
     </DialogPrimitive.Content>
   </DialogPortal>
