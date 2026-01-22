@@ -41,10 +41,9 @@ const IssueList: React.FC = () => {
       // 우선순위 필터
       const matchesPriority = filterPriority === 'all' || issue.priority === filterPriority;
 
-      // 권한 체크 (생성자, 담당자, 참조자만 확인 가능)
+      // 권한 체크 (생성자, 참조자만 확인 가능)
       const canView = user && (
         issue.reporterId === user.id ||
-        issue.assigneeId === user.id ||
         issue.cc?.some(ccUser => ccUser.id === user.id)
       );
 
@@ -233,7 +232,7 @@ const IssueList: React.FC = () => {
             <div className="col-span-4">제목</div>
             <div className="col-span-2">상태</div>
             <div className="col-span-1">우선순위</div>
-            <div className="col-span-1">담당자</div>
+            <div className="col-span-1">참조자</div>
             <div className="col-span-1">등록자</div>
             <div className="col-span-1">등록일</div>
             <div className="col-span-1">Dead Line</div>
@@ -302,12 +301,20 @@ const IssueList: React.FC = () => {
                   </div>
                 </div>
 
-                {/* 담당자 */}
+                {/* 참조자 */}
                 <div className="col-span-1">
                   <div className="flex items-center space-x-1">
                     <UserIcon className="w-4 h-4 text-gray-400" />
                     <span className="text-sm text-gray-700">
-                      {issue.assigneeName ? issue.assigneeName : '미지정'}
+                      {(() => {
+                        if (!issue.cc || issue.cc.length === 0) {
+                          return '미지정';
+                        } else if (issue.cc.length === 1) {
+                          return issue.cc[0].name;
+                        } else {
+                          return `${issue.cc[0].name}외 ${issue.cc.length - 1}명`;
+                        }
+                      })()}
                     </span>
                   </div>
                 </div>

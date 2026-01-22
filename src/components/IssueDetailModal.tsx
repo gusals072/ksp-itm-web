@@ -50,6 +50,8 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
   const [showMeetingModal, setShowMeetingModal] = useState(false);
   const [meetingNote, setMeetingNote] = useState('');
   const [showAgendaNoteModal, setShowAgendaNoteModal] = useState(false);
+  const [showStartProcessingModal, setShowStartProcessingModal] = useState(false);
+  const [showRevertToPendingModal, setShowRevertToPendingModal] = useState(false);
   // 모달이 닫힐 때 상태 초기화
   useEffect(() => {
     if (!isOpen) {
@@ -58,6 +60,8 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
       setCompletionReason('');
       setShowMeetingModal(false);
       setMeetingNote('');
+      setShowStartProcessingModal(false);
+      setShowRevertToPendingModal(false);
     }
   }, [isOpen]);
 
@@ -69,11 +73,40 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
     }
   };
 
-  // 담당자가 처리 시작
-  const handleStartProcessing = () => {
-    if (issue && issue.assigneeId && user?.id === issue.assigneeId && issue.status === IssueStatus.PENDING) {
-      updateIssueStatus(issue.id, IssueStatus.IN_PROGRESS);
+  // 참조자가 처리 시작 (확인 모달 표시)
+  const handleStartProcessingClick = () => {
+    if (issue && issue.status === IssueStatus.PENDING) {
+      setShowStartProcessingModal(true);
     }
+  };
+
+  // 처리 시작 확인
+  const handleStartProcessingConfirm = () => {
+    if (issue) {
+      updateIssueStatus(issue.id, IssueStatus.IN_PROGRESS);
+      setShowStartProcessingModal(false);
+    }
+  };
+
+  // 처리중 상태를 대기 상태로 되돌리기 (확인 모달 표시)
+  const handleRevertToPendingClick = () => {
+    if (issue && issue.status === IssueStatus.IN_PROGRESS) {
+      setShowRevertToPendingModal(true);
+    }
+  };
+
+  // 대기 상태로 되돌리기 확인
+  const handleRevertToPendingConfirm = () => {
+    if (issue) {
+      updateIssueStatus(issue.id, IssueStatus.PENDING);
+      setShowRevertToPendingModal(false);
+    }
+  };
+
+  // 현재 사용자가 참조자인지 확인
+  const isUserInCC = (): boolean => {
+    if (!issue || !user) return false;
+    return issue.cc?.some(cc => cc.id === user.id) || false;
   };
 
   const handleCompleteClick = () => {
@@ -252,8 +285,8 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
                     <span>주간 회의 안건 등록</span>
                   </button>
                 )}
-                {/* 수정 버튼 (완료된 티켓에서는 숨김, 담당자 또는 생성자만 가능) */}
-                {issue.status !== IssueStatus.RESOLVED && user && (user.id === issue.reporterId || user.id === issue.assigneeId) && (
+                {/* 수정 버튼 (완료된 티켓에서는 숨김, 참조자 또는 생성자만 가능) */}
+                {issue.status !== IssueStatus.RESOLVED && user && (user.id === issue.reporterId || isUserInCC()) && (
                   <button
                     onClick={() => {
                       onClose();
@@ -265,8 +298,8 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
                     <span>수정</span>
                   </button>
                 )}
-                {/* 삭제 버튼 (완료된 티켓에서는 숨김, 담당자 또는 생성자만 가능) */}
-                {issue.status !== IssueStatus.RESOLVED && user && (user.id === issue.reporterId || user.id === issue.assigneeId) && (
+                {/* 삭제 버튼 (완료된 티켓에서는 숨김, 참조자 또는 생성자만 가능) */}
+                {issue.status !== IssueStatus.RESOLVED && user && (user.id === issue.reporterId || isUserInCC()) && (
                   <button
                     onClick={() => setShowDeleteModal(true)}
                     className="flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-semibold shadow-sm"
@@ -292,11 +325,6 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
                       />
                       <h2 className="text-2xl font-bold text-gray-800">{issue.title}</h2>
                     </div>
-                    {issue.assigneeId && (
-                      <div className="px-4 py-2 bg-blue-50 text-blue-700 rounded-lg text-sm font-medium">
-                        담당자: {issue.assigneeName}
-                      </div>
-                    )}
                   </div>
 
                   <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
@@ -326,13 +354,15 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
                 </div>
 
                 {/* 첨부파일 */}
-                {issue.attachments && issue.attachments.length > 0 && (
-                  <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                    <div className="flex items-center space-x-2 mb-4">
-                      <Paperclip className="w-5 h-5 text-gray-600" />
-                      <h3 className="text-lg font-semibold text-gray-800">첨부파일</h3>
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                  <div className="flex items-center space-x-2 mb-4">
+                    <Paperclip className="w-5 h-5 text-gray-600" />
+                    <h3 className="text-lg font-semibold text-gray-800">첨부파일</h3>
+                    {issue.attachments && issue.attachments.length > 0 && (
                       <span className="text-sm text-gray-500">({issue.attachments.length}개)</span>
-                    </div>
+                    )}
+                  </div>
+                  {issue.attachments && issue.attachments.length > 0 ? (
                     <div className="space-y-2">
                       {issue.attachments.map(attachment => {
                         const formatFileSize = (bytes: number) => {
@@ -381,8 +411,12 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
                         );
                       })}
                     </div>
-                  </div>
-                )}
+                  ) : (
+                    <div className="text-center py-8">
+                      <p className="text-sm text-gray-500">첨부 파일이 없습니다.</p>
+                    </div>
+                  )}
+                </div>
 
                 {/* 연관된 이슈 */}
                 {issue.relatedIssues && issue.relatedIssues.length > 0 && (
@@ -447,12 +481,12 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
                     </div>
                   </div>
 
-                  {/* 담당자가 처리 시작 버튼 (PENDING 상태이고 담당자가 본인인 경우) */}
-                  {issue.status === IssueStatus.PENDING && issue.assigneeId && user?.id === issue.assigneeId && (
+                  {/* 참조자가 처리 시작 버튼 (PENDING 상태이고 참조자인 경우) */}
+                  {issue.status === IssueStatus.PENDING && isUserInCC() && (
                     <div className="border-t border-gray-200 pt-4">
                       <div className="flex justify-center">
                         <button
-                          onClick={handleStartProcessing}
+                          onClick={handleStartProcessingClick}
                           className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                         >
                           <CheckCircle2 className="w-4 h-4" />
@@ -462,9 +496,24 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
                     </div>
                   )}
 
-                  {/* 처리중 상태에서만 완료 버튼 표시 */}
-                  {issue.status === IssueStatus.IN_PROGRESS && (
+                  {/* 처리중 상태에서 대기 상태로 되돌리기 버튼 (참조자인 경우) */}
+                  {issue.status === IssueStatus.IN_PROGRESS && isUserInCC() && (
                     <div className="border-t border-gray-200 pt-4">
+                      <div className="flex justify-center">
+                        <button
+                          onClick={handleRevertToPendingClick}
+                          className="flex items-center gap-2 px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+                        >
+                          <CheckCircle2 className="w-4 h-4" />
+                          되돌리기
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 처리중 상태에서만 완료 버튼 표시 (참조자만 가능) */}
+                  {issue.status === IssueStatus.IN_PROGRESS && isUserInCC() && (
+                    <div className="pt-4">
                       <div className="flex justify-center">
                         <button
                           onClick={handleCompleteClick}
@@ -479,8 +528,8 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
 
                   {/* 상태 설명 */}
                   <div className="mt-4 text-xs text-gray-500">
-                    {issue.status === IssueStatus.PENDING && issue.assigneeId && '담당자가 처리 시작 버튼을 클릭하면 처리중 상태로 변경됩니다.'}
-                    {issue.status === IssueStatus.PENDING && !issue.assigneeId && '담당자가 배정되지 않았습니다.'}
+                    {issue.status === IssueStatus.PENDING && issue.cc && issue.cc.length > 0 && '참조자가 처리 시작 버튼을 클릭하면 처리중 상태로 변경됩니다.'}
+                    {issue.status === IssueStatus.PENDING && (!issue.cc || issue.cc.length === 0) && '참조자가 배정되지 않았습니다.'}
                     {issue.status === IssueStatus.IN_PROGRESS && '티켓을 완료하려면 완료 처리 버튼을 클릭하세요.'}
                     {issue.status === IssueStatus.MEETING && '주간 회의에서 처리될 예정입니다.'}
                     {issue.status === IssueStatus.RESOLVED && '이 티켓은 완료되었습니다.'}
@@ -624,6 +673,76 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
               className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
             >
               확인
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 처리 시작 확인 모달 */}
+      <Dialog open={showStartProcessingModal} onOpenChange={setShowStartProcessingModal}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CheckCircle2 className="w-5 h-5 text-blue-600" />
+              처리 시작 확인
+            </DialogTitle>
+            <DialogDescription>
+              이 티켓을 처리중 상태로 변경하시겠습니까?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-sm text-gray-700">
+              티켓이 처리중 상태로 변경되며, 작업을 시작할 준비가 되었음을 의미합니다.
+            </p>
+          </div>
+          <DialogFooter>
+            <button
+              onClick={() => setShowStartProcessingModal(false)}
+              className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+            >
+              취소
+            </button>
+            <button
+              onClick={handleStartProcessingConfirm}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center gap-2"
+            >
+              <CheckCircle2 className="w-4 h-4" />
+              처리 시작
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 대기 상태로 되돌리기 확인 모달 */}
+      <Dialog open={showRevertToPendingModal} onOpenChange={setShowRevertToPendingModal}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CheckCircle2 className="w-5 h-5 text-orange-600" />
+              대기 상태로 되돌리기 확인
+            </DialogTitle>
+            <DialogDescription>
+              이 티켓을 대기 상태로 되돌리시겠습니까?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-sm text-gray-700">
+              티켓이 대기 상태로 변경되며, 다시 처리 시작할 수 있습니다.
+            </p>
+          </div>
+          <DialogFooter>
+            <button
+              onClick={() => setShowRevertToPendingModal(false)}
+              className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+            >
+              취소
+            </button>
+            <button
+              onClick={handleRevertToPendingConfirm}
+              className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-medium flex items-center gap-2"
+            >
+              <CheckCircle2 className="w-4 h-4" />
+              되돌리기
             </button>
           </DialogFooter>
         </DialogContent>
