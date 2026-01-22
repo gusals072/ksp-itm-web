@@ -2,10 +2,11 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { IssueStatus, RankLevel } from '../types';
-import { Droplets, FileText, Clock, CheckCircle2, TrendingUp, Calendar } from 'lucide-react';
+import { Droplets, FileText, Clock, CheckCircle2, TrendingUp, Calendar as CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { motion } from 'framer-motion';
+import Calendar from '../components/Calendar';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -218,7 +219,7 @@ const Dashboard: React.FC = () => {
             <div className="bg-white rounded-xl shadow-sm border-2 border-water-teal-200 flex flex-col">
               <div className="p-4 border-b border-gray-100 bg-water-teal-50">
                 <div className="flex items-center space-x-2">
-                  <Calendar className="w-5 h-5 text-water-teal-600" />
+                  <CalendarIcon className="w-5 h-5 text-water-teal-600" />
                   <h3 className="text-lg font-semibold text-gray-800">나에게 할당된 이슈</h3>
                   {userAssignedIssues.length > 0 && (
                     <span className="ml-auto px-2 py-1 text-xs font-bold bg-water-teal-600 text-white rounded-full">
@@ -237,7 +238,7 @@ const Dashboard: React.FC = () => {
                         onClick={() => navigate(`/issues/${issue.id}`)}
                       >
                         <div className="flex items-center space-x-2 flex-1 min-w-0">
-                          <Calendar className="w-4 h-4 text-water-teal-600 flex-shrink-0" />
+                          <CalendarIcon className="w-4 h-4 text-water-teal-600 flex-shrink-0" />
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-gray-800 truncate">{issue.title}</p>
                             <p className="text-xs text-gray-500">
@@ -261,7 +262,7 @@ const Dashboard: React.FC = () => {
                   </div>
                 ) : (
                   <div className="text-center py-8">
-                    <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                    <CalendarIcon className="w-12 h-12 text-gray-300 mx-auto mb-3" />
                     <p className="text-gray-500 text-sm">할당된 이슈가 없습니다.</p>
                   </div>
                 )}
@@ -271,7 +272,7 @@ const Dashboard: React.FC = () => {
 
           {/* 중앙: 최근 이슈 (긴급 이슈 포함) */}
           <div 
-            className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 cursor-pointer hover:shadow-md transition-shadow"
+            className="lg:col-span-1 bg-white rounded-xl shadow-sm border border-gray-100 cursor-pointer hover:shadow-md transition-shadow"
             onClick={() => navigate('/issues')}
           >
             <div className="p-4 border-b border-gray-100 flex items-center justify-between">
@@ -326,6 +327,11 @@ const Dashboard: React.FC = () => {
                 })}
               </div>
             </div>
+          </div>
+
+          {/* 오른쪽: 캘린더 */}
+          <div className="lg:col-span-1">
+            <Calendar issues={visibleIssues} />
           </div>
         </motion.div>
 
