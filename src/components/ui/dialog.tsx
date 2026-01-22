@@ -56,9 +56,17 @@ const DialogContent = React.forwardRef<
           "fixed z-50 grid w-full gap-4 border border-gray-200 bg-white p-6 shadow-lg rounded-lg",
           className
         )}
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.95 }}
+        {...(className?.includes('max-w-4xl') ? {
+          // 이슈 상세 모달: scale만 사용
+          initial: { opacity: 0, scale: 0.95 },
+          animate: { opacity: 1, scale: 1 },
+          exit: { opacity: 0, scale: 0.95 }
+        } : {
+          // 주소록 모달 등: scale + 중앙 정렬 (x, y 사용)
+          initial: { opacity: 0, scale: 0.95, x: '-50%', y: '-50%' },
+          animate: { opacity: 1, scale: 1, x: '-50%', y: '-50%' },
+          exit: { opacity: 0, scale: 0.95, x: '-50%', y: '-50%' }
+        })}
         transition={{ duration: 0.2, ease: "easeOut" }}
         style={{
           ...(className?.includes('max-w-4xl') ? {
@@ -69,9 +77,9 @@ const DialogContent = React.forwardRef<
             top: '15%',
             transform: 'translateY(0)'
           } : {
+            // 주소록 모달 등 다른 모달: 중앙 정렬 (framer-motion의 x, y로 처리)
             left: 'calc(50% + 8rem)', // 사이드바(16rem)의 절반인 8rem을 더해서 콘텐츠 영역 중앙에 위치
-            top: '50%',
-            transform: 'translate(-50%, -50%)'
+            top: '50%'
           })
         }}
       >
