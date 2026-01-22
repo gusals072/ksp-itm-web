@@ -178,6 +178,8 @@ const dummyIssues: Issue[] = [
     priority: Priority.URGENT,
     reporterId: '8',
     reporterName: '권주임',
+    assigneeId: '5',
+    assigneeName: '최차장',
     cc: [
       { id: '5', name: '최차장' },
       { id: '4', name: '정부장' },

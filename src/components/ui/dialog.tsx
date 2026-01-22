@@ -49,6 +49,20 @@ const DialogContent = React.forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       asChild
+      onInteractOutside={(e) => {
+        // 파일 입력 다이얼로그가 열릴 때 모달이 닫히지 않도록
+        const target = e.target as HTMLElement;
+        // 파일 입력 버튼 클릭 시 모달 닫힘 방지
+        if (target.closest('[data-file-attach-button="true"]')) {
+          e.preventDefault();
+          return;
+        }
+        // 파일 입력 요소 자체 클릭 시 모달 닫힘 방지
+        if (target.tagName === 'INPUT' && target.getAttribute('type') === 'file') {
+          e.preventDefault();
+          return;
+        }
+      }}
       {...props}
     >
       <motion.div
