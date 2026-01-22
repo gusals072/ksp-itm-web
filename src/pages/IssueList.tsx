@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { IssueStatus, Priority, RankLevel, type Issue } from '../types';
-import { Search, Plus, User as UserIcon, Calendar, Filter, CheckCircle, AlertCircle, Clock } from 'lucide-react';
+import { Search, Plus, User as UserIcon, Calendar, AlertCircle, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { isOverdue, getDaysSinceCreation } from '../utils/ticket';
@@ -18,7 +18,6 @@ const IssueList: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterPriority, setFilterPriority] = useState<string>('all');
-  const [showMyIssues, setShowMyIssues] = useState(false);
 
   // 필터링 및 정렬
   const filteredIssues = issues
@@ -49,12 +48,7 @@ const IssueList: React.FC = () => {
         issue.cc?.some(ccUser => ccUser.id === user.id)
       );
 
-      // 내 이슈 필터 (담당자인 이슈만)
-      const isMyIssue = user && issue.assigneeId === user.id;
-
-      const matchesMyIssues = !showMyIssues || isMyIssue;
-
-      return matchesSearch && matchesStatus && matchesPriority && canView && matchesMyIssues;
+      return matchesSearch && matchesStatus && matchesPriority && canView;
     })
     .sort((a, b) => {
       // 기본: 최신순 정렬
@@ -187,19 +181,6 @@ const IssueList: React.FC = () => {
 
           {/* 필터 버튼 그룹 */}
           <div className="flex flex-wrap gap-3 items-center w-full lg:w-auto">
-            {/* 내 이슈 필터 */}
-            <button
-              onClick={() => setShowMyIssues(!showMyIssues)}
-              className={`flex items-center space-x-2 px-6 py-3 rounded-lg text-base font-semibold transition-colors ${
-                showMyIssues
-                  ? 'bg-water-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              {showMyIssues ? <CheckCircle className="w-5 h-5" /> : <Filter className="w-5 h-5" />}
-              <span>{showMyIssues ? '내 담당 이슈만 보는 중' : '내 담당 이슈만 보기'}</span>
-            </button>
-
             {/* 상태 필터 */}
             <select
               value={filterStatus}
@@ -379,7 +360,7 @@ const IssueList: React.FC = () => {
             <AlertCircle className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-gray-800 mb-2">검색 결과가 없습니다</h3>
             <p className="text-gray-500">
-              {showMyIssues ? '당신이 담당자인 이슈가 없습니다.' : '다른 검색어나 필터를 시도해보세요.'}
+              다른 검색어나 필터를 시도해보세요.
             </p>
           </motion.div>
         )}
@@ -393,7 +374,6 @@ const IssueList: React.FC = () => {
         transition={{ delay: 0.4, duration: 0.4 }}
       >
         총 <span className="font-bold text-water-blue-600">{filteredIssues.length}</span>개의 이슈
-        {showMyIssues && <span className="ml-2 text-orange-600 font-medium">| 내 이슈(담당자)만 표시 중</span>}
       </motion.div>
 
       {/* 이슈 상세 모달 */}

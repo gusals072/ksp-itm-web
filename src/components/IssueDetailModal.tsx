@@ -37,14 +37,19 @@ interface IssueDetailModalProps {
 
 const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, onClose, onIssueChange }) => {
   const navigate = useNavigate();
-  const { issues, updateIssueStatus, deleteIssue, updateIssue, updateIssueAssignee, user, addMeetingAgenda } = useApp();
+  const { issues, updateIssueStatus, deleteIssue, updateIssue, updateIssueAssignee, user, addMeetingAgenda, meetingAgendas } = useApp();
 
   const issue = issueId ? issues.find(i => i.id === issueId) : null;
+  
+  // 회의 안건 첨언 찾기
+  const meetingAgenda = issue ? meetingAgendas.find(a => a.issueId === issue.id) : null;
+  const agendaNote = meetingAgenda?.notes;
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
   const [completionReason, setCompletionReason] = useState('');
   const [showMeetingModal, setShowMeetingModal] = useState(false);
   const [meetingNote, setMeetingNote] = useState('');
+  const [showAgendaNoteModal, setShowAgendaNoteModal] = useState(false);
   // 모달이 닫힐 때 상태 초기화
   useEffect(() => {
     if (!isOpen) {
@@ -114,6 +119,7 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
     
     setShowMeetingModal(false);
     setMeetingNote('');
+    onClose(); // 회의 안건 등록 시 모달 자동 닫기
   };
 
   // 회의 안건 등록 권한 체크 (담당자, 생성자, 대표)
@@ -206,7 +212,7 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
             left: 'calc(50% - 30.25rem + 56rem + 0.5rem)',
             top: '15%',
             width: '20rem', // w-80 (320px)
-            height: '72vh',
+            height: '72vh', // 댓글 컨테이너는 항상 전체 높이 유지
             maxHeight: '72vh',
             transform: 'translateY(0)'
           }}
@@ -219,6 +225,7 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
         </motion.div>,
         document.body
       )}
+
 
       {/* 메인 이슈 상세 모달 */}
       <Dialog open={isOpen} onOpenChange={onClose}>
@@ -478,6 +485,19 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
                     {issue.status === IssueStatus.MEETING && '주간 회의에서 처리될 예정입니다.'}
                     {issue.status === IssueStatus.RESOLVED && '이 티켓은 완료되었습니다.'}
                   </div>
+
+                  {/* 회의 안건 첨언 확인 버튼 */}
+                  {issue.status === IssueStatus.MEETING && agendaNote && (
+                    <div className="border-t border-gray-200 pt-4 mt-4">
+                      <button
+                        onClick={() => setShowAgendaNoteModal(true)}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors text-sm font-medium"
+                      >
+                        <Send className="w-4 h-4" />
+                        첨언 확인하기
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {/* 정보 */}
@@ -565,6 +585,45 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
             >
               <CheckCircle2 className="w-4 h-4" />
               완료하기
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 회의 안건 첨언 확인 모달 */}
+      <Dialog open={showAgendaNoteModal} onOpenChange={setShowAgendaNoteModal}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Send className="w-5 h-5 text-purple-600" />
+              회의 안건 첨언
+            </DialogTitle>
+            <DialogDescription>
+              이 티켓을 회의 안건으로 등록할 때 작성된 첨언입니다.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            {agendaNote ? (
+              <div className="bg-purple-50 border-l-4 border-purple-400 rounded p-4">
+                <p className="text-sm text-purple-900 whitespace-pre-line leading-relaxed">
+                  {agendaNote}
+                </p>
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500">첨언이 없습니다.</p>
+            )}
+            {meetingAgenda?.meetingDate && (
+              <div className="mt-4 text-xs text-gray-500">
+                등록일: {format(new Date(meetingAgenda.meetingDate), 'yyyy-MM-dd HH:mm', { locale: ko })}
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <button
+              onClick={() => setShowAgendaNoteModal(false)}
+              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
+            >
+              확인
             </button>
           </DialogFooter>
         </DialogContent>

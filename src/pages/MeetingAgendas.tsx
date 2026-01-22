@@ -22,7 +22,6 @@ const MeetingAgendas: React.FC = () => {
   const { issues, updateIssueStatus, meetingAgendas } = useApp();
   const [showCompleteModal, setShowCompleteModal] = useState(false);
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
-  const [completionReason, setCompletionReason] = useState('');
   const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -35,15 +34,14 @@ const MeetingAgendas: React.FC = () => {
   };
 
   const handleCompleteConfirm = () => {
-    if (!selectedTicketId || !completionReason.trim()) {
-      alert('완료 사유를 입력해주세요.');
+    if (!selectedTicketId) {
       return;
     }
 
-    updateIssueStatus(selectedTicketId, IssueStatus.RESOLVED, completionReason);
+    // 주간 회의 안건은 사유 없이 바로 완료 처리
+    updateIssueStatus(selectedTicketId, IssueStatus.RESOLVED, '');
     setShowCompleteModal(false);
     setSelectedTicketId(null);
-    setCompletionReason('');
   };
 
   const handleDetailClick = (ticketId: string) => {
@@ -188,36 +186,23 @@ const MeetingAgendas: React.FC = () => {
         </motion.div>
       )}
 
-      {/* 완료 모달 */}
+      {/* 완료 확인 모달 (주간 회의 안건은 사유 없이 바로 완료) */}
       <Dialog open={showCompleteModal} onOpenChange={setShowCompleteModal}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[450px]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <CheckCircle2 className="w-5 h-5 text-green-600" />
               회의 완료 처리
             </DialogTitle>
             <DialogDescription>
-              이 티켓을 어떻게 완료했는지 설명해주세요.
+              이 티켓을 완료 처리하시겠습니까?
             </DialogDescription>
           </DialogHeader>
-          <div className="py-4">
-            <textarea
-              className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-water-blue-500 focus:border-transparent resize-none transition-all"
-              rows={5}
-              placeholder="완료 방법을 입력하세요..."
-              value={completionReason}
-              onChange={(e) => setCompletionReason(e.target.value)}
-            />
-            {!completionReason.trim() && (
-              <p className="text-xs text-red-500 mt-2">완료 사유를 입력해주세요.</p>
-            )}
-          </div>
           <DialogFooter>
             <button
               onClick={() => {
                 setShowCompleteModal(false);
                 setSelectedTicketId(null);
-                setCompletionReason('');
               }}
               className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium"
             >
@@ -225,8 +210,7 @@ const MeetingAgendas: React.FC = () => {
             </button>
             <button
               onClick={handleCompleteConfirm}
-              disabled={!completionReason.trim()}
-              className="px-4 py-2 bg-water-blue-600 text-white rounded-lg hover:bg-water-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center gap-2"
+              className="px-4 py-2 bg-water-blue-600 text-white rounded-lg hover:bg-water-blue-700 transition-colors font-medium flex items-center gap-2"
             >
               <CheckCircle2 className="w-4 h-4" />
               완료하기
