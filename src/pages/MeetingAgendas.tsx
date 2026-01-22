@@ -19,7 +19,7 @@ import IssueDetailModal from '../components/IssueDetailModal';
 
 const MeetingAgendas: React.FC = () => {
   const navigate = useNavigate();
-  const { issues, updateIssueStatus } = useApp();
+  const { issues, updateIssueStatus, meetingAgendas } = useApp();
   const [showCompleteModal, setShowCompleteModal] = useState(false);
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
   const [completionReason, setCompletionReason] = useState('');
@@ -129,6 +129,17 @@ const MeetingAgendas: React.FC = () => {
 
                     {/* 설명 */}
                     <p className="text-gray-600 mb-3 line-clamp-2">{ticket.description}</p>
+
+                    {/* 첨언 표시 (회의 안건에서만 확인 가능) */}
+                    {(() => {
+                      const agenda = meetingAgendas.find(a => a.issueId === ticket.id);
+                      return agenda?.notes ? (
+                        <div className="bg-purple-50 border-l-4 border-purple-400 rounded p-3 mb-3">
+                          <p className="text-xs font-medium text-purple-700 mb-1">회의 안건 첨언</p>
+                          <p className="text-sm text-purple-900">{agenda.notes}</p>
+                        </div>
+                      ) : null;
+                    })()}
 
                     {/* 메타 정보 */}
                     <div className="flex items-center gap-6 text-sm text-gray-500">

@@ -25,7 +25,7 @@ const IssueList: React.FC = () => {
     .filter(issue => {
       // 종료된 티켓과 회의 예정 티켓 제외
       const isClosed = isTerminalState(issue.status as any);
-      const isInMeeting = issue.status === ('MEETING_SCHEDULED' as any);
+      const isInMeeting = issue.status === IssueStatus.MEETING;
 
       if (isClosed || isInMeeting) {
         return false; // 종료된 티켓과 회의 예정 티켓은 이슈 목록에서 제외

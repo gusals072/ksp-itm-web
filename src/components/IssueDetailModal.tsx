@@ -37,18 +37,22 @@ interface IssueDetailModalProps {
 
 const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, onClose, onIssueChange }) => {
   const navigate = useNavigate();
-  const { issues, updateIssueStatus, deleteIssue, updateIssue, updateIssueAssignee, user } = useApp();
+  const { issues, updateIssueStatus, deleteIssue, updateIssue, updateIssueAssignee, user, addMeetingAgenda } = useApp();
 
   const issue = issueId ? issues.find(i => i.id === issueId) : null;
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
   const [completionReason, setCompletionReason] = useState('');
+  const [showMeetingModal, setShowMeetingModal] = useState(false);
+  const [meetingNote, setMeetingNote] = useState('');
   // 모달이 닫힐 때 상태 초기화
   useEffect(() => {
     if (!isOpen) {
       setShowDeleteModal(false);
       setShowCompletionModal(false);
       setCompletionReason('');
+      setShowMeetingModal(false);
+      setMeetingNote('');
     }
   }, [isOpen]);
 
@@ -82,13 +86,46 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
     updateIssueStatus(issue.id, IssueStatus.RESOLVED, completionReason);
     setShowCompletionModal(false);
     setCompletionReason('');
+    onClose(); // 완료 처리 시 모달 자동 닫기
   };
 
-  // 주간 회의 안건으로 바로 이동
+  // 주간 회의 안건으로 이동 (첨언 입력 모달 표시)
   const handleMoveToMeeting = () => {
     if (issue) {
-      updateIssueStatus(issue.id, IssueStatus.MEETING);
+      setShowMeetingModal(true);
     }
+  };
+
+  // 회의 안건 등록 확인
+  const handleMeetingConfirm = () => {
+    if (!issue) return;
+    
+    // 회의 안건 생성
+    addMeetingAgenda({
+      issueId: issue.id,
+      issueTitle: issue.title,
+      status: 'pending',
+      meetingDate: new Date(),
+      notes: meetingNote.trim() || undefined
+    });
+
+    // 이슈 상태를 회의 예정으로 변경
+    updateIssueStatus(issue.id, IssueStatus.MEETING);
+    
+    setShowMeetingModal(false);
+    setMeetingNote('');
+  };
+
+  // 회의 안건 등록 권한 체크 (담당자, 생성자, 대표)
+  const canMoveToMeeting = () => {
+    if (!user || !issue) return false;
+    // 대표
+    if (user.rank === Rank.DAEPIO) return true;
+    // 생성자
+    if (user.id === issue.reporterId) return true;
+    // 담당자
+    if (user.id === issue.assigneeId) return true;
+    return false;
   };
 
   const getStatusColor = (status: IssueStatus) => {
@@ -178,7 +215,7 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
           exit={{ opacity: 0, scale: 0.95 }}
           transition={{ duration: 0.2, ease: "easeOut" }}
         >
-          <IssueComments issue={issue} user={user} />
+          <IssueComments issue={issue} user={user} isReadOnly={issue.status === IssueStatus.RESOLVED} />
         </motion.div>,
         document.body
       )}
@@ -198,8 +235,8 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
                 </div>
               </div>
               <div className="flex items-center space-x-2">
-                {/* 주간 회의 안건 등록 버튼 (이사급 이상만) */}
-                {user && RankLevel[user.rank] >= RankLevel[Rank.ISA] && (
+                {/* 주간 회의 안건 등록 버튼 (담당자, 생성자, 대표만) */}
+                {user && canMoveToMeeting() && issue.status !== IssueStatus.MEETING && issue.status !== IssueStatus.RESOLVED && (
                   <button
                     onClick={handleMoveToMeeting}
                     className="flex items-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-semibold shadow-sm"
@@ -208,25 +245,29 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
                     <span>주간 회의 안건 등록</span>
                   </button>
                 )}
-                {/* 수정 버튼 */}
-                <button
-                  onClick={() => {
-                    onClose();
-                    navigate(`/issues/${issue.id}/edit`);
-                  }}
-                  className="flex items-center space-x-2 px-4 py-2 bg-water-blue-600 text-white rounded-lg hover:bg-water-blue-700 transition-colors font-semibold shadow-sm"
-                >
-                  <Edit className="w-4 h-4" />
-                  <span>수정</span>
-                </button>
-                {/* 삭제 버튼 */}
-                <button
-                  onClick={() => setShowDeleteModal(true)}
-                  className="flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-semibold shadow-sm"
-                >
-                  <Trash2 className="w-4 h-4" />
-                  <span>삭제</span>
-                </button>
+                {/* 수정 버튼 (완료된 티켓에서는 숨김, 담당자 또는 생성자만 가능) */}
+                {issue.status !== IssueStatus.RESOLVED && user && (user.id === issue.reporterId || user.id === issue.assigneeId) && (
+                  <button
+                    onClick={() => {
+                      onClose();
+                      navigate(`/issues/${issue.id}/edit`);
+                    }}
+                    className="flex items-center space-x-2 px-4 py-2 bg-water-blue-600 text-white rounded-lg hover:bg-water-blue-700 transition-colors font-semibold shadow-sm"
+                  >
+                    <Edit className="w-4 h-4" />
+                    <span>수정</span>
+                  </button>
+                )}
+                {/* 삭제 버튼 (완료된 티켓에서는 숨김, 담당자 또는 생성자만 가능) */}
+                {issue.status !== IssueStatus.RESOLVED && user && (user.id === issue.reporterId || user.id === issue.assigneeId) && (
+                  <button
+                    onClick={() => setShowDeleteModal(true)}
+                    className="flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-semibold shadow-sm"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    <span>삭제</span>
+                  </button>
+                )}
               </div>
             </div>
 
@@ -524,6 +565,51 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
             >
               <CheckCircle2 className="w-4 h-4" />
               완료하기
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 회의 안건 등록 모달 */}
+      <Dialog open={showMeetingModal} onOpenChange={setShowMeetingModal}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Send className="w-5 h-5 text-purple-600" />
+              주간 회의 안건 등록
+            </DialogTitle>
+            <DialogDescription>
+              이 티켓을 회의 안건으로 등록합니다. 왜 회의 안건으로 넘겼는지 첨언을 추가할 수 있습니다.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              첨언 (선택사항)
+            </label>
+            <textarea
+              className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none transition-all"
+              rows={5}
+              placeholder="왜 회의 안건으로 넘겼는지 설명해주세요..."
+              value={meetingNote}
+              onChange={(e) => setMeetingNote(e.target.value)}
+            />
+          </div>
+          <DialogFooter>
+            <button
+              onClick={() => {
+                setShowMeetingModal(false);
+                setMeetingNote('');
+              }}
+              className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+            >
+              취소
+            </button>
+            <button
+              onClick={handleMeetingConfirm}
+              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium flex items-center gap-2"
+            >
+              <Send className="w-4 h-4" />
+              등록하기
             </button>
           </DialogFooter>
         </DialogContent>

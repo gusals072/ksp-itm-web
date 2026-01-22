@@ -25,16 +25,18 @@ const Dashboard: React.FC = () => {
     );
   };
 
-  // 권한 체크 후 이슈 필터링
-  const visibleIssues = issues.filter(issue => canViewIssue(issue));
+  // 권한 체크 후 이슈 필터링 (회의 안건 상태 제외)
+  const visibleIssues = issues.filter(issue => 
+    canViewIssue(issue) && issue.status !== IssueStatus.MEETING
+  );
 
   // 통계 계산 (보이는 이슈 기준)
-  // 진행 중인 티켓 통계
+  // 진행 중인 티켓 통계 (회의 안건 제외)
   const activeStats = {
     total: visibleIssues.length,
     pending: visibleIssues.filter(i => i.status === IssueStatus.PENDING).length,
     inProgress: visibleIssues.filter(i => i.status === IssueStatus.IN_PROGRESS).length,
-    meeting: visibleIssues.filter(i => i.status === IssueStatus.MEETING).length
+    meeting: 0 // 회의 안건은 이슈 목록에서 제외되므로 0
   };
 
   // 완료된 티켓 통계 (closedTickets 기준)
