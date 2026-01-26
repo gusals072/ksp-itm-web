@@ -4,7 +4,7 @@ import { useApp } from '../context/AppContext';
 import { Priority, Rank, RankLabel } from '../types';
 import { ArrowLeft, Save, X, Upload, User, Users, Link as LinkIcon, Paperclip, File } from 'lucide-react';
 import { AssigneeAssignment } from '../components/AssigneeAssignment';
-import RelatedIssuesSelector from '../components/RelatedIssuesSelector';
+import RelatedIssuesModal from '../components/RelatedIssuesModal';
 import { toast } from 'react-toastify';
 
 const CreateIssue: React.FC = () => {
@@ -23,6 +23,7 @@ const CreateIssue: React.FC = () => {
   const [selectedCC, setSelectedCC] = useState<Array<{ id: string; name: string }>>([]);
   const [selectedRelatedIssues, setSelectedRelatedIssues] = useState<string[]>([]);
   const [isAssigneeModalOpen, setIsAssigneeModalOpen] = useState(false);
+  const [isRelatedIssuesModalOpen, setIsRelatedIssuesModalOpen] = useState(false);
 
   // 더미 사용자 목록 (실제로는 AppContext에서 가져와야 함)
   const dummyUsers = [
@@ -337,12 +338,61 @@ const CreateIssue: React.FC = () => {
           <p className="text-sm text-gray-500 mb-3">
             이 이슈와 관련된 다른 이슈를 연결할 수 있습니다.
           </p>
-          <RelatedIssuesSelector
-            selectedIssues={selectedRelatedIssues}
-            onSelectionChange={setSelectedRelatedIssues}
-            allIssues={issues}
-          />
+          <div className="space-y-3">
+            {/* 선택된 이슈 표시 */}
+            {selectedRelatedIssues.length > 0 && (
+              <div className="border-2 border-water-blue-200 rounded-lg p-3 bg-water-blue-50">
+                <p className="text-sm font-medium text-gray-700 mb-2">
+                  선택된 연관 이슈 ({selectedRelatedIssues.length}개)
+                </p>
+                <div className="space-y-2">
+                  {issues
+                    .filter(issue => selectedRelatedIssues.includes(issue.id))
+                    .map(issue => (
+                      <div
+                        key={issue.id}
+                        className="flex items-center justify-between p-2 bg-white rounded-lg border border-water-blue-200"
+                      >
+                        <div className="flex items-center space-x-2 flex-1 min-w-0">
+                          <LinkIcon className="w-4 h-4 text-water-blue-600 flex-shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-800 truncate">{issue.title}</p>
+                            <p className="text-xs text-gray-500">ID: {issue.id}</p>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedRelatedIssues(prev => prev.filter(id => id !== issue.id))}
+                          className="ml-2 p-1 hover:bg-red-100 rounded transition-colors"
+                        >
+                          <X className="w-4 h-4 text-red-600" />
+                        </button>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            )}
+            {/* 연관 이슈 선택 버튼 */}
+            <button
+              type="button"
+              onClick={() => setIsRelatedIssuesModalOpen(true)}
+              className="w-full flex items-center justify-center space-x-2 px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg hover:border-water-blue-400 hover:bg-water-blue-50 transition-colors text-gray-700"
+            >
+              <LinkIcon className="w-5 h-5 text-water-blue-600" />
+              <span className="font-medium">연관 이슈 선택하기</span>
+            </button>
+          </div>
         </div>
+
+        {/* 연관 이슈 선택 모달 */}
+        <RelatedIssuesModal
+          isOpen={isRelatedIssuesModalOpen}
+          onClose={() => setIsRelatedIssuesModalOpen(false)}
+          selectedIssues={selectedRelatedIssues}
+          onSelectionChange={setSelectedRelatedIssues}
+          allIssues={issues}
+          currentUser={user}
+        />
 
         {/* 버튼 그룹 */}
         <div className="flex items-center justify-end space-x-3 pt-6 border-t border-gray-200">
