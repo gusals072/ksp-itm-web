@@ -157,10 +157,11 @@ const Calendar: React.FC<CalendarProps> = ({ issues }) => {
               className={`
                 aspect-square p-1 border-r border-b border-gray-100
                 ${!isCurrentMonth ? 'bg-gray-50' : 'bg-white'}
-                ${weekend && isCurrentMonth ? 'bg-gray-50/50' : ''}
-                ${isToday ? 'bg-water-blue-50' : ''}
+                ${weekend && isCurrentMonth && !isToday ? 'bg-gray-50/50' : ''}
+                ${isToday ? 'bg-water-blue-100 ring-2 ring-water-blue-400 ring-offset-1 shadow-md' : ''}
                 hover:bg-gray-100 transition-colors cursor-pointer
                 flex flex-col items-center justify-center relative
+                ${isToday ? 'z-10' : ''}
               `}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -169,14 +170,21 @@ const Calendar: React.FC<CalendarProps> = ({ issues }) => {
               {/* 날짜 숫자 */}
               <span
                 className={`
-                  text-xs font-medium mb-1
+                  text-xs font-medium mb-0.5
                   ${!isCurrentMonth ? 'text-gray-300' : ''}
-                  ${isToday ? 'text-water-blue-600 font-bold' : 'text-gray-700'}
+                  ${isToday ? 'text-water-blue-700 font-bold' : 'text-gray-700'}
                   ${weekend && isCurrentMonth && !isToday ? 'text-gray-500' : ''}
                 `}
               >
                 {format(date, 'd')}
               </span>
+              
+              {/* 오늘 표시 */}
+              {isToday && (
+                <span className="text-[8px] font-semibold text-water-blue-700 leading-none">
+                  오늘
+                </span>
+              )}
 
               {/* 이슈 개수 배지 */}
               {issueCount > 0 && (
