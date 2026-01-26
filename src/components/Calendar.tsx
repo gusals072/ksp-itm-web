@@ -3,14 +3,18 @@ import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSam
 import { ko } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
-import type { Issue } from '../types';
+import type { Issue, User } from '../types';
+import DateIssuesSlideModal from './DateIssuesSlideModal';
 
 interface CalendarProps {
   issues: Issue[];
+  user: User | null;
 }
 
-const Calendar: React.FC<CalendarProps> = ({ issues }) => {
+const Calendar: React.FC<CalendarProps> = ({ issues, user }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [isSlideModalOpen, setIsSlideModalOpen] = useState(false);
   const today = new Date();
 
   // 날짜별 이슈 개수 집계
@@ -68,6 +72,15 @@ const Calendar: React.FC<CalendarProps> = ({ issues }) => {
   const getIssueCount = (date: Date): number => {
     const dateKey = format(date, 'yyyy-MM-dd');
     return issuesByDate[dateKey] || 0;
+  };
+
+  // 날짜 클릭 핸들러
+  const handleDateClick = (date: Date) => {
+    const issueCount = getIssueCount(date);
+    if (issueCount > 0) {
+      setSelectedDate(date);
+      setIsSlideModalOpen(true);
+    }
   };
 
   // 이슈 개수에 따른 색상 클래스
@@ -159,13 +172,15 @@ const Calendar: React.FC<CalendarProps> = ({ issues }) => {
                 ${!isCurrentMonth ? 'bg-gray-50' : 'bg-white'}
                 ${weekend && isCurrentMonth && !isToday ? 'bg-gray-50/50' : ''}
                 ${isToday ? 'bg-water-blue-100 ring-2 ring-water-blue-400 ring-offset-1 shadow-md' : ''}
-                hover:bg-gray-100 transition-colors cursor-pointer
+                ${issueCount > 0 ? 'hover:bg-water-blue-50 cursor-pointer' : 'cursor-default'}
+                transition-colors
                 flex flex-col items-center justify-center relative
                 ${isToday ? 'z-10' : ''}
               `}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: index * 0.01 }}
+              onClick={() => handleDateClick(date)}
             >
               {/* 날짜 숫자 */}
               <span
@@ -222,6 +237,18 @@ const Calendar: React.FC<CalendarProps> = ({ issues }) => {
           </div>
         </div>
       </div>
+
+      {/* 날짜별 이슈 슬라이드 모달 */}
+      <DateIssuesSlideModal
+        isOpen={isSlideModalOpen}
+        onClose={() => {
+          setIsSlideModalOpen(false);
+          setSelectedDate(null);
+        }}
+        date={selectedDate}
+        issues={issues}
+        currentUser={user}
+      />
     </motion.div>
   );
 };

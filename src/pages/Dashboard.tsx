@@ -339,7 +339,7 @@ const Dashboard: React.FC = () => {
 
           {/* 오른쪽: 캘린더 */}
           <div className="lg:col-span-1">
-            <Calendar issues={visibleIssues} />
+            <Calendar issues={visibleIssues} user={user} />
           </div>
         </motion.div>
 
