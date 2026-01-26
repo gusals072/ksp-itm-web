@@ -28,7 +28,7 @@ import {
   DialogTitle,
   VisuallyHidden,
 } from './ui/dialog';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface IssueDetailModalProps {
   issueId: string | null;
@@ -41,7 +41,19 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
   const navigate = useNavigate();
   const { issues, updateIssueStatus, deleteIssue, updateIssue, updateIssueAssignee, user, addMeetingAgenda, meetingAgendas } = useApp();
 
-  const issue = issueId ? issues.find(i => i.id === issueId) : null;
+  // 모달 스택 관리 (이전 이슈 ID들의 히스토리)
+  const [modalStack, setModalStack] = useState<string[]>([]);
+  const [currentIssueId, setCurrentIssueId] = useState<string | null>(issueId);
+
+  // issueId가 변경되면 currentIssueId 업데이트
+  useEffect(() => {
+    if (issueId) {
+      setCurrentIssueId(issueId);
+      setModalStack([]); // 새로운 모달이 열릴 때 스택 초기화
+    }
+  }, [issueId]);
+
+  const issue = currentIssueId ? issues.find(i => i.id === currentIssueId) : null;
   
   // 회의 안건 첨언 찾기
   const meetingAgenda = issue ? meetingAgendas.find(a => a.issueId === issue.id) : null;
@@ -64,8 +76,23 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
       setMeetingNote('');
       setShowStartProcessingModal(false);
       setShowRevertToPendingModal(false);
+      setModalStack([]);
+      setCurrentIssueId(null);
     }
   }, [isOpen]);
+
+  // 모달 닫기 핸들러 (스택이 있으면 이전 이슈로 돌아가고, 없으면 완전히 닫기)
+  const handleClose = () => {
+    if (modalStack.length > 0) {
+      // 스택에서 마지막 이슈를 가져와서 현재 이슈로 설정
+      const previousIssueId = modalStack[modalStack.length - 1];
+      setModalStack(prev => prev.slice(0, -1));
+      setCurrentIssueId(previousIssueId);
+    } else {
+      // 스택이 비어있으면 완전히 닫기
+      onClose();
+    }
+  };
 
   const handleDelete = () => {
     if (issue) {
@@ -266,13 +293,22 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
 
 
       {/* 메인 이슈 상세 모달 */}
-      <Dialog open={isOpen} onOpenChange={onClose}>
+      <Dialog open={isOpen} onOpenChange={handleClose}>
         <DialogContent className="max-w-4xl h-[72vh] overflow-hidden p-0 flex flex-col" id="issue-detail-modal" hideClose>
           <VisuallyHidden>
             <DialogTitle>이슈 상세</DialogTitle>
             <DialogDescription>이슈의 상세 정보를 확인하고 관리할 수 있습니다.</DialogDescription>
           </VisuallyHidden>
-          <div className="p-6 flex-1 overflow-y-auto">
+          <AnimatePresence mode="wait">
+            {issue && (
+              <motion.div
+                key={currentIssueId}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3, ease: "easeInOut" }}
+                className="p-6 flex-1 overflow-y-auto"
+              >
             {/* 헤더 */}
             <div className="mb-6 flex items-center justify-between">
               <div className="flex items-center space-x-4">
@@ -442,9 +478,11 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
                           <div
                             key={relatedIssueId}
                             onClick={() => {
-                              if (onIssueChange) {
-                                onIssueChange(relatedIssueId);
+                              // 현재 이슈를 스택에 추가하고 새 이슈로 변경
+                              if (currentIssueId) {
+                                setModalStack(prev => [...prev, currentIssueId]);
                               }
+                              setCurrentIssueId(relatedIssueId);
                             }}
                             className="flex items-center space-x-3 p-3 bg-gray-50 hover:bg-gray-100 rounded-lg cursor-pointer transition-colors border border-gray-200"
                           >
@@ -598,7 +636,9 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
               </div>
 
             </div>
-          </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </DialogContent>
       </Dialog>
 
