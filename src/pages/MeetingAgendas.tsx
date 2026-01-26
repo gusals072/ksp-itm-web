@@ -188,7 +188,7 @@ const MeetingAgendas: React.FC = () => {
 
       {/* 완료 확인 모달 (주간 회의 안건은 사유 없이 바로 완료) */}
       <Dialog open={showCompleteModal} onOpenChange={setShowCompleteModal}>
-        <DialogContent className="sm:max-w-[450px] z-[10004]">
+        <DialogContent className="sm:max-w-[450px] z-[10005]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <CheckCircle2 className="w-5 h-5 text-green-600" />
