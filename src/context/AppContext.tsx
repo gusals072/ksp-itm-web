@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
-import type { User, Issue, MeetingAgenda, Internalization, ClosedTicket } from '../types';
+import type { User, Issue, MeetingAgenda, Internalization, ClosedTicket, Notification, NotificationType } from '../types';
 import { Priority, IssueStatus, Rank } from '../types';
 
 interface AppContextType {
@@ -30,6 +30,14 @@ interface AppContextType {
 
   // Closed Tickets (완료된 티켓 보관)
   closedTickets: ClosedTicket[];
+
+  // Notifications
+  notifications: Notification[];
+  addNotification: (notification: Omit<Notification, 'id' | 'createdAt' | 'read'>) => void;
+  markNotificationAsRead: (notificationId: string) => void;
+  markAllNotificationsAsRead: () => void;
+  updateUserLinkedEmail: (userId: string, email: string) => void;
+  sendEmailNotification: (to: string, subject: string, body: string) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -248,12 +256,28 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const [meetingAgendas, setMeetingAgendas] = useState<MeetingAgenda[]>(dummyMeetingAgendas);
   const [internalizations, setInternalizations] = useState<Internalization[]>(dummyInternalizations);
   const [closedTickets, setClosedTickets] = useState<ClosedTicket[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
 
   // 세션 복구
   useEffect(() => {
     const savedUser = localStorage.getItem('user');
     if (savedUser) {
-      setUser(JSON.parse(savedUser));
+      const parsedUser = JSON.parse(savedUser);
+      setUser(parsedUser);
+    }
+    
+    // 알림 복구
+    const savedNotifications = localStorage.getItem('notifications');
+    if (savedNotifications) {
+      try {
+        const parsed = JSON.parse(savedNotifications);
+        setNotifications(parsed.map((n: any) => ({
+          ...n,
+          createdAt: new Date(n.createdAt)
+        })));
+      } catch (e) {
+        console.error('Failed to parse notifications:', e);
+      }
     }
   }, []);
 
@@ -360,6 +384,19 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       updatedAt: new Date()
     };
     setIssues(prev => [newIssue, ...prev]);
+
+    // 알림 전송: 티켓 참조자들에게 티켓 생성 알림
+    const notifyUsers = (issueData.cc || []).map(cc => cc.id);
+    notifyUsers.forEach(userId => {
+      addNotification({
+        type: 'TICKET_CREATED',
+        title: '새로운 티켓이 생성되었습니다',
+        message: `${issueData.reporterName}님이 "${newIssue.title}" 티켓을 생성했습니다.`,
+        issueId: newIssue.id,
+        issueTitle: newIssue.title,
+        userId
+      });
+    });
   };
 
   // 티켓 종료 상태인지 확인
@@ -403,6 +440,40 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   };
 
   const updateIssueStatus = (issueId: string, status: IssueStatus, closedReason?: string) => {
+    // 먼저 현재 이슈 정보를 가져옴
+    const currentIssue = issues.find(i => i.id === issueId);
+    if (!currentIssue) return;
+
+    const oldStatus = currentIssue.status;
+    
+    // 상태가 실제로 변경되지 않았다면 알림을 보내지 않음
+    if (oldStatus === status) return;
+
+    // 알림 전송: 상태가 변경된 경우 참조자들에게 알림 (setIssues 밖에서 실행)
+    const statusText = {
+      [IssueStatus.PENDING]: '이슈 제기',
+      [IssueStatus.IN_PROGRESS]: '처리 중',
+      [IssueStatus.MEETING]: '회의 예정',
+      [IssueStatus.RESOLVED]: '완료됨'
+    }[status] || status;
+
+    const notifyUsers = [
+      currentIssue.reporterId, // 생성자
+      ...(currentIssue.cc || []).map(cc => cc.id) // 참조자들
+    ].filter((id, index, self) => self.indexOf(id) === index); // 중복 제거
+
+    notifyUsers.forEach(userId => {
+      addNotification({
+        type: 'STATUS_CHANGED',
+        title: '티켓 상태가 변경되었습니다',
+        message: `"${currentIssue.title}" 티켓의 상태가 "${statusText}"로 변경되었습니다.`,
+        issueId: currentIssue.id,
+        issueTitle: currentIssue.title,
+        userId
+      });
+    });
+
+    // 이슈 상태 업데이트
     setIssues(prev => prev.map(issue => {
       if (issue.id === issueId) {
         const updatedIssue = {
@@ -536,6 +607,90 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     }));
   };
 
+  // 알림 관련 함수
+  const addNotification = (notificationData: Omit<Notification, 'id' | 'createdAt' | 'read'>) => {
+    const newNotification: Notification = {
+      ...notificationData,
+      id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+      createdAt: new Date(),
+      read: false
+    };
+    
+    setNotifications(prev => {
+      const updated = [newNotification, ...prev];
+      localStorage.setItem('notifications', JSON.stringify(updated));
+      return updated;
+    });
+
+    // 이메일 알림 전송 (연동된 이메일이 있는 경우)
+    const targetUser = dummyUsers.find(u => u.id === notificationData.userId);
+    if (targetUser?.linkedEmail) {
+      sendEmailNotification(
+        targetUser.linkedEmail,
+        newNotification.title,
+        newNotification.message
+      ).catch(err => {
+        console.error('Failed to send email notification:', err);
+      });
+    }
+  };
+
+  const markNotificationAsRead = (notificationId: string) => {
+    setNotifications(prev => {
+      const updated = prev.map(n => 
+        n.id === notificationId ? { ...n, read: true } : n
+      );
+      localStorage.setItem('notifications', JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  const markAllNotificationsAsRead = () => {
+    setNotifications(prev => {
+      const updated = prev.map(n => ({ ...n, read: true }));
+      localStorage.setItem('notifications', JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  const updateUserLinkedEmail = (userId: string, email: string) => {
+    // 사용자 목록 업데이트
+    const updatedUsers = dummyUsers.map(u => 
+      u.id === userId ? { ...u, linkedEmail: email } : u
+    );
+    
+    // 현재 사용자도 업데이트
+    if (user && user.id === userId) {
+      const updatedUser = { ...user, linkedEmail: email };
+      setUser(updatedUser);
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+    }
+    
+    // TODO: 백엔드 API 호출로 실제 사용자 데이터 업데이트
+    console.log(`[임시] 사용자 ${userId}의 이메일이 ${email}로 연동되었습니다.`);
+  };
+
+  // 이메일 전송 함수 (임시 구현)
+  const sendEmailNotification = async (to: string, subject: string, body: string): Promise<void> => {
+    // TODO: 백엔드 API 호출 - mailplug 연동
+    // 현재는 콘솔에 출력 (개발용)
+    console.log(`[임시 이메일 전송]`);
+    console.log(`받는 사람: ${to}`);
+    console.log(`제목: ${subject}`);
+    console.log(`내용: ${body}`);
+    console.log('---');
+    
+    // 실제로는 다음과 같은 API 호출이 필요:
+    // await fetch('/api/notifications/email', {
+    //   method: 'POST',
+    //   headers: { 'Content-Type': 'application/json' },
+    //   body: JSON.stringify({ to, subject, body })
+    // });
+    
+    // 임시로 성공 시뮬레이션
+    return Promise.resolve();
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -556,7 +711,13 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         internalizations,
         addInternalization,
         updateInternalization,
-        closedTickets
+        closedTickets,
+        notifications,
+        addNotification,
+        markNotificationAsRead,
+        markAllNotificationsAsRead,
+        updateUserLinkedEmail,
+        sendEmailNotification
       }}
     >
       {children}

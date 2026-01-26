@@ -3,6 +3,7 @@ import { CheckCircle2, File, Plus } from 'lucide-react';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import type { Issue, Opinion } from '../types';
+import { useApp } from '../context/AppContext';
 import AddOpinionModal from './AddOpinionModal';
 import OpinionDetailModal from './OpinionDetailModal';
 
@@ -13,6 +14,7 @@ interface IssueCommentsProps {
 }
 
 const IssueComments: React.FC<IssueCommentsProps> = ({ issue, user, isReadOnly = false }) => {
+  const { addNotification, users } = useApp();
   const [opinions, setOpinions] = useState<Opinion[]>([]);
   const [showAddOpinionModal, setShowAddOpinionModal] = useState(false);
   const [selectedOpinion, setSelectedOpinion] = useState<Opinion | null>(null);
@@ -41,6 +43,23 @@ const IssueComments: React.FC<IssueCommentsProps> = ({ issue, user, isReadOnly =
     
     setOpinions(prev => [...prev, newOpinion]);
     setShowAddOpinionModal(false);
+
+    // 알림 전송: 티켓 참조자들에게 의견 추가 알림
+    const notifyUsers = [
+      issue.reporterId, // 생성자
+      ...(issue.cc || []).map(cc => cc.id) // 참조자들
+    ].filter(id => id !== user.id); // 작성자 제외
+
+    notifyUsers.forEach(userId => {
+      addNotification({
+        type: 'OPINION_ADDED',
+        title: '새로운 의견이 추가되었습니다',
+        message: `${user.name}님이 "${issue.title}" 티켓에 의견을 남겼습니다.`,
+        issueId: issue.id,
+        issueTitle: issue.title,
+        userId
+      });
+    });
   };
 
   const handleOpinionClick = (opinion: Opinion) => {

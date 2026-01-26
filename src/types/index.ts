@@ -88,6 +88,7 @@ export interface User {
   department: string;
   role: 'admin' | 'manager' | 'user';
   rank: Rank;
+  linkedEmail?: string; // 연동된 사내 메일 (mailplug)
 }
 
 // 이슈 타입
@@ -202,4 +203,23 @@ export interface Opinion {
     type: string;
     url?: string;
   }>;
+}
+
+// 알림 타입
+export type NotificationType = 
+  | 'OPINION_ADDED'      // 의견이 추가됨
+  | 'STATUS_CHANGED'     // 티켓 상태가 변경됨
+  | 'TICKET_CREATED';    // 티켓이 생성됨
+
+// 알림 인터페이스
+export interface Notification {
+  id: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  issueId?: string;
+  issueTitle?: string;
+  userId: string; // 알림을 받을 사용자 ID
+  read: boolean;
+  createdAt: Date;
 }

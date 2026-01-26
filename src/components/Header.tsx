@@ -1,7 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Bell, Menu, User, Mail, Building, Shield, X, Camera, Upload, Image as ImageIcon } from 'lucide-react';
+import { Bell, Menu, User, Mail, Building, Shield, X, Camera, Upload, Image as ImageIcon, Link2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '../context/AppContext';
 import { IssueStatus } from '../types';
+import NotificationDropdown from './NotificationDropdown';
+import EmailVerificationModal from './EmailVerificationModal';
+import { useNavigate } from 'react-router-dom';
 
 interface HeaderProps {
   title: string;
@@ -9,9 +13,20 @@ interface HeaderProps {
 }
 
 const Header: React.FC<HeaderProps> = ({ title, onMenuClick }) => {
-  const { user, issues } = useApp();
+  const navigate = useNavigate();
+  const { 
+    user, 
+    issues, 
+    notifications, 
+    addNotification,
+    markNotificationAsRead,
+    markAllNotificationsAsRead,
+    updateUserLinkedEmail
+  } = useApp();
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [showImageUploadModal, setShowImageUploadModal] = useState(false);
+  const [showNotificationDropdown, setShowNotificationDropdown] = useState(false);
+  const [showEmailVerificationModal, setShowEmailVerificationModal] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [profileImage, setProfileImage] = useState<string | null>(
     user ? localStorage.getItem(`profileImage_${user.id}`) : null
@@ -19,6 +34,7 @@ const Header: React.FC<HeaderProps> = ({ title, onMenuClick }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
+  const notificationRef = useRef<HTMLDivElement>(null);
 
   // 프로필 드롭다운 외부 클릭 감지
   useEffect(() => {
@@ -29,16 +45,19 @@ const Header: React.FC<HeaderProps> = ({ title, onMenuClick }) => {
       if (modalRef.current && !modalRef.current.contains(event.target as Node) && showImageUploadModal) {
         setShowImageUploadModal(false);
       }
+      if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
+        setShowNotificationDropdown(false);
+      }
     };
 
-    if (showProfileDropdown || showImageUploadModal) {
+    if (showProfileDropdown || showImageUploadModal || showNotificationDropdown) {
       document.addEventListener('mousedown', handleClickOutside);
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [showProfileDropdown, showImageUploadModal]);
+  }, [showProfileDropdown, showImageUploadModal, showNotificationDropdown]);
 
   // 사용자 변경 시 프로필 이미지 로드
   useEffect(() => {
@@ -157,10 +176,36 @@ const Header: React.FC<HeaderProps> = ({ title, onMenuClick }) => {
       {/* 오른쪽: 알림 및 프로필 */}
       <div className="flex items-center space-x-4">
         {/* 알림 */}
-        <button className="relative p-2 hover:bg-gray-100 rounded-lg transition-colors">
-          <Bell className="w-5 h-5 text-gray-600" />
-          <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-        </button>
+        <div className="relative" ref={notificationRef}>
+          <button 
+            onClick={() => setShowNotificationDropdown(!showNotificationDropdown)}
+            className="relative p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            <Bell className="w-5 h-5 text-gray-600" />
+            {user && notifications.filter(n => n.userId === user.id && !n.read).length > 0 && (
+              <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+            )}
+          </button>
+          {user && (
+            <NotificationDropdown
+              isOpen={showNotificationDropdown}
+              onClose={() => setShowNotificationDropdown(false)}
+              notifications={notifications.filter(n => n.userId === user.id).sort((a, b) => 
+                new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+              )}
+              unreadCount={notifications.filter(n => n.userId === user.id && !n.read).length}
+              onNotificationClick={(notification) => {
+                if (notification.issueId) {
+                  navigate(`/issues`);
+                  // TODO: 이슈 상세 모달 열기
+                }
+                setShowNotificationDropdown(false);
+              }}
+              onMarkAsRead={markNotificationAsRead}
+              onMarkAllAsRead={markAllNotificationsAsRead}
+            />
+          )}
+        </div>
 
         {/* 사용자 정보 및 프로필 드롭다운 */}
         <div className="relative pl-4 border-l border-gray-200" ref={dropdownRef}>
@@ -194,7 +239,13 @@ const Header: React.FC<HeaderProps> = ({ title, onMenuClick }) => {
 
           {/* 프로필 드롭다운 */}
           {showProfileDropdown && user && (
-            <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden z-50">
+            <motion.div
+              initial={{ opacity: 0, y: -10, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -10, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
+              className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden z-50"
+            >
               {/* 헤더 */}
               <div className="bg-gradient-to-r from-water-blue-600 to-water-teal-600 p-6 text-white">
                 <div className="flex items-center justify-between mb-4">
@@ -296,7 +347,40 @@ const Header: React.FC<HeaderProps> = ({ title, onMenuClick }) => {
                   </div>
                 </div>
               )}
-            </div>
+
+              {/* 이메일 연동 섹션 */}
+              <div className="p-6 border-t border-gray-200">
+                <h4 className="text-sm font-semibold text-gray-800 mb-3">이메일 연동</h4>
+                <div className="space-y-3">
+                  {user.linkedEmail ? (
+                    <div className="flex items-center justify-between p-3 bg-water-blue-50 rounded-lg border border-water-blue-200">
+                      <div className="flex items-center space-x-2 flex-1 min-w-0">
+                        <Mail className="w-4 h-4 text-water-blue-600 flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs text-gray-500">연동된 이메일</p>
+                          <p className="text-sm font-medium text-gray-800 truncate">{user.linkedEmail}</p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => setShowEmailVerificationModal(true)}
+                        className="px-3 py-1.5 text-xs text-water-blue-600 hover:bg-water-blue-100 rounded-lg transition-colors flex items-center space-x-1"
+                      >
+                        <Link2 className="w-3 h-3" />
+                        <span>변경</span>
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setShowEmailVerificationModal(true)}
+                      className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-water-blue-600 text-white rounded-lg hover:bg-water-blue-700 transition-colors"
+                    >
+                      <Mail className="w-4 h-4" />
+                      <span>이메일 연동하기</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+            </motion.div>
           )}
         </div>
       </div>
@@ -357,6 +441,37 @@ const Header: React.FC<HeaderProps> = ({ title, onMenuClick }) => {
             />
           </div>
         </div>
+      )}
+
+      {/* 이메일 인증 모달 */}
+      {user && (
+        <EmailVerificationModal
+          isOpen={showEmailVerificationModal}
+          onClose={() => setShowEmailVerificationModal(false)}
+          currentEmail={user.linkedEmail}
+          onVerify={async (email: string, verificationCode: string) => {
+            // TODO: 백엔드 API 호출 - 인증 코드 검증
+            // 임시로 시뮬레이션
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // 실제로는 백엔드에서 검증
+            // const response = await fetch('/api/email/verify', {
+            //   method: 'POST',
+            //   headers: { 'Content-Type': 'application/json' },
+            //   body: JSON.stringify({ email, code: verificationCode })
+            // });
+            // const result = await response.json();
+            
+            // 임시로 항상 성공 (실제로는 백엔드 응답 확인)
+            const isValid = verificationCode.length === 6; // 임시 검증
+            
+            if (isValid) {
+              updateUserLinkedEmail(user.id, email);
+              return true;
+            }
+            return false;
+          }}
+        />
       )}
     </header>
   );
