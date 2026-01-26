@@ -205,7 +205,7 @@ const IssueDetail: React.FC = () => {
               className="flex items-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-semibold shadow-sm"
             >
               <Send className="w-4 h-4" />
-              <span>주간 회의 안건 등록</span>
+              <span>회의 안건 등록</span>
             </button>
           )}
           {/* 수정 버튼 */}

@@ -291,7 +291,7 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
                     className="flex items-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-semibold shadow-sm"
                   >
                     <Send className="w-4 h-4" />
-                    <span>주간 회의 안건 등록</span>
+                    <span>회의 안건 등록</span>
                   </button>
                 )}
                 {/* 수정 버튼 (완료된 티켓에서는 숨김, 참조자 또는 생성자만 가능) */}
@@ -763,7 +763,7 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Send className="w-5 h-5 text-purple-600" />
-              주간 회의 안건 등록
+              회의 안건 등록
             </DialogTitle>
             <DialogDescription>
               이 티켓을 회의 안건으로 등록합니다. 왜 회의 안건으로 넘겼는지 첨언을 추가할 수 있습니다.
