@@ -46,6 +46,15 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 const dummyUsers: User[] = [
   {
     id: '1',
+    username: 'super_admin',
+    name: '총괄 관리자',
+    email: 'super_admin@ksmartpia.co.kr',
+    department: '시스템 관리팀',
+    role: 'super_admin',
+    rank: 'SAWON'
+  },
+  {
+    id: '2',
     username: 'admin',
     name: '김대표',
     email: 'admin@ksmartpia.co.kr',
@@ -54,34 +63,34 @@ const dummyUsers: User[] = [
     rank: 'DAEPIO'
   },
   {
-    id: '2',
+    id: '3',
     username: 'isa',
     name: '박이사',
     email: 'isa@ksmartpia.co.kr',
     department: '상하수도팀',
-    role: 'manager',
+    role: 'user',
     rank: 'ISA'
   },
   {
-    id: '3',
+    id: '4',
     username: 'sangmu',
     name: '이상무',
     email: 'sangmu@ksmartpia.co.kr',
     department: '관리팀',
-    role: 'manager',
+    role: 'user',
     rank: 'SANGMU'
   },
   {
-    id: '4',
+    id: '5',
     username: 'bujang',
     name: '정부장',
     email: 'bujang@ksmartpia.co.kr',
     department: '상하수도팀',
-    role: 'manager',
+    role: 'user',
     rank: 'BUJANG'
   },
   {
-    id: '5',
+    id: '6',
     username: 'chajang',
     name: '최차장',
     email: 'chajang@ksmartpia.co.kr',
@@ -90,7 +99,7 @@ const dummyUsers: User[] = [
     rank: 'CHAJANG'
   },
   {
-    id: '6',
+    id: '7',
     username: 'gwajang',
     name: '한과장',
     email: 'gwajang@ksmartpia.co.kr',
@@ -99,7 +108,7 @@ const dummyUsers: User[] = [
     rank: 'GWAJANG'
   },
   {
-    id: '7',
+    id: '8',
     username: 'daeri',
     name: '조대리',
     email: 'daeri@ksmartpia.co.kr',
@@ -108,7 +117,7 @@ const dummyUsers: User[] = [
     rank: 'DAERI'
   },
   {
-    id: '8',
+    id: '9',
     username: 'juim',
     name: '권주임',
     email: 'juim@ksmartpia.co.kr',
@@ -117,7 +126,7 @@ const dummyUsers: User[] = [
     rank: 'JUIM'
   },
   {
-    id: '9',
+    id: '10',
     username: 'sawon',
     name: '민사원',
     email: 'sawon@ksmartpia.co.kr',
@@ -126,7 +135,7 @@ const dummyUsers: User[] = [
     rank: 'SAWON'
   },
   {
-    id: '10',
+    id: '11',
     username: 'sawon2',
     name: '강사원',
     email: 'sawon2@ksmartpia.co.kr',
@@ -135,7 +144,7 @@ const dummyUsers: User[] = [
     rank: 'SAWON'
   },
   {
-    id: '11',
+    id: '12',
     username: 'sawon3',
     name: '윤사원',
     email: 'sawon3@ksmartpia.co.kr',
@@ -144,7 +153,7 @@ const dummyUsers: User[] = [
     rank: 'SAWON'
   },
   {
-    id: '12',
+    id: '13',
     username: 'gwajang2',
     name: '서과장',
     email: 'gwajang2@ksmartpia.co.kr',
@@ -153,7 +162,7 @@ const dummyUsers: User[] = [
     rank: 'GWAJANG'
   },
   {
-    id: '13',
+    id: '14',
     username: 'chajang2',
     name: '송차장',
     email: 'chajang2@ksmartpia.co.kr',
@@ -162,21 +171,21 @@ const dummyUsers: User[] = [
     rank: 'CHAJANG'
   },
   {
-    id: '14',
+    id: '15',
     username: 'bujang2',
     name: '임부장',
     email: 'bujang2@ksmartpia.co.kr',
     department: '시설팀',
-    role: 'manager',
+    role: 'user',
     rank: 'BUJANG'
   },
   {
-    id: '15',
+    id: '16',
     username: 'sangmu2',
     name: '오상무',
     email: 'sangmu2@ksmartpia.co.kr',
     department: '시스템팀',
-    role: 'manager',
+    role: 'user',
     rank: 'SANGMU'
   }
 ];
@@ -189,13 +198,13 @@ const dummyIssues: Issue[] = [
     description: '현재 사용 중인 감지 시스템의 센서 민감도가 낮아 누수 조기 탐지가 어렵습니다. 고민감도 센서로 교체 필요.',
     status: IssueStatus.IN_PROGRESS,
     priority: Priority.HIGH,
-    reporterId: '7',
+    reporterId: '8',
     reporterName: '조대리',
-    assigneeId: '7',
+    assigneeId: '8',
     assigneeName: '조대리',
     cc: [
-      { id: '4', name: '정부장' },
-      { id: '5', name: '최차장' }
+      { id: '5', name: '정부장' },
+      { id: '6', name: '최차장' }
     ],
     readLevel: 'DAERI',
     createdAt: new Date('2026-01-07'),
@@ -218,8 +227,8 @@ const dummyIssues: Issue[] = [
     assigneeId: '6',
     assigneeName: '한과장',
     cc: [
-      { id: '4', name: '정부장' },
-      { id: '2', name: '박이사' }
+      { id: '5', name: '정부장' },
+      { id: '3', name: '박이사' }
     ],
     readLevel: 'GWAJANG',
     createdAt: new Date('2026-01-05'),
@@ -238,14 +247,14 @@ const dummyIssues: Issue[] = [
     description: '인근 주민들의 민원이 증가하고 있습니다. 추가적인 악취 제거 시설 설치가 필요합니다.',
     status: IssueStatus.PENDING,
     priority: Priority.URGENT,
-    reporterId: '8',
+    reporterId: '9',
     reporterName: '권주임',
-    assigneeId: '5',
+    assigneeId: '6',
     assigneeName: '최차장',
     cc: [
-      { id: '5', name: '최차장' },
-      { id: '4', name: '정부장' },
-      { id: '3', name: '이상무' }
+      { id: '6', name: '최차장' },
+      { id: '5', name: '정부장' },
+      { id: '4', name: '이상무' }
     ],
     readLevel: 'JUIM',
     createdAt: new Date('2026-01-12'),
@@ -264,7 +273,7 @@ const dummyIssues: Issue[] = [
     assigneeId: '6',
     assigneeName: '한과장',
     cc: [
-      { id: '2', name: '박이사' }
+      { id: '3', name: '박이사' }
     ],
     readLevel: 'GWAJANG',
     createdAt: new Date('2026-01-01'),
@@ -279,13 +288,13 @@ const dummyIssues: Issue[] = [
     description: '펌프실에서 발생하는 소음이 인근 주민에게 불편을 주고 있습니다. 방음 시설 설치가 필요합니다.',
     status: IssueStatus.IN_PROGRESS,
     priority: Priority.HIGH,
-    reporterId: '10',
+    reporterId: '11',
     reporterName: '강사원',
-    assigneeId: '5',
+    assigneeId: '6',
     assigneeName: '최차장',
     cc: [
-      { id: '14', name: '임부장' },
-      { id: '8', name: '권주임' }
+      { id: '15', name: '임부장' },
+      { id: '9', name: '권주임' }
     ],
     readLevel: 'SAWON',
     createdAt: new Date('2026-01-10'),

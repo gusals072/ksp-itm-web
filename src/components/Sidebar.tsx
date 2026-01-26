@@ -7,7 +7,9 @@ import {
   Archive,
   User,
   Droplets,
-  LogOut
+  LogOut,
+  Users,
+  Settings
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
@@ -37,6 +39,20 @@ const Sidebar: React.FC = () => {
       icon: Archive
     }
   ];
+
+  // 총괄 관리자 전용 메뉴
+  const adminNavItems = user?.role === 'super_admin' ? [
+    {
+      title: '유저 관리',
+      path: '/admin/users',
+      icon: Users
+    },
+    {
+      title: '사이트 관리',
+      path: '/admin/site',
+      icon: Settings
+    }
+  ] : [];
 
   const isActive = (path: string) => {
     return location.pathname === path || location.pathname.startsWith(path + '/');
@@ -73,6 +89,31 @@ const Sidebar: React.FC = () => {
             <span className="font-medium">{item.title}</span>
           </NavLink>
         ))}
+
+        {/* 총괄 관리자 전용 메뉴 */}
+        {adminNavItems.length > 0 && (
+          <>
+            <div className="pt-4 pb-2">
+              <div className="px-4 text-xs font-semibold text-water-blue-400 uppercase tracking-wider">
+                관리
+              </div>
+            </div>
+            {adminNavItems.map((item) => (
+              <NavLink
+                key={item.path}
+                to={item.path}
+                className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all group ${
+                  isActive(item.path)
+                    ? 'bg-water-blue-700 text-white shadow-lg'
+                    : 'text-water-blue-100 hover:bg-water-blue-800'
+                }`}
+              >
+                <item.icon className={`w-5 h-5 ${isActive(item.path) ? 'text-water-teal-300' : 'text-water-blue-400 group-hover:text-water-teal-300'}`} />
+                <span className="font-medium">{item.title}</span>
+              </NavLink>
+            ))}
+          </>
+        )}
       </nav>
 
       {/* 사용자 정보 */}

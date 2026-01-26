@@ -15,6 +15,8 @@ import CreateIssue from './pages/CreateIssue';
 import EditIssue from './pages/EditIssue';
 import MeetingAgendas from './pages/MeetingAgendas';
 import Internalizations from './pages/Internalizations';
+import UserManagement from './pages/UserManagement';
+import SiteManagement from './pages/SiteManagement';
 import { useApp } from './context/AppContext';
 
 // 보호된 라우트 컴포넌트
@@ -38,6 +40,8 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     if (path.includes('/edit')) return '이슈 수정';
     if (path === '/meetings') return '회의 안건';
     if (path === '/internalizations') return '완료된 티켓';
+    if (path === '/admin/users') return '유저 관리';
+    if (path === '/admin/site') return '사이트 관리';
     return 'K-SMARTPIA 이슈 티켓 매니지먼트 시스템';
   };
 
@@ -136,6 +140,29 @@ function App() {
                   <ProtectedRoute>
                     <MainLayout>
                       <Internalizations />
+                    </MainLayout>
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* 총괄 관리자 전용 라우트 */}
+              <Route
+                path="/admin/users"
+                element={
+                  <ProtectedRoute>
+                    <MainLayout>
+                      <UserManagement />
+                    </MainLayout>
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/admin/site"
+                element={
+                  <ProtectedRoute>
+                    <MainLayout>
+                      <SiteManagement />
                     </MainLayout>
                   </ProtectedRoute>
                 }

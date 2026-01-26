@@ -79,6 +79,9 @@ export const RankLevel: Record<Rank, number> = {
   DAEPIO: 10
 };
 
+// 사용자 권한 타입
+export type UserRole = 'super_admin' | 'admin' | 'user' | 'guest';
+
 // 사용자 타입
 export interface User {
   id: string;
@@ -86,7 +89,7 @@ export interface User {
   name: string;
   email: string;
   department: string;
-  role: 'admin' | 'manager' | 'user';
+  role: UserRole;
   rank: Rank;
   linkedEmail?: string; // 연동된 사내 메일 (mailplug)
 }

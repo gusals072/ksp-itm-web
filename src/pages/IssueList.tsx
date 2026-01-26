@@ -50,8 +50,9 @@ const IssueList: React.FC = () => {
       // 카테고리 필터
       const matchesCategory = filterCategory === 'all' || issue.category === filterCategory;
 
-      // 권한 체크 (생성자, 참조자만 확인 가능)
+      // 권한 체크 (총괄 관리자는 모든 티켓 확인 가능, 그 외는 생성자/참조자만)
       const canView = user && (
+        user.role === 'super_admin' ||
         issue.reporterId === user.id ||
         issue.cc?.some(ccUser => ccUser.id === user.id)
       );

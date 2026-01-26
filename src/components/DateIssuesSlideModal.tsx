@@ -36,9 +36,10 @@ const DateIssuesSlideModal: React.FC<DateIssuesSlideModalProps> = ({
     });
   }, [date, issues]);
 
-  // 권한 체크: 본인이 확인 가능한 이슈만 필터링
+  // 권한 체크: 총괄 관리자는 모든 티켓 확인 가능, 그 외는 본인이 확인 가능한 이슈만 필터링
   const viewableIssues = React.useMemo(() => {
     if (!currentUser) return [];
+    if (currentUser.role === 'super_admin') return dateIssues;
     return dateIssues.filter(issue => {
       return (
         issue.reporterId === currentUser.id ||

@@ -15,8 +15,9 @@ const Dashboard: React.FC = () => {
   const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // 권한 기준 필터링 함수 (생성자, 담당자, 참조자만 확인 가능)
+  // 권한 기준 필터링 함수 (총괄 관리자는 모든 티켓 확인 가능, 그 외는 생성자/참조자만)
   const canViewIssue = (issue: typeof issues[0]) => {
+    if (user?.role === 'super_admin') return true;
     if (!user) return false;
     return (
       issue.reporterId === user.id ||
