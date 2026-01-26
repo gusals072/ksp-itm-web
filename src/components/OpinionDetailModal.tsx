@@ -45,7 +45,7 @@ const OpinionDetailModal: React.FC<OpinionDetailModalProps> = ({ isOpen, onClose
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent 
-          className="sm:max-w-[700px] max-h-[80vh] overflow-y-auto z-[10000]"
+          className="sm:max-w-[700px] max-h-[80vh] overflow-y-auto z-[10003]"
         >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
