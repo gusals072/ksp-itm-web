@@ -25,7 +25,7 @@ const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
 
   // 사내 메일 도메인 체크 (mailplug 또는 ksmartpia.co.kr)
   const isValidCompanyEmail = (email: string) => {
-    const companyDomains = ['@ksmartpia.co.kr', '@mailplug.co.kr'];
+    const companyDomains = ['@ksmartpia.com'];
     return companyDomains.some(domain => email.endsWith(domain));
   };
 
@@ -39,7 +39,7 @@ const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
     }
 
     if (!isValidCompanyEmail(email)) {
-      setError('사내 메일(@ksmartpia.co.kr 또는 @mailplug.co.kr)만 연동 가능합니다.');
+      setError('사내 메일(@ksmartpia.com)만 연동 가능합니다.');
       return;
     }
 
@@ -152,7 +152,7 @@ const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
                   disabled={isLoading}
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  @ksmartpia.co.kr 또는 @mailplug.co.kr 도메인만 가능합니다.
+                  ksmartpia.com 도메인만 가능합니다.
                 </p>
               </div>
 

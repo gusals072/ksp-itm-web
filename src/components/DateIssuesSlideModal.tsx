@@ -24,11 +24,13 @@ const DateIssuesSlideModal: React.FC<DateIssuesSlideModalProps> = ({
   const [selectedIssueId, setSelectedIssueId] = React.useState<string | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = React.useState(false);
 
-  // 해당 날짜의 이슈 필터링
+  // 해당 날짜의 이슈 필터링 (완료된 티켓 제외)
   const dateIssues = React.useMemo(() => {
     if (!date) return [];
     const dateKey = format(date, 'yyyy-MM-dd');
     return issues.filter(issue => {
+      // 완료된 티켓은 제외
+      if (issue.status === 'RESOLVED') return false;
       const issueDateKey = format(new Date(issue.createdAt), 'yyyy-MM-dd');
       return issueDateKey === dateKey;
     });

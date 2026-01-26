@@ -25,9 +25,11 @@ const Dashboard: React.FC = () => {
     );
   };
 
-  // 권한 체크 후 이슈 필터링 (회의 안건 상태 제외)
+  // 권한 체크 후 이슈 필터링 (회의 안건 상태 및 완료된 티켓 제외)
   const visibleIssues = issues.filter(issue => 
-    canViewIssue(issue) && issue.status !== IssueStatus.MEETING
+    canViewIssue(issue) && 
+    issue.status !== IssueStatus.MEETING && 
+    issue.status !== IssueStatus.RESOLVED
   );
 
   // 통계 계산 (보이는 이슈 기준)
@@ -67,9 +69,13 @@ const Dashboard: React.FC = () => {
   // 주간 회의 예정 안건
   const upcomingMeetings = meetingAgendas.filter(a => a.status === 'pending').slice(0, 3);
 
-  // 사용자 관련 이슈
-  const userReportedIssues = user ? issues.filter(i => i.reporterId === user.id).slice(0, 5) : [];
-  const userAssignedIssues = user ? issues.filter(i => i.cc?.some(ccUser => ccUser.id === user.id)).slice(0, 5) : [];
+  // 사용자 관련 이슈 (완료된 티켓 제외)
+  const userReportedIssues = user ? issues.filter(i => 
+    i.reporterId === user.id && i.status !== IssueStatus.RESOLVED
+  ).slice(0, 5) : [];
+  const userAssignedIssues = user ? issues.filter(i => 
+    i.cc?.some(ccUser => ccUser.id === user.id) && i.status !== IssueStatus.RESOLVED
+  ).slice(0, 5) : [];
 
   const getStatusColor = (status: IssueStatus) => {
     switch (status) {

@@ -190,7 +190,6 @@ const IssueList: React.FC = () => {
               <option value="PENDING">이슈 제기</option>
               <option value="IN_PROGRESS">처리 중</option>
               <option value="MEETING">회의 예정</option>
-              <option value="RESOLVED">완료됨</option>
             </select>
 
             {/* 우선순위 필터 */}

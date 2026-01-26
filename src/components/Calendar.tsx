@@ -17,10 +17,12 @@ const Calendar: React.FC<CalendarProps> = ({ issues, user }) => {
   const [isSlideModalOpen, setIsSlideModalOpen] = useState(false);
   const today = new Date();
 
-  // 날짜별 이슈 개수 집계
+  // 날짜별 이슈 개수 집계 (완료된 티켓 제외)
   const issuesByDate = useMemo(() => {
     const countMap: Record<string, number> = {};
     issues.forEach(issue => {
+      // 완료된 티켓은 제외
+      if (issue.status === 'RESOLVED') return;
       const dateKey = format(new Date(issue.createdAt), 'yyyy-MM-dd');
       countMap[dateKey] = (countMap[dateKey] || 0) + 1;
     });
