@@ -18,8 +18,6 @@ const EditIssue: React.FC = () => {
     description: '',
     priority: Priority.MEDIUM,
     category: '',
-    assigneeId: '',
-    assigneeName: '',
     cc: [] as Array<{ id: string; name: string }>,
     readLevel: Rank.SAWON
   });
@@ -47,8 +45,6 @@ const EditIssue: React.FC = () => {
         description: issue.description,
         priority: issue.priority,
         category: issue.category,
-        assigneeId: issue.assigneeId || '',
-        assigneeName: issue.assigneeName || '',
         cc: issue.cc || [],
         readLevel: issue.readLevel
       });
@@ -116,8 +112,6 @@ const EditIssue: React.FC = () => {
       description: formData.description,
       priority: formData.priority,
       category: formData.category,
-      assigneeId: formData.assigneeId,
-      assigneeName: formData.assigneeName,
       cc: selectedCC,
       relatedIssues: selectedRelatedIssues.length > 0 ? selectedRelatedIssues : undefined
     });
@@ -296,27 +290,15 @@ const EditIssue: React.FC = () => {
           </div>
         </div>
 
-        {/* 담당자/참조자 배정 */}
+        {/* 참조자 배정 */}
         <div className="mb-8">
           <label className="block text-lg font-semibold text-gray-700 mb-2">
-            담당자 및 참조자 배정
+            참조자 배정
           </label>
           <div className="border-2 border-gray-300 rounded-lg p-4">
             <div className="flex items-center justify-between">
               <div className="flex-1">
-                {formData.assigneeId ? (
-                  <div className="mb-2">
-                    <div className="text-sm text-gray-600 mb-1">담당자</div>
-                    <div className="flex items-center space-x-2">
-                      <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                      <span className="font-medium">{formData.assigneeName}</span>
-                      <span className="text-xs text-gray-400">(수정 불가)</span>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-sm text-gray-400 mb-2">담당자 수정은 불가능합니다</div>
-                )}
-                {selectedCC.length > 0 && (
+                {selectedCC.length > 0 ? (
                   <div>
                     <div className="text-sm text-gray-600 mb-1">참조자 ({selectedCC.length})</div>
                     <div className="flex flex-wrap gap-1">
@@ -330,6 +312,8 @@ const EditIssue: React.FC = () => {
                       ))}
                     </div>
                   </div>
+                ) : (
+                  <div className="text-sm text-gray-400">참조자가 배정되지 않았습니다</div>
                 )}
               </div>
               <button
@@ -337,19 +321,18 @@ const EditIssue: React.FC = () => {
                 onClick={() => setIsAssigneeModalOpen(true)}
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
               >
-                참조 추가
+                참조자 추가
               </button>
             </div>
           </div>
         </div>
 
-        {/* 담당자 및 참조자 배정 모달 */}
+        {/* 참조자 배정 모달 */}
         <AssigneeAssignment
           ticketId={id || ''}
-          currentAssignee={formData.assigneeId ? { id: formData.assigneeId, name: formData.assigneeName } : null}
+          currentAssignee={null}
           currentCC={selectedCC}
           onAssignmentChange={(assignee, cc) => {
-            // 담당자는 변경하지 않음 (현재 담당자 유지)
             setSelectedCC(cc);
           }}
           isOpen={isAssigneeModalOpen}

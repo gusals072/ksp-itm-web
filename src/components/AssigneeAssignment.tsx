@@ -99,7 +99,7 @@ export function AssigneeAssignment({
 
   // 선택된 항목 총 개수
   const totalSelectedCount = useMemo(() => {
-    let count = selectedAssignee ? 1 : 0
+    let count = 0
     selectedCC.forEach(cc => {
       if (cc.isTeam && cc.memberCount) {
         count += cc.memberCount
@@ -108,11 +108,7 @@ export function AssigneeAssignment({
       }
     })
     return count
-  }, [selectedAssignee, selectedCC])
-
-  const handleAddAssignee = (userId: string) => {
-    setSelectedAssignee(userId)
-  }
+  }, [selectedCC])
 
   const handleAddCCUser = (userId: string) => {
     const user = users.find(u => u.id === userId)
@@ -140,11 +136,6 @@ export function AssigneeAssignment({
     setSelectedTeams(new Set([...selectedTeams, teamName]))
   }
 
-  const handleRemoveAssignee = () => {
-    if (!allowAssigneeChange) return; // 담당자 변경 불가 시 무시
-    setSelectedAssignee('')
-  }
-
   const handleRemoveCC = (ccId: string) => {
     const cc = selectedCC.find(c => c.id === ccId)
     if (cc?.isTeam && cc.teamName) {
@@ -166,29 +157,26 @@ export function AssigneeAssignment({
         // 팀인 경우 모든 멤버를 개별적으로 추가
         const members = getTeamMembers(cc.teamName)
         members.forEach(member => {
-          // 담당자와 중복되지 않도록 체크
-          if (member.id !== selectedAssignee && !finalCC.find(c => c.id === member.id)) {
+          if (!finalCC.find(c => c.id === member.id)) {
             finalCC.push({ id: member.id, name: member.name })
           }
         })
       } else {
         // 개인인 경우
-        if (cc.id !== selectedAssignee && !finalCC.find(c => c.id === cc.id)) {
+        if (!finalCC.find(c => c.id === cc.id)) {
           finalCC.push({ id: cc.id, name: cc.name })
         }
       }
     })
 
-    const assignee = selectedAssignee ? users.find(u => u.id === selectedAssignee) || null : null
-
     assignTicketMutation.mutate({
       ticketId,
-      assigneeId: assignee?.id,
-      assigneeName: assignee?.name,
+      assigneeId: undefined,
+      assigneeName: undefined,
       cc: finalCC
     }, {
       onSuccess: () => {
-        onAssignmentChange(assignee, finalCC)
+        onAssignmentChange(null, finalCC)
         onClose()
       }
     })
@@ -220,7 +208,7 @@ export function AssigneeAssignment({
             <div>
               <DialogTitle className="text-xl font-semibold">주소록</DialogTitle>
               <DialogDescription className="mt-1 text-sm text-gray-600">
-                담당자 및 참조자를 선택하세요.
+                참조자를 선택하세요.
               </DialogDescription>
             </div>
             <div className="flex items-center gap-2">
@@ -337,26 +325,14 @@ export function AssigneeAssignment({
                             >
                               <input
                                 type="checkbox"
-                                checked={
-                                  selectedAssignee === member.id ||
-                                  selectedCC.some(cc => cc.id === member.id && !cc.isTeam)
-                                }
+                                checked={selectedCC.some(cc => cc.id === member.id && !cc.isTeam)}
                                 onChange={(e) => {
                                   if (e.target.checked) {
-                                    if (selectedAssignee === '' && allowAssigneeChange) {
-                                      handleAddAssignee(member.id)
-                                    } else {
-                                      handleAddCCUser(member.id)
-                                    }
+                                    handleAddCCUser(member.id)
                                   } else {
-                                    if (selectedAssignee === member.id && allowAssigneeChange) {
-                                      handleRemoveAssignee()
-                                    } else {
-                                      handleRemoveCC(member.id)
-                                    }
+                                    handleRemoveCC(member.id)
                                   }
                                 }}
-                                disabled={selectedAssignee === member.id && !allowAssigneeChange}
                                 className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
                               />
                               <div className="flex-1">
@@ -388,26 +364,14 @@ export function AssigneeAssignment({
                       >
                         <input
                           type="checkbox"
-                          checked={
-                            selectedAssignee === user.id ||
-                            selectedCC.some(cc => cc.id === user.id && !cc.isTeam)
-                          }
+                          checked={selectedCC.some(cc => cc.id === user.id && !cc.isTeam)}
                           onChange={(e) => {
                             if (e.target.checked) {
-                              if (selectedAssignee === '' && allowAssigneeChange) {
-                                handleAddAssignee(user.id)
-                              } else {
-                                handleAddCCUser(user.id)
-                              }
+                              handleAddCCUser(user.id)
                             } else {
-                              if (selectedAssignee === user.id && allowAssigneeChange) {
-                                handleRemoveAssignee()
-                              } else {
-                                handleRemoveCC(user.id)
-                              }
+                              handleRemoveCC(user.id)
                             }
                           }}
-                          disabled={selectedAssignee === user.id && !allowAssigneeChange}
                           className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
                         />
                         <div className="flex-1">
@@ -427,40 +391,6 @@ export function AssigneeAssignment({
           {/* 오른쪽 패널 - 선택된 항목 */}
           <div className="w-1/2 flex flex-col">
             <div className="flex-1 p-4 overflow-y-auto space-y-6">
-              {/* 받는 사람 (담당자) */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-sm font-medium text-gray-700">받는 사람 &gt;</h3>
-                </div>
-                {selectedAssignee ? (
-                  <div className="bg-white border border-gray-200 rounded p-3 flex items-center justify-between">
-                    <div>
-                      <div className="text-sm font-medium">
-                        {users.find(u => u.id === selectedAssignee)?.name}
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        {users.find(u => u.id === selectedAssignee)?.email}
-                      </div>
-                      {!allowAssigneeChange && (
-                        <div className="text-xs text-gray-400 mt-1">(변경 불가)</div>
-                      )}
-                    </div>
-                    {allowAssigneeChange && (
-                      <button
-                        onClick={handleRemoveAssignee}
-                        className="p-1 hover:bg-gray-100 rounded"
-                      >
-                        <X className="w-4 h-4 text-gray-500" />
-                      </button>
-                    )}
-                  </div>
-                ) : (
-                  <div className="text-sm text-gray-400">
-                    {allowAssigneeChange ? '담당자를 선택하세요' : '담당자 수정은 불가능합니다'}
-                  </div>
-                )}
-              </div>
-
               {/* 참조 */}
               <div>
                 <div className="flex items-center justify-between mb-2">
@@ -508,7 +438,7 @@ export function AssigneeAssignment({
               </button>
               <button
                 onClick={handleSave}
-                disabled={assignTicketMutation.isPending || (allowAssigneeChange && !selectedAssignee)}
+                disabled={assignTicketMutation.isPending}
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {assignTicketMutation.isPending ? '저장 중...' : '저장'}
