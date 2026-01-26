@@ -13,7 +13,8 @@ import {
   Link as LinkIcon,
   Paperclip,
   File,
-  Download
+  Download,
+  RotateCcw
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
@@ -504,7 +505,7 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
                           onClick={handleRevertToPendingClick}
                           className="flex items-center gap-2 px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
                         >
-                          <CheckCircle2 className="w-4 h-4" />
+                          <RotateCcw className="w-4 h-4" />
                           되돌리기
                         </button>
                       </div>
@@ -741,7 +742,7 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
               onClick={handleRevertToPendingConfirm}
               className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-medium flex items-center gap-2"
             >
-              <CheckCircle2 className="w-4 h-4" />
+              <RotateCcw className="w-4 h-4" />
               되돌리기
             </button>
           </DialogFooter>
