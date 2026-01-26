@@ -60,7 +60,7 @@ const AddOpinionModal: React.FC<AddOpinionModalProps> = ({ isOpen, onClose, onSu
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[600px] z-[10000]">
+      <DialogContent className="sm:max-w-[600px] z-[10001]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Send className="w-5 h-5 text-water-blue-600" />

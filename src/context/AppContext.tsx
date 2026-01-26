@@ -124,6 +124,60 @@ const dummyUsers: User[] = [
     department: '상하수도팀',
     role: 'user',
     rank: 'SAWON'
+  },
+  {
+    id: '10',
+    username: 'sawon2',
+    name: '강사원',
+    email: 'sawon2@ksmartpia.co.kr',
+    department: '시설팀',
+    role: 'user',
+    rank: 'SAWON'
+  },
+  {
+    id: '11',
+    username: 'sawon3',
+    name: '윤사원',
+    email: 'sawon3@ksmartpia.co.kr',
+    department: '시스템팀',
+    role: 'user',
+    rank: 'SAWON'
+  },
+  {
+    id: '12',
+    username: 'gwajang2',
+    name: '서과장',
+    email: 'gwajang2@ksmartpia.co.kr',
+    department: '관리팀',
+    role: 'user',
+    rank: 'GWAJANG'
+  },
+  {
+    id: '13',
+    username: 'chajang2',
+    name: '송차장',
+    email: 'chajang2@ksmartpia.co.kr',
+    department: '상하수도팀',
+    role: 'user',
+    rank: 'CHAJANG'
+  },
+  {
+    id: '14',
+    username: 'bujang2',
+    name: '임부장',
+    email: 'bujang2@ksmartpia.co.kr',
+    department: '시설팀',
+    role: 'manager',
+    rank: 'BUJANG'
+  },
+  {
+    id: '15',
+    username: 'sangmu2',
+    name: '오상무',
+    email: 'sangmu2@ksmartpia.co.kr',
+    department: '시스템팀',
+    role: 'manager',
+    rank: 'SANGMU'
   }
 ];
 
@@ -218,6 +272,249 @@ const dummyIssues: Issue[] = [
     resolvedDate: new Date('2026-01-09'),
     tags: ['데이터', '관로', '유지보수'],
     category: '데이터관리'
+  },
+  {
+    id: '5',
+    title: '펌프실 소음 저감 공사',
+    description: '펌프실에서 발생하는 소음이 인근 주민에게 불편을 주고 있습니다. 방음 시설 설치가 필요합니다.',
+    status: IssueStatus.IN_PROGRESS,
+    priority: Priority.HIGH,
+    reporterId: '10',
+    reporterName: '강사원',
+    assigneeId: '5',
+    assigneeName: '최차장',
+    cc: [
+      { id: '14', name: '임부장' },
+      { id: '8', name: '권주임' }
+    ],
+    readLevel: 'SAWON',
+    createdAt: new Date('2026-01-10'),
+    updatedAt: new Date('2026-01-11'),
+    tags: ['소음', '시설', '민원'],
+    category: '시설확충',
+    attachments: [
+      { id: 'att5', name: '소음측정_보고서.pdf', size: 1536000, type: 'application/pdf' }
+    ]
+  },
+  {
+    id: '6',
+    title: '모바일 앱 사용자 인증 시스템 개선',
+    description: '현재 모바일 앱의 인증 방식이 불편하여 사용자 불만이 증가하고 있습니다. 생체인증 기능 추가 검토가 필요합니다.',
+    status: IssueStatus.PENDING,
+    priority: Priority.MEDIUM,
+    reporterId: '11',
+    reporterName: '윤사원',
+    assigneeId: '6',
+    assigneeName: '한과장',
+    cc: [
+      { id: '15', name: '오상무' },
+      { id: '2', name: '박이사' }
+    ],
+    readLevel: 'SAWON',
+    createdAt: new Date('2026-01-11'),
+    updatedAt: new Date('2026-01-11'),
+    tags: ['모바일', '인증', '개선'],
+    category: '시스템개선'
+  },
+  {
+    id: '7',
+    title: '정수장 전력 사용량 모니터링 시스템 도입',
+    description: '전력 사용량을 실시간으로 모니터링하여 비용 절감을 위한 시스템 도입이 필요합니다.',
+    status: IssueStatus.IN_PROGRESS,
+    priority: Priority.MEDIUM,
+    reporterId: '12',
+    reporterName: '서과장',
+    assigneeId: '12',
+    assigneeName: '서과장',
+    cc: [
+      { id: '3', name: '이상무' },
+      { id: '1', name: '김대표' }
+    ],
+    readLevel: 'GWAJANG',
+    createdAt: new Date('2026-01-08'),
+    updatedAt: new Date('2026-01-12'),
+    tags: ['전력', '모니터링', '비용절감'],
+    category: '시스템개선',
+    attachments: [
+      { id: 'att6', name: '전력모니터링_제안서.pdf', size: 2560000, type: 'application/pdf' },
+      { id: 'att7', name: '비용분석.xlsx', size: 768000, type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }
+    ]
+  },
+  {
+    id: '8',
+    title: '하수관 막힘 예방 정기 점검 체계 수립',
+    description: '하수관 막힘 사고를 사전에 예방하기 위한 정기 점검 체계를 수립해야 합니다.',
+    status: IssueStatus.PENDING,
+    priority: Priority.LOW,
+    reporterId: '9',
+    reporterName: '민사원',
+    assigneeId: '13',
+    assigneeName: '송차장',
+    cc: [
+      { id: '4', name: '정부장' },
+      { id: '7', name: '조대리' }
+    ],
+    readLevel: 'SAWON',
+    createdAt: new Date('2026-01-13'),
+    updatedAt: new Date('2026-01-13'),
+    tags: ['점검', '예방', '체계'],
+    category: '설비관리'
+  },
+  {
+    id: '9',
+    title: '급수압 불균형 해소 방안',
+    description: '일부 지역에서 급수압이 불안정하여 주민 불만이 있습니다. 압력 조절 밸브 교체 및 배관 개선이 필요합니다.',
+    status: IssueStatus.IN_PROGRESS,
+    priority: Priority.HIGH,
+    reporterId: '13',
+    reporterName: '송차장',
+    assigneeId: '13',
+    assigneeName: '송차장',
+    cc: [
+      { id: '4', name: '정부장' },
+      { id: '2', name: '박이사' },
+      { id: '9', name: '민사원' }
+    ],
+    readLevel: 'CHAJANG',
+    createdAt: new Date('2026-01-06'),
+    updatedAt: new Date('2026-01-12'),
+    tags: ['급수', '압력', '개선'],
+    category: '설비관리',
+    attachments: [
+      { id: 'att8', name: '급수압_측정데이터.xlsx', size: 512000, type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }
+    ]
+  },
+  {
+    id: '10',
+    title: '재해 대응 매뉴얼 개정',
+    description: '기존 재해 대응 매뉴얼이 최신 상황을 반영하지 못하고 있습니다. 개정 작업이 필요합니다.',
+    status: IssueStatus.RESOLVED,
+    priority: Priority.MEDIUM,
+    reporterId: '3',
+    reporterName: '이상무',
+    assigneeId: '3',
+    assigneeName: '이상무',
+    cc: [
+      { id: '1', name: '김대표' },
+      { id: '12', name: '서과장' }
+    ],
+    readLevel: 'SANGMU',
+    createdAt: new Date('2025-12-28'),
+    updatedAt: new Date('2026-01-05'),
+    resolvedDate: new Date('2026-01-05'),
+    tags: ['매뉴얼', '재해', '개정'],
+    category: '기타'
+  },
+  {
+    id: '11',
+    title: '수질 검사 자동화 장비 도입',
+    description: '수질 검사를 자동화하여 검사 시간을 단축하고 정확도를 높이기 위한 장비 도입이 필요합니다.',
+    status: IssueStatus.MEETING,
+    priority: Priority.MEDIUM,
+    reporterId: '2',
+    reporterName: '박이사',
+    assigneeId: '2',
+    assigneeName: '박이사',
+    cc: [
+      { id: '1', name: '김대표' },
+      { id: '6', name: '한과장' },
+      { id: '11', name: '윤사원' }
+    ],
+    readLevel: 'ISA',
+    createdAt: new Date('2026-01-09'),
+    updatedAt: new Date('2026-01-11'),
+    meetingDate: new Date('2026-01-15'),
+    tags: ['수질', '자동화', '장비'],
+    category: '시설확충',
+    attachments: [
+      { id: 'att9', name: '장비_사양서.pdf', size: 3072000, type: 'application/pdf' },
+      { id: 'att10', name: '비용견적서.xlsx', size: 1024000, type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }
+    ]
+  },
+  {
+    id: '12',
+    title: '시민 신고 앱 기능 개선',
+    description: '시민들이 사용하는 신고 앱의 UI/UX 개선 및 신고 처리 현황 조회 기능 추가가 필요합니다.',
+    status: IssueStatus.PENDING,
+    priority: Priority.MEDIUM,
+    reporterId: '15',
+    reporterName: '오상무',
+    assigneeId: '11',
+    assigneeName: '윤사원',
+    cc: [
+      { id: '6', name: '한과장' },
+      { id: '1', name: '김대표' }
+    ],
+    readLevel: 'SANGMU',
+    createdAt: new Date('2026-01-14'),
+    updatedAt: new Date('2026-01-14'),
+    tags: ['앱', 'UI/UX', '개선'],
+    category: '시스템개선'
+  },
+  {
+    id: '13',
+    title: '정수장 필터 교체 주기 최적화',
+    description: '현재 필터 교체 주기가 비효율적입니다. 사용량과 수질 데이터를 분석하여 최적의 교체 주기를 수립해야 합니다.',
+    status: IssueStatus.IN_PROGRESS,
+    priority: Priority.LOW,
+    reporterId: '14',
+    reporterName: '임부장',
+    assigneeId: '14',
+    assigneeName: '임부장',
+    cc: [
+      { id: '5', name: '최차장' },
+      { id: '10', name: '강사원' }
+    ],
+    readLevel: 'BUJANG',
+    createdAt: new Date('2026-01-04'),
+    updatedAt: new Date('2026-01-11'),
+    tags: ['필터', '최적화', '비용'],
+    category: '설비관리',
+    attachments: [
+      { id: 'att11', name: '필터_사용량_분석.xlsx', size: 640000, type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }
+    ]
+  },
+  {
+    id: '14',
+    title: '직원 안전 교육 프로그램 개편',
+    description: '현장 작업 직원들의 안전 의식을 높이기 위한 교육 프로그램을 개편해야 합니다.',
+    status: IssueStatus.RESOLVED,
+    priority: Priority.MEDIUM,
+    reporterId: '1',
+    reporterName: '김대표',
+    assigneeId: '3',
+    assigneeName: '이상무',
+    cc: [
+      { id: '12', name: '서과장' },
+      { id: '14', name: '임부장' }
+    ],
+    readLevel: 'DAEPIO',
+    createdAt: new Date('2025-12-30'),
+    updatedAt: new Date('2026-01-08'),
+    resolvedDate: new Date('2026-01-08'),
+    tags: ['안전', '교육', '개편'],
+    category: '기타'
+  },
+  {
+    id: '15',
+    title: '데이터 백업 시스템 이중화',
+    description: '현재 단일 백업 시스템으로는 위험합니다. 이중화를 통한 데이터 보안 강화가 필요합니다.',
+    status: IssueStatus.PENDING,
+    priority: Priority.HIGH,
+    reporterId: '6',
+    reporterName: '한과장',
+    assigneeId: '6',
+    assigneeName: '한과장',
+    cc: [
+      { id: '15', name: '오상무' },
+      { id: '1', name: '김대표' },
+      { id: '11', name: '윤사원' }
+    ],
+    readLevel: 'GWAJANG',
+    createdAt: new Date('2026-01-15'),
+    updatedAt: new Date('2026-01-15'),
+    tags: ['백업', '보안', '이중화'],
+    category: '시스템개선'
   }
 ];
 
@@ -229,6 +526,13 @@ const dummyMeetingAgendas: MeetingAgenda[] = [
     issueTitle: '주요 지역 수질 모니터링 보고서 자동화',
     status: 'pending',
     meetingDate: new Date('2026-01-12')
+  },
+  {
+    id: '2',
+    issueId: '11',
+    issueTitle: '수질 검사 자동화 장비 도입',
+    status: 'pending',
+    meetingDate: new Date('2026-01-15')
   }
 ];
 
@@ -240,9 +544,29 @@ const dummyInternalizations: Internalization[] = [
     issueTitle: '관로 노후화 데이터베이스 구축',
     reviewDate: new Date('2026-01-10'),
     reviewerId: '1',
-    reviewerName: '김관리',
+    reviewerName: '김대표',
     status: 'approved',
     reason: '전국적으로 확대 적용 가능한 우수 사례'
+  },
+  {
+    id: '2',
+    issueId: '10',
+    issueTitle: '재해 대응 매뉴얼 개정',
+    reviewDate: new Date('2026-01-06'),
+    reviewerId: '1',
+    reviewerName: '김대표',
+    status: 'approved',
+    reason: '실무에 바로 적용 가능한 개선 사항'
+  },
+  {
+    id: '3',
+    issueId: '14',
+    issueTitle: '직원 안전 교육 프로그램 개편',
+    reviewDate: new Date('2026-01-09'),
+    reviewerId: '2',
+    reviewerName: '박이사',
+    status: 'approved',
+    reason: '다른 부서에도 참고할 만한 우수 사례'
   }
 ];
 

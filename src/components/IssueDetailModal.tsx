@@ -266,7 +266,7 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
       {isOpen && issue && typeof window !== 'undefined' && createPortal(
         <motion.div 
           data-comment-container="true"
-          className="fixed bg-white shadow-2xl z-[100] border border-gray-200 rounded-xl flex flex-col"
+          className="fixed bg-white shadow-2xl z-[10000] border border-gray-200 rounded-xl flex flex-col"
           style={{ 
             pointerEvents: 'auto',
             // 메인 모달과 동일한 top 위치, 메인 모달 오른쪽에 배치
@@ -294,7 +294,7 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
 
       {/* 메인 이슈 상세 모달 */}
       <Dialog open={isOpen} onOpenChange={handleClose}>
-        <DialogContent className="max-w-4xl h-[72vh] overflow-hidden p-0 flex flex-col" id="issue-detail-modal" hideClose>
+        <DialogContent className="max-w-4xl h-[72vh] overflow-hidden p-0 flex flex-col z-[10000]" id="issue-detail-modal" hideClose>
           <VisuallyHidden>
             <DialogTitle>이슈 상세</DialogTitle>
             <DialogDescription>이슈의 상세 정보를 확인하고 관리할 수 있습니다.</DialogDescription>

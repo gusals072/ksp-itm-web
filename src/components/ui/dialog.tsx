@@ -46,7 +46,10 @@ const DialogContent = React.forwardRef<
 >(({ className, children, hideClose = false, ...props }, ref) => {
   // z-index가 높게 설정된 경우 overlay도 함께 높임
   const hasHighZIndex = className?.includes('z-[');
-  const overlayZIndex = hasHighZIndex ? 'z-[9999]' : undefined;
+  // z-index 값을 추출하여 overlay는 content보다 1 낮게 설정
+  const zIndexMatch = className?.match(/z-\[(\d+)\]/);
+  const contentZIndex = zIndexMatch ? parseInt(zIndexMatch[1]) : undefined;
+  const overlayZIndex = contentZIndex ? `z-[${contentZIndex - 1}]` : (hasHighZIndex ? 'z-[9999]' : undefined);
   
   return (
   <DialogPortal>
