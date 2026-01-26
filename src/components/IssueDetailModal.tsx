@@ -658,12 +658,12 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
             <textarea
               className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-water-blue-500 focus:border-transparent resize-none transition-all"
               rows={5}
-              placeholder="완료 방법을 입력하세요..."
+              placeholder="내용을 입력하세요..."
               value={completionReason}
               onChange={(e) => setCompletionReason(e.target.value)}
             />
             {!completionReason.trim() && (
-              <p className="text-xs text-red-500 mt-2">완료 사유를 입력해주세요.</p>
+              <p className="text-xs text-red-500 mt-2">완료 내용을 입력해주세요.</p>
             )}
           </div>
           <DialogFooter>
@@ -799,7 +799,7 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
 
       {/* 회의 안건 등록 모달 */}
       <Dialog open={showMeetingModal} onOpenChange={setShowMeetingModal}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[500px] z-[10004]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Send className="w-5 h-5 text-purple-600" />
@@ -844,7 +844,7 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
 
       {/* 삭제 확인 모달 */}
       <Dialog open={showDeleteModal} onOpenChange={setShowDeleteModal}>
-        <DialogContent className="sm:max-w-[450px]">
+        <DialogContent className="sm:max-w-[450px] z-[10004]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-red-600">
               <Trash2 className="w-5 h-5" />
