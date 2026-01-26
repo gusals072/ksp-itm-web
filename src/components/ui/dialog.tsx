@@ -56,10 +56,11 @@ const DialogContent = React.forwardRef<
     {overlayZIndex ? (
       <DialogPrimitive.Overlay asChild>
         <motion.div
-          className={cn(
-            "fixed inset-0 bg-black/20",
-            overlayZIndex
-          )}
+          className="fixed inset-0 bg-black/20"
+          style={{
+            // z-index를 인라인 스타일로 직접 설정하여 우선순위 보장
+            zIndex: contentZIndex ? contentZIndex - 1 : (hasHighZIndex ? 9999 : 49)
+          }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -103,7 +104,7 @@ const DialogContent = React.forwardRef<
     >
       <motion.div
         className={cn(
-          "fixed z-50 grid w-full gap-4 border border-gray-200 bg-white p-6 shadow-lg rounded-lg",
+          "fixed grid w-full gap-4 border border-gray-200 bg-white p-6 shadow-lg rounded-lg",
           className
         )}
         {...(className?.includes('max-w-4xl') ? {
@@ -119,6 +120,8 @@ const DialogContent = React.forwardRef<
         })}
         transition={{ duration: 0.2, ease: "easeOut" }}
         style={{
+          // z-index를 인라인 스타일로 직접 설정하여 우선순위 보장 (CSS 클래스보다 우선)
+          zIndex: contentZIndex || (hasHighZIndex ? 9999 : 50),
           ...(className?.includes('max-w-4xl') ? {
             // 두 컨테이너 합친 너비: 56rem(메인) + 0.5rem(간격) + 20rem(댓글) = 76.5rem
             // 두 컨테이너 합친 기준 중앙: 50% - 38.25rem (76.5rem / 2)
