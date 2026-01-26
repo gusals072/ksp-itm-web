@@ -69,7 +69,7 @@ const Dashboard: React.FC = () => {
 
   // 사용자 관련 이슈
   const userReportedIssues = user ? issues.filter(i => i.reporterId === user.id).slice(0, 5) : [];
-  const userAssignedIssues = user ? issues.filter(i => i.assigneeId === user.id).slice(0, 5) : [];
+  const userAssignedIssues = user ? issues.filter(i => i.cc?.some(ccUser => ccUser.id === user.id)).slice(0, 5) : [];
 
   const getStatusColor = (status: IssueStatus) => {
     switch (status) {
@@ -224,7 +224,7 @@ const Dashboard: React.FC = () => {
               <div className="p-4 border-b border-gray-100 bg-water-teal-50">
                 <div className="flex items-center space-x-2">
                   <CalendarIcon className="w-5 h-5 text-water-teal-600" />
-                  <h3 className="text-lg font-semibold text-gray-800">나에게 할당된 이슈</h3>
+                  <h3 className="text-lg font-semibold text-gray-800">내가 참조된 이슈</h3>
                   {userAssignedIssues.length > 0 && (
                     <span className="ml-auto px-2 py-1 text-xs font-bold bg-water-teal-600 text-white rounded-full">
                       {userAssignedIssues.length}
@@ -270,7 +270,7 @@ const Dashboard: React.FC = () => {
                 ) : (
                   <div className="text-center py-8">
                     <CalendarIcon className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                    <p className="text-gray-500 text-sm">할당된 이슈가 없습니다.</p>
+                    <p className="text-gray-500 text-sm">참조된 이슈가 없습니다.</p>
                   </div>
                 )}
               </div>
