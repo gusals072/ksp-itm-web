@@ -187,3 +187,19 @@ export interface CreateIssueForm {
   category: string;
   tags: string[];
 }
+
+// 의견 타입
+export interface Opinion {
+  id: string;
+  text: string;
+  authorId: string;
+  authorName: string;
+  createdAt: Date;
+  attachments?: Array<{
+    id: string;
+    name: string;
+    size: number;
+    type: string;
+    url?: string;
+  }>;
+}

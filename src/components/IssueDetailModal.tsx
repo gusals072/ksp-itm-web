@@ -26,6 +26,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  VisuallyHidden,
 } from './ui/dialog';
 import { motion } from 'framer-motion';
 
@@ -237,6 +238,7 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
       {/* 오른쪽: 댓글 컨테이너 (모달 옆에 붙임) - Portal 사용 */}
       {isOpen && issue && typeof window !== 'undefined' && createPortal(
         <motion.div 
+          data-comment-container="true"
           className="fixed bg-white shadow-2xl z-[100] border border-gray-200 rounded-xl flex flex-col"
           style={{ 
             pointerEvents: 'auto',
@@ -254,6 +256,8 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.95 }}
           transition={{ duration: 0.2, ease: "easeOut" }}
+          onClick={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
         >
           <IssueComments issue={issue} user={user} isReadOnly={issue.status === IssueStatus.RESOLVED} />
         </motion.div>,
@@ -264,6 +268,10 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
       {/* 메인 이슈 상세 모달 */}
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="max-w-4xl h-[72vh] overflow-hidden p-0 flex flex-col" id="issue-detail-modal" hideClose>
+          <VisuallyHidden>
+            <DialogTitle>이슈 상세</DialogTitle>
+            <DialogDescription>이슈의 상세 정보를 확인하고 관리할 수 있습니다.</DialogDescription>
+          </VisuallyHidden>
           <div className="p-6 flex-1 overflow-y-auto">
             {/* 헤더 */}
             <div className="mb-6 flex items-center justify-between">

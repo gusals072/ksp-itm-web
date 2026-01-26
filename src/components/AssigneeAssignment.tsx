@@ -7,6 +7,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from './ui/dialog'
 
 interface Assignee {
@@ -216,7 +217,12 @@ export function AssigneeAssignment({
       <DialogContent className="max-w-5xl w-full h-[80vh] flex flex-col p-0" hideClose>
         <DialogHeader className="px-6 pt-6 pb-4 border-b">
           <div className="flex items-center justify-between">
-            <DialogTitle className="text-xl font-semibold">주소록</DialogTitle>
+            <div>
+              <DialogTitle className="text-xl font-semibold">주소록</DialogTitle>
+              <DialogDescription className="mt-1 text-sm text-gray-600">
+                담당자 및 참조자를 선택하세요.
+              </DialogDescription>
+            </div>
             <div className="flex items-center gap-2">
               <span className="text-sm text-gray-600">선택 {totalSelectedCount}</span>
               <button 

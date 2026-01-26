@@ -43,9 +43,29 @@ interface DialogContentProps extends React.ComponentPropsWithoutRef<typeof Dialo
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   DialogContentProps
->(({ className, children, hideClose = false, ...props }, ref) => (
+>(({ className, children, hideClose = false, ...props }, ref) => {
+  // z-index가 높게 설정된 경우 overlay도 함께 높임
+  const hasHighZIndex = className?.includes('z-[');
+  const overlayZIndex = hasHighZIndex ? 'z-[9999]' : undefined;
+  
+  return (
   <DialogPortal>
-    <DialogOverlay />
+    {overlayZIndex ? (
+      <DialogPrimitive.Overlay asChild>
+        <motion.div
+          className={cn(
+            "fixed inset-0 bg-black/20",
+            overlayZIndex
+          )}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+        />
+      </DialogPrimitive.Overlay>
+    ) : (
+      <DialogOverlay />
+    )}
     <DialogPrimitive.Content
       ref={ref}
       asChild
@@ -59,6 +79,19 @@ const DialogContent = React.forwardRef<
         }
         // 파일 입력 요소 자체 클릭 시 모달 닫힘 방지
         if (target.tagName === 'INPUT' && target.getAttribute('type') === 'file') {
+          e.preventDefault();
+          return;
+        }
+        // 댓글 입력 영역 클릭 시 모달 닫힘 방지
+        if (target.closest('textarea') || 
+            target.closest('form') ||
+            target.closest('[data-comment-area="true"]')) {
+          e.preventDefault();
+          return;
+        }
+        // 댓글 컨테이너(Portal로 렌더링된) 클릭 시 모달 닫힘 방지
+        const commentContainer = document.querySelector('[data-comment-container="true"]');
+        if (commentContainer && commentContainer.contains(target)) {
           e.preventDefault();
           return;
         }
@@ -107,7 +140,8 @@ const DialogContent = React.forwardRef<
       </motion.div>
     </DialogPrimitive.Content>
   </DialogPortal>
-))
+  );
+})
 DialogContent.displayName = DialogPrimitive.Content.displayName
 
 const DialogHeader = ({
@@ -165,6 +199,29 @@ const DialogDescription = React.forwardRef<
 ))
 DialogDescription.displayName = DialogPrimitive.Description.displayName
 
+// VisuallyHidden 컴포넌트 (스크린 리더용)
+const VisuallyHidden = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, children, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn(
+      "absolute w-px h-px p-0 -m-px overflow-hidden whitespace-nowrap border-0",
+      "clip-path-[inset(50%)]",
+      className
+    )}
+    style={{
+      clip: "rect(0, 0, 0, 0)",
+      clipPath: "inset(50%)",
+    }}
+    {...props}
+  >
+    {children}
+  </div>
+))
+VisuallyHidden.displayName = "VisuallyHidden"
+
 export {
   Dialog,
   DialogPortal,
@@ -176,5 +233,6 @@ export {
   DialogFooter,
   DialogTitle,
   DialogDescription,
+  VisuallyHidden,
 }
 
