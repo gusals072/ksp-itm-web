@@ -70,7 +70,7 @@ const NotificationSlideModal: React.FC<NotificationSlideModalProps> = ({
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed right-0 top-0 h-full w-full max-w-md bg-white shadow-2xl z-[9999] flex flex-col"
+            className="fixed right-[-16px] top-0 h-full w-full max-w-md bg-white shadow-2xl z-[9999] flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
             {/* 헤더 */}

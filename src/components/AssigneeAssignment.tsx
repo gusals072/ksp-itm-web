@@ -206,7 +206,7 @@ export function AssigneeAssignment({
         <DialogHeader className="px-6 pt-6 pb-4 border-b">
           <div className="flex items-center justify-between">
             <div>
-              <DialogTitle className="text-xl font-semibold">주소록</DialogTitle>
+            <DialogTitle className="text-xl font-semibold">주소록</DialogTitle>
               <DialogDescription className="mt-1 text-sm text-gray-600">
                 참조자를 선택하세요.
               </DialogDescription>
@@ -328,9 +328,9 @@ export function AssigneeAssignment({
                                 checked={selectedCC.some(cc => cc.id === member.id && !cc.isTeam)}
                                 onChange={(e) => {
                                   if (e.target.checked) {
-                                    handleAddCCUser(member.id)
-                                  } else {
-                                    handleRemoveCC(member.id)
+                                      handleAddCCUser(member.id)
+                                    } else {
+                                      handleRemoveCC(member.id)
                                   }
                                 }}
                                 className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
@@ -367,9 +367,9 @@ export function AssigneeAssignment({
                           checked={selectedCC.some(cc => cc.id === user.id && !cc.isTeam)}
                           onChange={(e) => {
                             if (e.target.checked) {
-                              handleAddCCUser(user.id)
-                            } else {
-                              handleRemoveCC(user.id)
+                                handleAddCCUser(user.id)
+                              } else {
+                                handleRemoveCC(user.id)
                             }
                           }}
                           className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
