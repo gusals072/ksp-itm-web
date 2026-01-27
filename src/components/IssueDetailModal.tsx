@@ -170,7 +170,7 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
     setTimeout(() => {
       updateIssueStatus(issue.id, IssueStatus.RESOLVED, completionReason);
       setCompletionReason('');
-    }, 1200); // 체크 아이콘 애니메이션 완료 후
+    }, 800); // 체크 아이콘 애니메이션 완료 후 (더 빠르게)
     
     // 모달 페이드아웃 시작
     setTimeout(() => {
@@ -190,10 +190,10 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
           setTimeout(() => {
             setShowCompletionAnimation(false);
             setIsMessageClosing(false);
-          }, 500); // 메시지 페이드아웃 시간 (0.5초)
-        }, 100); // 모달 닫힌 후 약간의 딜레이
-      }, 500); // 모달 페이드아웃 시간 (0.5초)
-    }, 2000); // "완료되었습니다!" 메시지 표시 시간
+          }, 300); // 메시지 페이드아웃 시간 (0.3초, 더 빠르게)
+        }, 50); // 모달 닫힌 후 약간의 딜레이 (더 빠르게)
+      }, 300); // 모달 페이드아웃 시간 (0.3초, 더 빠르게)
+    }, 1500); // "완료되었습니다!" 메시지 표시 시간 (더 빠르게)
   };
 
   // 주간 회의 안건으로 이동 (첨언 입력 모달 표시)
@@ -310,7 +310,7 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
               initial={{ opacity: 0 }}
               animate={{ opacity: isClosing || isMessageClosing ? 0 : 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.5, ease: "easeInOut" }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
               className="fixed inset-0 bg-black/50 z-[10001] flex items-center justify-center"
               style={{ 
                 position: 'fixed',
@@ -339,7 +339,7 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
                     opacity: 1 
                   }}
                   transition={{ 
-                    duration: 0.5,
+                    duration: 0.3,
                     ease: [0.34, 1.56, 0.64, 1] // 탄성 효과
                   }}
                   className="relative"
@@ -378,8 +378,8 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
                     y: 0 
                   }}
                   transition={{ 
-                    duration: 0.5,
-                    delay: 0.3
+                    duration: 0.3,
+                    delay: 0.2
                   }}
                   className="text-white text-2xl font-bold"
                 >
@@ -410,7 +410,7 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
               opacity: isClosing ? 0 : 1,
               x: isClosing ? 100 : 0
             }}
-            transition={{ duration: 0.5, ease: "easeInOut" }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
             className="h-full w-full"
           >
           <AnimatePresence mode="wait">

@@ -108,8 +108,10 @@ const SwiperView: React.FC<{
   getPriorityText: (priority: Priority) => string;
   onSlideChange?: (index: number) => void;
 }> = ({ tickets, meetingAgendas, onComplete, onDetail, getPriorityColor, getPriorityText, onSlideChange }) => {
+  const isSingleSlide = tickets.length === 1;
+  
   return (
-    <div className="relative flex items-center justify-center">
+    <div className={`relative flex items-center justify-center w-full ${isSingleSlide ? 'max-w-md mx-auto' : ''}`}>
       <Swiper
         pagination={{
           dynamicBullets: true,
@@ -119,12 +121,12 @@ const SwiperView: React.FC<{
           onlyInViewport: true,
         }}
         modules={[Pagination, Keyboard]}
-        className="meeting-swiper"
+        className={`meeting-swiper ${isSingleSlide ? '!w-full max-w-md' : ''}`}
         speed={600}
         spaceBetween={30}
-        slidesPerView={1.2}
-        centeredSlides={true}
-        grabCursor={true}
+        slidesPerView={isSingleSlide ? 1 : 1.2}
+        centeredSlides={!isSingleSlide}
+        grabCursor={!isSingleSlide}
         onSlideChange={(swiper) => {
           if (onSlideChange) {
             onSlideChange(swiper.activeIndex);
@@ -315,7 +317,7 @@ const MeetingAgendas: React.FC = () => {
       <Dialog open={showCompleteModal} onOpenChange={setShowCompleteModal}>
         <DialogContent className="sm:max-w-[450px] z-[10005]">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
+            <DialogTitle className="flex items-center gap-2">ㅇㅇ
               <CheckCircle2 className="w-5 h-5 text-green-600" />
               회의 완료 처리
             </DialogTitle>

@@ -138,7 +138,7 @@ const DialogContent = React.forwardRef<
           exit: { opacity: 0, scale: 0.95, x: '-50%', y: '-50%' }
         })}
         transition={{ 
-          duration: className?.includes('max-w-[1344px]') ? 0.5 : 0.2, 
+          duration: className?.includes('max-w-[1344px]') ? 0.3 : 0.2, 
           ease: "easeOut" 
         }}
         style={{
