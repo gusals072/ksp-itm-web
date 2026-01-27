@@ -38,37 +38,52 @@ DialogOverlay.displayName = DialogPrimitive.Overlay.displayName
 
 interface DialogContentProps extends React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> {
   hideClose?: boolean;
+  overlayOpacity?: number;
+  isClosing?: boolean;
 }
 
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   DialogContentProps
->(({ className, children, hideClose = false, ...props }, ref) => {
+>(({ className, children, hideClose = false, overlayOpacity, isClosing = false, ...props }, ref) => {
   // z-index가 높게 설정된 경우 overlay도 함께 높임
   const hasHighZIndex = className?.includes('z-[');
   // z-index 값을 추출하여 overlay는 content보다 1 낮게 설정
   const zIndexMatch = className?.match(/z-\[(\d+)\]/);
   const contentZIndex = zIndexMatch ? parseInt(zIndexMatch[1]) : undefined;
   const overlayZIndex = contentZIndex ? `z-[${contentZIndex - 1}]` : (hasHighZIndex ? 'z-[9999]' : undefined);
+  const finalOverlayOpacity = overlayOpacity !== undefined ? overlayOpacity : 1;
   
   return (
   <DialogPortal>
     {overlayZIndex ? (
       <DialogPrimitive.Overlay asChild>
         <motion.div
-          className="fixed inset-0 bg-black/20"
+          className="fixed inset-0 bg-black/50"
           style={{
             // z-index를 인라인 스타일로 직접 설정하여 우선순위 보장
             zIndex: contentZIndex ? contentZIndex - 1 : (hasHighZIndex ? 9999 : 49)
           }}
           initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
+          animate={{ opacity: finalOverlayOpacity * 0.5 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
+          transition={{ duration: 0.5 }}
         />
       </DialogPrimitive.Overlay>
     ) : (
-      <DialogOverlay />
+      overlayOpacity !== undefined ? (
+        <DialogPrimitive.Overlay asChild>
+          <motion.div
+            className="fixed inset-0 z-50 bg-black/20"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: overlayOpacity * 0.2 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5 }}
+          />
+        </DialogPrimitive.Overlay>
+      ) : (
+        <DialogOverlay />
+      )
     )}
     <DialogPrimitive.Content
       ref={ref}
@@ -110,15 +125,22 @@ const DialogContent = React.forwardRef<
         {...(className?.includes('max-w-4xl') || className?.includes('max-w-[1344px]') || className?.includes('max-w-[1050px]') || className?.includes('max-w-[900px]') ? {
           // 이슈 상세 모달 및 의견 모달: scale만 사용
           initial: { opacity: 0, scale: 0.95 },
-          animate: { opacity: 1, scale: 1 },
-          exit: { opacity: 0, scale: 0.95 }
+          animate: className?.includes('max-w-[1344px]') && isClosing
+            ? { opacity: 0, x: 100 } // 이슈 상세 모달은 슬라이드 아웃
+            : { opacity: 1, scale: 1 },
+          exit: className?.includes('max-w-[1344px]') 
+            ? { opacity: 0, x: 100 } // 이슈 상세 모달은 슬라이드 아웃
+            : { opacity: 0, scale: 0.95 }
         } : {
           // 주소록 모달 등: scale + 중앙 정렬 (x, y 사용)
           initial: { opacity: 0, scale: 0.95, x: '-50%', y: '-50%' },
           animate: { opacity: 1, scale: 1, x: '-50%', y: '-50%' },
           exit: { opacity: 0, scale: 0.95, x: '-50%', y: '-50%' }
         })}
-        transition={{ duration: 0.2, ease: "easeOut" }}
+        transition={{ 
+          duration: className?.includes('max-w-[1344px]') ? 0.5 : 0.2, 
+          ease: "easeOut" 
+        }}
         style={{
           // z-index를 인라인 스타일로 직접 설정하여 우선순위 보장 (CSS 클래스보다 우선)
           zIndex: contentZIndex || (hasHighZIndex ? 9999 : 50),

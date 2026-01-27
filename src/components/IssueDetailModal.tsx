@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { IssueStatus, Priority, RankLevel, Rank } from '../types';
@@ -69,6 +70,9 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
   const [showStartProcessingModal, setShowStartProcessingModal] = useState(false);
   const [showRevertToPendingModal, setShowRevertToPendingModal] = useState(false);
   const [relatedIssuesSlideIndex, setRelatedIssuesSlideIndex] = useState(0);
+  const [showCompletionAnimation, setShowCompletionAnimation] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
+  const [isMessageClosing, setIsMessageClosing] = useState(false);
   // 모달이 닫힐 때 상태 초기화
   useEffect(() => {
     if (!isOpen) {
@@ -79,6 +83,9 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
       setMeetingNote('');
       setShowStartProcessingModal(false);
       setShowRevertToPendingModal(false);
+      setShowCompletionAnimation(false);
+      setIsClosing(false);
+      setIsMessageClosing(false);
       setModalStack([]);
       setCurrentIssueId(null);
     }
@@ -153,10 +160,40 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
       return;
     }
 
-    updateIssueStatus(issue.id, IssueStatus.RESOLVED, completionReason);
+    // 완료 사유 모달 닫기
     setShowCompletionModal(false);
-    setCompletionReason('');
-    onClose(); // 완료 처리 시 모달 자동 닫기
+    
+    // 완료 애니메이션 시작
+    setShowCompletionAnimation(true);
+    
+    // 체크 아이콘 애니메이션 후 상태 업데이트
+    setTimeout(() => {
+      updateIssueStatus(issue.id, IssueStatus.RESOLVED, completionReason);
+      setCompletionReason('');
+    }, 1200); // 체크 아이콘 애니메이션 완료 후
+    
+    // 모달 페이드아웃 시작
+    setTimeout(() => {
+      // 모달 페이드아웃 시작
+      setIsClosing(true);
+      
+      // 모달 페이드아웃이 완전히 끝나는 순간에 모달 닫기
+      setTimeout(() => {
+        onClose(); // 모달 닫기
+        setIsClosing(false);
+        
+        // 모달이 닫힌 후 메시지 페이드아웃 시작
+        setTimeout(() => {
+          setIsMessageClosing(true);
+          
+          // 메시지 페이드아웃이 끝나면 애니메이션 완전히 종료
+          setTimeout(() => {
+            setShowCompletionAnimation(false);
+            setIsMessageClosing(false);
+          }, 500); // 메시지 페이드아웃 시간 (0.5초)
+        }, 100); // 모달 닫힌 후 약간의 딜레이
+      }, 500); // 모달 페이드아웃 시간 (0.5초)
+    }, 2000); // "완료되었습니다!" 메시지 표시 시간
   };
 
   // 주간 회의 안건으로 이동 (첨언 입력 모달 표시)
@@ -265,13 +302,117 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
 
   return (
     <>
+      {/* 완료 애니메이션 오버레이 (Portal로 렌더링) */}
+      {typeof document !== 'undefined' && createPortal(
+        <AnimatePresence>
+          {showCompletionAnimation && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: isClosing || isMessageClosing ? 0 : 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.5, ease: "easeInOut" }}
+              className="fixed inset-0 bg-black/50 z-[10001] flex items-center justify-center"
+              style={{ 
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                margin: 0,
+                pointerEvents: isClosing || isMessageClosing ? 'none' : 'auto'
+              }}
+            >
+              <motion.div 
+                className="flex flex-col items-center justify-center space-y-6"
+                animate={{ 
+                  opacity: isMessageClosing ? 0 : 1
+                }}
+                transition={{ 
+                  duration: 0.5
+                }}
+              >
+                {/* 체크 아이콘 애니메이션 */}
+                <motion.div
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={{ 
+                    scale: 1, 
+                    opacity: 1 
+                  }}
+                  transition={{ 
+                    duration: 0.5,
+                    ease: [0.34, 1.56, 0.64, 1] // 탄성 효과
+                  }}
+                  className="relative"
+                >
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ 
+                      duration: 0.3,
+                      delay: 0.2
+                    }}
+                    className="w-24 h-24 bg-green-500 rounded-full flex items-center justify-center shadow-2xl"
+                  >
+                    <CheckCircle2 className="w-16 h-16 text-white" />
+                  </motion.div>
+                  {/* 펄스 효과 */}
+                  {!isMessageClosing && (
+                    <motion.div
+                      initial={{ scale: 0.8, opacity: 0.8 }}
+                      animate={{ scale: 1.3, opacity: 0 }}
+                      transition={{ 
+                        duration: 0.8,
+                        repeat: Infinity,
+                        repeatDelay: 0.5
+                      }}
+                      className="absolute inset-0 bg-green-500 rounded-full"
+                    />
+                  )}
+                </motion.div>
+                
+                {/* 완료 메시지 */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ 
+                    opacity: 1, 
+                    y: 0 
+                  }}
+                  transition={{ 
+                    duration: 0.5,
+                    delay: 0.3
+                  }}
+                  className="text-white text-2xl font-bold"
+                >
+                  완료되었습니다!
+                </motion.div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
+
       {/* 메인 이슈 상세 모달 */}
       <Dialog open={isOpen} onOpenChange={handleClose}>
-        <DialogContent className="max-w-[1344px] max-h-[90vh] overflow-y-auto p-0 flex flex-col z-[10000]" id="issue-detail-modal" hideClose>
+        <DialogContent 
+          className="max-w-[1344px] max-h-[90vh] overflow-y-auto p-0 flex flex-col z-[10000]" 
+          id="issue-detail-modal" 
+          hideClose
+          overlayOpacity={isClosing ? 0 : 1}
+          isClosing={isClosing}
+        >
           <VisuallyHidden>
             <DialogTitle>이슈 상세</DialogTitle>
             <DialogDescription>이슈의 상세 정보를 확인하고 관리할 수 있습니다.</DialogDescription>
           </VisuallyHidden>
+          <motion.div
+            animate={{ 
+              opacity: isClosing ? 0 : 1,
+              x: isClosing ? 100 : 0
+            }}
+            transition={{ duration: 0.5, ease: "easeInOut" }}
+            className="h-full w-full"
+          >
           <AnimatePresence mode="wait">
             {issue && (
               <motion.div
@@ -293,16 +434,6 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
                 </div>
               </div>
               <div className="flex items-center space-x-2">
-                {/* 주간 회의 안건 등록 버튼 (담당자, 생성자, 대표만) */}
-                {user && canMoveToMeeting() && issue.status !== IssueStatus.MEETING && issue.status !== IssueStatus.RESOLVED && (
-                  <button
-                    onClick={handleMoveToMeeting}
-                    className="flex items-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-semibold shadow-sm"
-                  >
-                    <Send className="w-4 h-4" />
-                    <span>회의 안건 등록</span>
-                  </button>
-                )}
                 {/* 되돌리기 버튼 (처리 중 상태일 때만, 참조자만 가능) */}
                 {issue.status === IssueStatus.IN_PROGRESS && isUserInCC() && (
                   <button
@@ -311,6 +442,16 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
                   >
                     <RotateCcw className="w-4 h-4" />
                     <span>되돌리기</span>
+                  </button>
+                )}
+                {/* 주간 회의 안건 등록 버튼 (담당자, 생성자, 대표만) */}
+                {user && canMoveToMeeting() && issue.status !== IssueStatus.MEETING && issue.status !== IssueStatus.RESOLVED && (
+                  <button
+                    onClick={handleMoveToMeeting}
+                    className="flex items-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-semibold shadow-sm"
+                  >
+                    <Send className="w-4 h-4" />
+                    <span>회의 안건 등록</span>
                   </button>
                 )}
                 {/* 수정 버튼 (완료된 티켓에서는 숨김, 참조자 또는 생성자만 가능) */}
@@ -763,6 +904,7 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
               </motion.div>
             )}
           </AnimatePresence>
+          </motion.div>
         </DialogContent>
       </Dialog>
 
