@@ -1,4 +1,6 @@
 @import "tailwindcss";
+@import "swiper/css";
+@import "swiper/css/effect-cards";
 
 @theme {
   --color-water-blue-50: #f0f9ff;
@@ -57,4 +59,28 @@ html, body {
 body {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch; /* iOS 부드러운 스크롤 */
+}
+
+/* Swiper 부드러운 애니메이션 */
+.meeting-swiper {
+  --swiper-pagination-color: #3b82f6;
+  padding-bottom: 60px;
+}
+
+.meeting-swiper .swiper-slide {
+  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform;
+  height: auto;
+}
+
+.meeting-swiper .swiper-pagination-bullet {
+  transition: all 0.3s ease;
+  width: 8px;
+  height: 8px;
+}
+
+.meeting-swiper .swiper-pagination-bullet-active {
+  transform: scale(1.2);
+  width: 12px;
+  height: 12px;
 }
