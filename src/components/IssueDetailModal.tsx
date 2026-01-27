@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { IssueStatus, Priority, RankLevel, Rank } from '../types';
@@ -14,7 +13,8 @@ import {
   Paperclip,
   File,
   Download,
-  RotateCcw
+  RotateCcw,
+  Ticket
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
@@ -29,6 +29,8 @@ import {
   VisuallyHidden,
 } from './ui/dialog';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Keyboard, Mousewheel } from 'swiper/modules';
 
 interface IssueDetailModalProps {
   issueId: string | null;
@@ -66,6 +68,7 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
   const [showAgendaNoteModal, setShowAgendaNoteModal] = useState(false);
   const [showStartProcessingModal, setShowStartProcessingModal] = useState(false);
   const [showRevertToPendingModal, setShowRevertToPendingModal] = useState(false);
+  const [relatedIssuesSlideIndex, setRelatedIssuesSlideIndex] = useState(0);
   // 모달이 닫힐 때 상태 초기화
   useEffect(() => {
     if (!isOpen) {
@@ -262,39 +265,9 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
 
   return (
     <>
-      {/* 오른쪽: 댓글 컨테이너 (모달 옆에 붙임) - Portal 사용 */}
-      {isOpen && issue && typeof window !== 'undefined' && createPortal(
-        <motion.div 
-          data-comment-container="true"
-          className="fixed bg-white shadow-2xl z-[10000] border border-gray-200 rounded-xl flex flex-col"
-          style={{ 
-            pointerEvents: 'auto',
-            // 메인 모달과 동일한 top 위치, 메인 모달 오른쪽에 배치
-            // 메인 모달 left: calc(50% - 30.25rem), 너비: 56rem, top: 15%
-            // 댓글 컨테이너 left: 메인 모달 left + 메인 모달 너비 + 간격(0.5rem)
-            left: 'calc(50% - 30.25rem + 56rem + 0.5rem)',
-            top: '15%',
-            width: '20rem', // w-80 (320px)
-            height: '72vh', // 댓글 컨테이너는 항상 전체 높이 유지
-            maxHeight: '72vh',
-            transform: 'translateY(0)'
-          }}
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.95 }}
-          transition={{ duration: 0.2, ease: "easeOut" }}
-          onClick={(e) => e.stopPropagation()}
-          onMouseDown={(e) => e.stopPropagation()}
-        >
-          <IssueComments issue={issue} user={user} isReadOnly={issue.status === IssueStatus.RESOLVED} />
-        </motion.div>,
-        document.body
-      )}
-
-
       {/* 메인 이슈 상세 모달 */}
       <Dialog open={isOpen} onOpenChange={handleClose}>
-        <DialogContent className="max-w-4xl h-[72vh] overflow-hidden p-0 flex flex-col z-[10000]" id="issue-detail-modal" hideClose>
+        <DialogContent className="max-w-[1344px] max-h-[90vh] overflow-y-auto p-0 flex flex-col z-[10000]" id="issue-detail-modal" hideClose>
           <VisuallyHidden>
             <DialogTitle>이슈 상세</DialogTitle>
             <DialogDescription>이슈의 상세 정보를 확인하고 관리할 수 있습니다.</DialogDescription>
@@ -307,7 +280,7 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.3, ease: "easeInOut" }}
-                className="p-6 flex-1 overflow-y-auto"
+                className="p-6 flex-1 flex flex-col"
               >
             {/* 헤더 */}
             <div className="mb-6 flex items-center justify-between">
@@ -328,6 +301,16 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
                   >
                     <Send className="w-4 h-4" />
                     <span>회의 안건 등록</span>
+                  </button>
+                )}
+                {/* 되돌리기 버튼 (처리 중 상태일 때만, 참조자만 가능) */}
+                {issue.status === IssueStatus.IN_PROGRESS && isUserInCC() && (
+                  <button
+                    onClick={handleRevertToPendingClick}
+                    className="flex items-center space-x-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-semibold shadow-sm"
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                    <span>되돌리기</span>
                   </button>
                 )}
                 {/* 수정 버튼 (완료된 티켓에서는 숨김, 참조자 또는 생성자만 가능) */}
@@ -357,9 +340,9 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
             </div>
 
             {/* 메인 콘텐츠 */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
               {/* 왼쪽: 상세 정보 */}
-              <div className="lg:col-span-2 space-y-6">
+              <div className="lg:col-span-3 space-y-6 overflow-y-auto pr-2">
                 {/* 상태 및 메타 정보 */}
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                   <div className="flex items-start justify-between mb-4">
@@ -399,15 +382,13 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
                 </div>
 
                 {/* 첨부파일 */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                  <div className="flex items-center space-x-2 mb-4">
-                    <Paperclip className="w-5 h-5 text-gray-600" />
-                    <h3 className="text-lg font-semibold text-gray-800">첨부파일</h3>
-                    {issue.attachments && issue.attachments.length > 0 && (
+                {issue.attachments && issue.attachments.length > 0 ? (
+                  <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                    <div className="flex items-center space-x-2 mb-4">
+                      <Paperclip className="w-5 h-5 text-gray-600" />
+                      <h3 className="text-lg font-semibold text-gray-800">첨부파일</h3>
                       <span className="text-sm text-gray-500">({issue.attachments.length}개)</span>
-                    )}
-                  </div>
-                  {issue.attachments && issue.attachments.length > 0 ? (
+                    </div>
                     <div className="space-y-2">
                       {issue.attachments.map(attachment => {
                         const formatFileSize = (bytes: number) => {
@@ -456,56 +437,138 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
                         );
                       })}
                     </div>
-                  ) : (
-                    <div className="text-center py-8">
-                      <p className="text-sm text-gray-500">첨부 파일이 없습니다.</p>
+                  </div>
+                ) : (
+                  <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-3">
+                    <div className="flex items-center space-x-2">
+                      <Paperclip className="w-4 h-4 text-gray-400" />
+                      <p className="text-xs text-gray-500">첨부 파일이 없습니다.</p>
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
 
                 {/* 연관된 이슈 */}
-                {issue.relatedIssues && issue.relatedIssues.length > 0 && (
+                {issue.relatedIssues && issue.relatedIssues.length > 0 ? (
                   <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                     <div className="flex items-center space-x-2 mb-4">
                       <LinkIcon className="w-5 h-5 text-gray-600" />
                       <h3 className="text-lg font-semibold text-gray-800">연관된 이슈</h3>
                     </div>
-                    <div className="space-y-2">
-                      {issue.relatedIssues.map(relatedIssueId => {
-                        const relatedIssue = issues.find(i => i.id === relatedIssueId);
-                        if (!relatedIssue) return null;
-                        return (
-                          <div
-                            key={relatedIssueId}
-                            onClick={() => {
-                              // 현재 이슈를 스택에 추가하고 새 이슈로 변경
-                              if (currentIssueId) {
-                                setModalStack(prev => [...prev, currentIssueId]);
-                              }
-                              setCurrentIssueId(relatedIssueId);
-                            }}
-                            className="flex items-center space-x-3 p-3 bg-gray-50 hover:bg-gray-100 rounded-lg cursor-pointer transition-colors border border-gray-200"
-                          >
-                            <LinkIcon className="w-4 h-4 text-water-blue-600 flex-shrink-0" />
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-gray-800 truncate">{relatedIssue.title}</p>
-                              <p className="text-xs text-gray-500">ID: {relatedIssue.id}</p>
+                    {issue.relatedIssues.length >= 2 ? (
+                      <>
+                        <Swiper
+                          modules={[Keyboard, Mousewheel]}
+                          spaceBetween={16}
+                          slidesPerView={1}
+                          keyboard={{ enabled: true }}
+                          mousewheel={{ enabled: true, forceToAxis: true }}
+                          className="related-issues-swiper"
+                          onSlideChange={(swiper) => setRelatedIssuesSlideIndex(swiper.activeIndex)}
+                        >
+                          {issue.relatedIssues.map(relatedIssueId => {
+                            const relatedIssue = issues.find(i => i.id === relatedIssueId);
+                            if (!relatedIssue) return null;
+                            return (
+                              <SwiperSlide key={relatedIssueId}>
+                                <div
+                                  onClick={() => {
+                                    // 현재 이슈를 스택에 추가하고 새 이슈로 변경
+                                    if (currentIssueId) {
+                                      setModalStack(prev => [...prev, currentIssueId]);
+                                    }
+                                    setCurrentIssueId(relatedIssueId);
+                                  }}
+                                  className="flex items-center space-x-3 p-3 bg-gray-50 hover:bg-gray-100 rounded-lg cursor-pointer transition-colors border border-gray-200"
+                                >
+                                  <LinkIcon className="w-4 h-4 text-water-blue-600 flex-shrink-0" />
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium text-gray-800 truncate">{relatedIssue.title}</p>
+                                    <p className="text-xs text-gray-500">ID: {relatedIssue.id}</p>
+                                  </div>
+                                  <div className="flex items-center space-x-2">
+                                    <span className={`px-2 py-1 text-xs font-medium rounded ${
+                                      relatedIssue.status === IssueStatus.PENDING ? 'bg-yellow-100 text-yellow-800' :
+                                      relatedIssue.status === IssueStatus.IN_PROGRESS ? 'bg-blue-100 text-blue-800' :
+                                      relatedIssue.status === IssueStatus.MEETING ? 'bg-purple-100 text-purple-800' :
+                                      'bg-green-100 text-green-800'
+                                    }`}>
+                                      {relatedIssue.status === IssueStatus.PENDING ? '대기' :
+                                       relatedIssue.status === IssueStatus.IN_PROGRESS ? '처리중' :
+                                       relatedIssue.status === IssueStatus.MEETING ? '회의예정' : '완료'}
+                                    </span>
+                                  </div>
+                                </div>
+                              </SwiperSlide>
+                            );
+                          })}
+                        </Swiper>
+                        {/* 라디오 버튼 스타일 인디케이터 */}
+                        <div className="flex items-center justify-center gap-2 mt-4">
+                          {issue.relatedIssues.map((_, index) => (
+                            <button
+                              key={index}
+                              onClick={() => {
+                                // Swiper 인스턴스에 접근하여 슬라이드 이동
+                                const swiperEl = document.querySelector('.related-issues-swiper') as any;
+                                if (swiperEl && swiperEl.swiper) {
+                                  swiperEl.swiper.slideTo(index);
+                                }
+                              }}
+                              className={`h-2 rounded-full transition-all duration-300 ${
+                                index === relatedIssuesSlideIndex
+                                  ? 'bg-water-blue-600 w-8'
+                                  : 'bg-gray-300 hover:bg-gray-400 w-2'
+                              }`}
+                              aria-label={`연관 이슈 ${index + 1}`}
+                            />
+                          ))}
+                        </div>
+                      </>
+                    ) : (
+                      <div className="space-y-2">
+                        {issue.relatedIssues.map(relatedIssueId => {
+                          const relatedIssue = issues.find(i => i.id === relatedIssueId);
+                          if (!relatedIssue) return null;
+                          return (
+                            <div
+                              key={relatedIssueId}
+                              onClick={() => {
+                                // 현재 이슈를 스택에 추가하고 새 이슈로 변경
+                                if (currentIssueId) {
+                                  setModalStack(prev => [...prev, currentIssueId]);
+                                }
+                                setCurrentIssueId(relatedIssueId);
+                              }}
+                              className="flex items-center space-x-3 p-3 bg-gray-50 hover:bg-gray-100 rounded-lg cursor-pointer transition-colors border border-gray-200"
+                            >
+                              <LinkIcon className="w-4 h-4 text-water-blue-600 flex-shrink-0" />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-gray-800 truncate">{relatedIssue.title}</p>
+                                <p className="text-xs text-gray-500">ID: {relatedIssue.id}</p>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <span className={`px-2 py-1 text-xs font-medium rounded ${
+                                  relatedIssue.status === IssueStatus.PENDING ? 'bg-yellow-100 text-yellow-800' :
+                                  relatedIssue.status === IssueStatus.IN_PROGRESS ? 'bg-blue-100 text-blue-800' :
+                                  relatedIssue.status === IssueStatus.MEETING ? 'bg-purple-100 text-purple-800' :
+                                  'bg-green-100 text-green-800'
+                                }`}>
+                                  {relatedIssue.status === IssueStatus.PENDING ? '대기' :
+                                   relatedIssue.status === IssueStatus.IN_PROGRESS ? '처리중' :
+                                   relatedIssue.status === IssueStatus.MEETING ? '회의예정' : '완료'}
+                                </span>
+                              </div>
                             </div>
-                            <div className="flex items-center space-x-2">
-                              <span className={`px-2 py-1 text-xs font-medium rounded ${
-                                relatedIssue.status === IssueStatus.PENDING ? 'bg-yellow-100 text-yellow-800' :
-                                relatedIssue.status === IssueStatus.IN_PROGRESS ? 'bg-blue-100 text-blue-800' :
-                                relatedIssue.status === IssueStatus.MEETING ? 'bg-purple-100 text-purple-800' :
-                                'bg-green-100 text-green-800'
-                              }`}>
-                                {relatedIssue.status === IssueStatus.PENDING ? '대기' :
-                                 relatedIssue.status === IssueStatus.IN_PROGRESS ? '처리중' :
-                                 relatedIssue.status === IssueStatus.MEETING ? '회의예정' : '완료'}
-                              </span>
-                            </div>
-                          </div>
-                        );
-                      })}
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-3">
+                    <div className="flex items-center space-x-2">
+                      <LinkIcon className="w-4 h-4 text-gray-400" />
+                      <p className="text-xs text-gray-500">연관된 이슈가 없습니다.</p>
                     </div>
                   </div>
                 )}
@@ -513,69 +576,125 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
               </div>
 
               {/* 오른쪽: 사이드바 */}
-              <div className="space-y-6">
+              <div className="lg:col-span-1">
+                {/* 사이드바 영역 */}
+                <div className="space-y-6 overflow-y-auto pr-2">
                 {/* 상태 표시 및 완료 버튼 */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 w-full">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4">티켓 상태</h3>
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 w-full">
+                  <h3 className="text-base font-semibold text-gray-800 mb-4">티켓 상태</h3>
                   
                   {/* 현재 상태 표시 */}
                   <div className="mb-4">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">현재 상태</span>
-                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(issue.status)}`}>
-                        {getStatusText(issue.status)}
-                      </span>
+                      <span className="text-xs text-gray-600">현재 상태</span>
+                      <div className="relative flex items-center">
+                        {/* 상태 아이콘 영역 - 슬라이드 전환 애니메이션 */}
+                        <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 z-10 w-8 h-8 overflow-hidden">
+                          <AnimatePresence mode="wait" initial={false}>
+                            {issue.status === IssueStatus.PENDING && (
+                              <motion.div
+                                key="ticket-icon"
+                                initial={{ opacity: 0, x: -20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: 20 }}
+                                transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1], delay: 0.05 }}
+                                className="absolute inset-0 flex items-center justify-center"
+                              >
+                                <Ticket className="w-8 h-8 text-gray-600" />
+                              </motion.div>
+                            )}
+                            {issue.status === IssueStatus.IN_PROGRESS && (
+                              <motion.div
+                                key="spinner-icon"
+                                initial={{ opacity: 0, x: -20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: 20 }}
+                                transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1], delay: 0.05 }}
+                                className="absolute inset-0 flex items-center justify-center"
+                              >
+                                <div className="relative w-8 h-8">
+                                  <svg className="w-8 h-8 animate-spin" viewBox="0 0 40 40">
+                                    <circle
+                                      cx="20"
+                                      cy="20"
+                                      r="16"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      strokeWidth="4"
+                                      strokeLinecap="round"
+                                      strokeDasharray="80 40"
+                                      className="text-blue-600"
+                                    />
+                                  </svg>
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+                        <div className="relative overflow-hidden min-w-[80px]">
+                          <AnimatePresence mode="wait" initial={false}>
+                            <motion.span
+                              key={issue.status}
+                              initial={{ opacity: 0, x: -20 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              exit={{ opacity: 0, x: 20 }}
+                              transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1], delay: 0.1 }}
+                              className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(issue.status)} block text-center`}
+                            >
+                              {getStatusText(issue.status)}
+                            </motion.span>
+                          </AnimatePresence>
+                        </div>
+                      </div>
                     </div>
                   </div>
 
-                  {/* 참조자가 처리 시작 버튼 (PENDING 상태이고 참조자인 경우) */}
-                  {issue.status === IssueStatus.PENDING && isUserInCC() && (
-                    <div className="border-t border-gray-200 pt-4">
-                      <div className="flex justify-center">
-                        <button
-                          onClick={handleStartProcessingClick}
-                          className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  {/* 버튼 영역 - 상태에 따라 슬라이드 전환 효과 */}
+                  <div className="border-t border-gray-200 pt-4 relative overflow-hidden min-h-[60px]">
+                    <AnimatePresence mode="wait" initial={false}>
+                      {issue.status === IssueStatus.PENDING && isUserInCC() && (
+                        <motion.div
+                          key="pending-button"
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: 20 }}
+                          transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1], delay: 0.15 }}
+                          className="flex justify-center"
                         >
-                          <CheckCircle2 className="w-4 h-4" />
-                          처리 시작
-                        </button>
-                      </div>
-                    </div>
-                  )}
+                          <button
+                            onClick={handleStartProcessingClick}
+                            className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                          >
+                            <CheckCircle2 className="w-4 h-4" />
+                            처리 시작
+                          </button>
+                        </motion.div>
+                      )}
 
-                  {/* 처리중 상태에서 대기 상태로 되돌리기 버튼 (참조자인 경우) */}
-                  {issue.status === IssueStatus.IN_PROGRESS && isUserInCC() && (
-                    <div className="border-t border-gray-200 pt-4">
-                      <div className="flex justify-center">
-                        <button
-                          onClick={handleRevertToPendingClick}
-                          className="flex items-center gap-2 px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+                      {issue.status === IssueStatus.IN_PROGRESS && isUserInCC() && (
+                        <motion.div
+                          key="complete-button"
+                          initial={{ opacity: 0, x: 0 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: 20 }}
+                          transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1], delay: 0.15 }}
+                          className="flex justify-center"
                         >
-                          <RotateCcw className="w-4 h-4" />
-                          되돌리기
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* 처리중 상태에서만 완료 버튼 표시 (참조자만 가능) */}
-                  {issue.status === IssueStatus.IN_PROGRESS && isUserInCC() && (
-                    <div className="pt-4">
-                      <div className="flex justify-center">
-                        <button
-                          onClick={handleCompleteClick}
-                          className="flex items-center gap-2 px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                        >
-                          <CheckCircle2 className="w-4 h-4" />
-                          완료 처리
-                        </button>
-                      </div>
-                    </div>
-                  )}
+                          <button
+                            onClick={handleCompleteClick}
+                            className="flex items-center gap-2 px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                          >
+                            <CheckCircle2 className="w-4 h-4" />
+                            완료 처리
+                          </button>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
 
                   {/* 상태 설명 */}
                   <div className="mt-4 text-xs text-gray-500">
-                    {issue.status === IssueStatus.PENDING && issue.cc && issue.cc.length > 0 && '참조자가 처리 시작 버튼을 클릭하면 처리중 상태로 변경됩니다.'}
+                    {issue.status === IssueStatus.PENDING && issue.cc && issue.cc.length > 0 && '처리 시작 버튼을 클릭하여 시작하세요.'}
                     {issue.status === IssueStatus.PENDING && (!issue.cc || issue.cc.length === 0) && '참조자가 배정되지 않았습니다.'}
                     {issue.status === IssueStatus.IN_PROGRESS && '티켓을 완료하려면 완료 처리 버튼을 클릭하세요.'}
                     {issue.status === IssueStatus.MEETING && '주간 회의에서 처리될 예정입니다.'}
@@ -597,8 +716,8 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
                 </div>
 
                 {/* 정보 */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4">상세 정보</h3>
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+                  <h3 className="text-base font-semibold text-gray-800 mb-4">상세 정보</h3>
                   <div className="space-y-4">
                     <div>
                       <p className="text-xs text-gray-500 mb-1">카테고리</p>
@@ -633,8 +752,13 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
                     )}
                   </div>
                 </div>
+                </div>
               </div>
+            </div>
 
+            {/* 댓글 섹션 */}
+            <div className="mt-6 border-t border-gray-200 pt-6">
+              <IssueComments issue={issue} user={user} isReadOnly={issue.status === IssueStatus.RESOLVED} />
             </div>
               </motion.div>
             )}

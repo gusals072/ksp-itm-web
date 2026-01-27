@@ -107,8 +107,8 @@ const DialogContent = React.forwardRef<
           "fixed grid w-full gap-4 border border-gray-200 bg-white p-6 shadow-lg rounded-lg",
           className
         )}
-        {...(className?.includes('max-w-4xl') ? {
-          // 이슈 상세 모달: scale만 사용
+        {...(className?.includes('max-w-4xl') || className?.includes('max-w-[1344px]') || className?.includes('max-w-[1050px]') || className?.includes('max-w-[900px]') ? {
+          // 이슈 상세 모달 및 의견 모달: scale만 사용
           initial: { opacity: 0, scale: 0.95 },
           animate: { opacity: 1, scale: 1 },
           exit: { opacity: 0, scale: 0.95 }
@@ -122,13 +122,28 @@ const DialogContent = React.forwardRef<
         style={{
           // z-index를 인라인 스타일로 직접 설정하여 우선순위 보장 (CSS 클래스보다 우선)
           zIndex: contentZIndex || (hasHighZIndex ? 9999 : 50),
-          ...(className?.includes('max-w-4xl') ? {
-            // 두 컨테이너 합친 너비: 56rem(메인) + 0.5rem(간격) + 20rem(댓글) = 76.5rem
-            // 두 컨테이너 합친 기준 중앙: 50% - 38.25rem (76.5rem / 2)
-            // 사이드바(16rem) 고려: 50% - 38.25rem + 8rem = 50% - 30.25rem
-            left: 'calc(50% - 30.25rem)',
-            top: '15%',
-            transform: 'translateY(0)'
+          ...(className?.includes('max-w-4xl') || className?.includes('max-w-[1344px]') ? {
+            // 이슈 상세 모달: 중앙 정렬
+            // max-w-[1344px] = 84rem
+            // 전체 화면 기준 중앙: 50% - 42rem (84rem / 2)
+            // 사이드바(16rem) 고려: 50% - 42rem + 8rem = 50% - 34rem
+            left: 'calc(50% - 34rem)',
+            top: '5%',
+            transform: 'translateY(-50%)'
+          } : className?.includes('max-w-[1050px]') ? {
+            // 의견 상세 모달: 1050px (65.625rem)
+            // 화면 정중앙에 배치 (이슈 상세 모달 위에 완전히 오버레이)
+            // 전체 화면 기준 중앙: 50% - 32.8125rem (65.625rem / 2)
+            left: 'calc(50% - 32.8125rem)',
+            top: '50%',
+            transform: 'translateY(-50%)'
+          } : className?.includes('max-w-[900px]') ? {
+            // 의견 추가 모달: 900px (56.25rem)
+            // 화면 정중앙에 배치 (이슈 상세 모달 위에 완전히 오버레이)
+            // 전체 화면 기준 중앙: 50% - 28.125rem (56.25rem / 2)
+            left: 'calc(50% - 28.125rem)',
+            top: '50%',
+            transform: 'translateY(-50%)'
           } : {
             // 주소록 모달 등 다른 모달: 중앙 정렬 (framer-motion의 x, y로 처리)
             left: 'calc(50% + 8rem)', // 사이드바(16rem)의 절반인 8rem을 더해서 콘텐츠 영역 중앙에 위치

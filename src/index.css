@@ -41,6 +41,16 @@ body {
   box-sizing: border-box;
 }
 
+/* 연관 이슈 Swiper 스타일 */
+.related-issues-swiper {
+  width: 100%;
+  padding-bottom: 0;
+}
+
+.related-issues-swiper .swiper-pagination {
+  display: none; /* 기본 pagination 숨기기 */
+}
+
 /* 스크롤바 숨기기 */
 * {
   scrollbar-width: none; /* Firefox */

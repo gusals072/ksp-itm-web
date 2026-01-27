@@ -1,11 +1,9 @@
-import React, { useState } from 'react';
-import { CheckCircle2, File, Plus } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { CheckCircle2, File, Send, Paperclip } from 'lucide-react';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import type { Issue, Opinion } from '../types';
 import { useApp } from '../context/AppContext';
-import AddOpinionModal from './AddOpinionModal';
-import OpinionDetailModal from './OpinionDetailModal';
 
 interface IssueCommentsProps {
   issue: Issue;
@@ -14,26 +12,39 @@ interface IssueCommentsProps {
 }
 
 const IssueComments: React.FC<IssueCommentsProps> = ({ issue, user, isReadOnly = false }) => {
-  const { addNotification, users } = useApp();
-  const [opinions, setOpinions] = useState<Opinion[]>([]);
-  const [showAddOpinionModal, setShowAddOpinionModal] = useState(false);
-  const [selectedOpinion, setSelectedOpinion] = useState<Opinion | null>(null);
-  const [showOpinionDetailModal, setShowOpinionDetailModal] = useState(false);
+  const { addNotification } = useApp();
+  const [comments, setComments] = useState<Opinion[]>([]);
+  const [commentText, setCommentText] = useState('');
+  const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const handleAddOpinion = () => {
-    setShowAddOpinionModal(true);
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      const newFiles = Array.from(files);
+      setAttachedFiles(prev => [...prev, ...newFiles]);
+    }
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
-  const handleSubmitOpinion = (text: string, files: File[]) => {
-    if (!user) return;
+  const handleRemoveFile = (index: number) => {
+    setAttachedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSubmitComment = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user || (!commentText.trim() && attachedFiles.length === 0)) return;
     
-    const newOpinion: Opinion = {
+    const newComment: Opinion = {
       id: Date.now().toString(),
-      text: text.trim(),
+      text: commentText.trim(),
       authorId: user.id,
       authorName: user.name,
       createdAt: new Date(),
-      attachments: files.map((file, index) => ({
+      attachments: attachedFiles.map((file, index) => ({
         id: `${Date.now()}-${index}`,
         name: file.name,
         size: file.size,
@@ -41,10 +52,11 @@ const IssueComments: React.FC<IssueCommentsProps> = ({ issue, user, isReadOnly =
       }))
     };
     
-    setOpinions(prev => [...prev, newOpinion]);
-    setShowAddOpinionModal(false);
+    setComments(prev => [...prev, newComment]);
+    setCommentText('');
+    setAttachedFiles([]);
 
-    // 알림 전송: 티켓 참조자들에게 의견 추가 알림
+    // 알림 전송: 티켓 참조자들에게 댓글 추가 알림
     const notifyUsers = [
       issue.reporterId, // 생성자
       ...(issue.cc || []).map(cc => cc.id) // 참조자들
@@ -53,18 +65,13 @@ const IssueComments: React.FC<IssueCommentsProps> = ({ issue, user, isReadOnly =
     notifyUsers.forEach(userId => {
       addNotification({
         type: 'OPINION_ADDED',
-        title: '새로운 의견이 추가되었습니다',
-        message: `${user.name}님이 "${issue.title}" 티켓에 의견을 남겼습니다.`,
+        title: '새로운 댓글이 추가되었습니다',
+        message: `${user.name}님이 "${issue.title}" 티켓에 댓글을 남겼습니다.`,
         issueId: issue.id,
         issueTitle: issue.title,
         userId
       });
     });
-  };
-
-  const handleOpinionClick = (opinion: Opinion) => {
-    setSelectedOpinion(opinion);
-    setShowOpinionDetailModal(true);
   };
 
   const formatFileSize = (bytes: number) => {
@@ -81,21 +88,11 @@ const IssueComments: React.FC<IssueCommentsProps> = ({ issue, user, isReadOnly =
         onMouseDown={(e) => e.stopPropagation()}
       >
         {/* 헤더 */}
-        <div className="p-4 border-b border-gray-100 flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-gray-800">의견</h3>
-          {/* 의견 추가하기 버튼 (우상단) */}
-          {!isReadOnly && (
-            <button
-              onClick={handleAddOpinion}
-              className="flex items-center space-x-2 px-3 py-1.5 text-sm text-water-blue-600 hover:text-water-blue-700 hover:bg-water-blue-50 rounded-lg transition-colors"
-            >
-              <Plus className="w-4 h-4" />
-              <span>의견 추가하기</span>
-            </button>
-          )}
+        <div className="p-4 border-b border-gray-100">
+          <h3 className="text-lg font-semibold text-gray-800">댓글</h3>
         </div>
 
-        {/* 의견 목록 (스크롤 가능) */}
+        {/* 댓글 목록 (스크롤 가능) */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {/* 이슈 생성 알림 */}
           <div className="flex space-x-3">
@@ -114,31 +111,28 @@ const IssueComments: React.FC<IssueCommentsProps> = ({ issue, user, isReadOnly =
             </div>
           </div>
 
-          {/* 의견 목록 */}
-          {opinions.map(opinion => (
-            <div key={opinion.id} className="flex space-x-3">
+          {/* 댓글 목록 */}
+          {comments.map(comment => (
+            <div key={comment.id} className="flex space-x-3">
               <div className="w-10 h-10 bg-gradient-to-br from-water-blue-500 to-water-teal-500 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0">
-                {opinion.authorName.charAt(0)}
+                {comment.authorName.charAt(0)}
               </div>
               <div className="flex-1">
-                <div 
-                  className="cursor-pointer hover:bg-gray-50 rounded-lg p-2 -m-2 transition-colors"
-                  onClick={() => handleOpinionClick(opinion)}
-                >
+                <div className="rounded-lg p-2">
                   <div className="flex items-center space-x-2">
-                    <span className="font-medium text-gray-800">{opinion.authorName}</span>
+                    <span className="font-medium text-gray-800">{comment.authorName}</span>
                     <span className="text-gray-400">•</span>
                     <span className="text-sm text-gray-500">
-                      {format(new Date(opinion.createdAt), 'yyyy-MM-dd HH:mm', { locale: ko })}
+                      {format(new Date(comment.createdAt), 'yyyy-MM-dd HH:mm', { locale: ko })}
                     </span>
                   </div>
-                  <p className="text-gray-700 mt-1 whitespace-pre-line line-clamp-3">
-                    {opinion.text}
+                  <p className="text-gray-700 mt-1 whitespace-pre-line">
+                    {comment.text}
                   </p>
                   {/* 첨부 파일 표시 */}
-                  {opinion.attachments && opinion.attachments.length > 0 && (
+                  {comment.attachments && comment.attachments.length > 0 && (
                     <div className="mt-2 space-y-1">
-                      {opinion.attachments.map((attachment) => (
+                      {comment.attachments.map((attachment) => (
                         <div key={attachment.id} className="flex items-center space-x-2 text-xs text-gray-600">
                           <File className="w-3 h-3" />
                           <span>{attachment.name}</span>
@@ -154,32 +148,82 @@ const IssueComments: React.FC<IssueCommentsProps> = ({ issue, user, isReadOnly =
             </div>
           ))}
         </div>
+
+        {/* 댓글 입력 영역 */}
+        {!isReadOnly && (
+          <div className="p-4 border-t border-gray-100" data-comment-area="true">
+            <form onSubmit={handleSubmitComment} className="space-y-3">
+              <textarea
+                ref={textareaRef}
+                value={commentText}
+                onChange={(e) => setCommentText(e.target.value)}
+                placeholder="댓글을 입력하세요..."
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-water-blue-500 focus:border-transparent outline-none resize-none text-sm"
+                rows={3}
+              />
+              
+              {/* 첨부된 파일 목록 */}
+              {attachedFiles.length > 0 && (
+                <div className="space-y-1">
+                  {attachedFiles.map((file, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between p-2 bg-gray-50 rounded border border-gray-200 text-xs"
+                    >
+                      <div className="flex items-center space-x-2 flex-1 min-w-0">
+                        <File className="w-3 h-3 text-gray-500 flex-shrink-0" />
+                        <span className="text-gray-700 truncate">{file.name}</span>
+                        <span className="text-gray-400">({formatFileSize(file.size)})</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveFile(index)}
+                        className="ml-2 p-1 hover:bg-gray-200 rounded transition-colors text-gray-500"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    multiple
+                    onChange={handleFileSelect}
+                    className="hidden"
+                    id="comment-file-input"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="flex items-center space-x-1 px-3 py-1.5 text-xs text-gray-600 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                    data-file-attach-button="true"
+                  >
+                    <Paperclip className="w-3 h-3" />
+                    <span>파일 첨부</span>
+                  </button>
+                  {attachedFiles.length > 0 && (
+                    <span className="text-xs text-gray-500">({attachedFiles.length}개)</span>
+                  )}
+                </div>
+                <button
+                  type="submit"
+                  disabled={!commentText.trim() && attachedFiles.length === 0}
+                  className="flex items-center space-x-2 px-4 py-2 bg-water-blue-600 text-white rounded-lg hover:bg-water-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium"
+                >
+                  <Send className="w-4 h-4" />
+                  <span>등록</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
       </div>
 
-      {/* 의견 추가 모달 */}
-      {showAddOpinionModal && (
-        <AddOpinionModal
-          isOpen={showAddOpinionModal}
-          onClose={() => {
-            setShowAddOpinionModal(false);
-          }}
-          onSubmit={handleSubmitOpinion}
-          user={user}
-        />
-      )}
-
-      {/* 상세 의견 모달 */}
-      {showOpinionDetailModal && selectedOpinion && (
-        <OpinionDetailModal
-          isOpen={showOpinionDetailModal}
-          onClose={() => {
-            setShowOpinionDetailModal(false);
-            setSelectedOpinion(null);
-          }}
-          opinion={selectedOpinion}
-          user={user}
-        />
-      )}
     </>
   );
 };
