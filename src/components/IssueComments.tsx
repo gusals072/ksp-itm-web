@@ -1,9 +1,17 @@
 import React, { useState, useRef } from 'react';
-import { File, Send, Paperclip } from 'lucide-react';
+import { File, Send, Paperclip, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import type { Issue, Opinion } from '../types';
 import { useApp } from '../context/AppContext';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from './ui/dialog';
 
 interface IssueCommentsProps {
   issue: Issue;
@@ -12,10 +20,12 @@ interface IssueCommentsProps {
 }
 
 const IssueComments: React.FC<IssueCommentsProps> = ({ issue, user, isReadOnly = false }) => {
-  const { addNotification } = useApp();
+  const { addNotification, user: currentUser } = useApp();
   const [comments, setComments] = useState<Opinion[]>([]);
   const [commentText, setCommentText] = useState('');
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [commentToDelete, setCommentToDelete] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -80,6 +90,34 @@ const IssueComments: React.FC<IssueCommentsProps> = ({ issue, user, isReadOnly =
     return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
   };
 
+  // 댓글 삭제 권한 확인
+  const canDeleteComment = (comment: Opinion): boolean => {
+    if (!currentUser) return false;
+    // super_admin은 모든 댓글 삭제 가능
+    if (currentUser.role === 'super_admin') return true;
+    // 댓글 작성자 본인만 삭제 가능
+    return comment.authorId === currentUser.id;
+  };
+
+  // 댓글 삭제 핸들러
+  const handleDeleteClick = (commentId: string) => {
+    setCommentToDelete(commentId);
+    setShowDeleteModal(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (commentToDelete) {
+      setComments(prev => prev.filter(comment => comment.id !== commentToDelete));
+      setShowDeleteModal(false);
+      setCommentToDelete(null);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setShowDeleteModal(false);
+    setCommentToDelete(null);
+  };
+
   return (
     <>
       <div 
@@ -105,12 +143,23 @@ const IssueComments: React.FC<IssueCommentsProps> = ({ issue, user, isReadOnly =
                 {comment.authorName.charAt(0)}
               </div>
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="font-medium text-gray-800">{comment.authorName}</span>
-                  <span className="text-gray-400">•</span>
-                  <span className="text-sm text-gray-500">
-                    {format(new Date(comment.createdAt), 'yyyy-MM-dd HH:mm', { locale: ko })}
-                  </span>
+                <div className="flex items-center justify-between gap-2 mb-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-gray-800">{comment.authorName}</span>
+                    <span className="text-gray-400">•</span>
+                    <span className="text-sm text-gray-500">
+                      {format(new Date(comment.createdAt), 'yyyy-MM-dd HH:mm', { locale: ko })}
+                    </span>
+                  </div>
+                  {canDeleteComment(comment) && (
+                    <button
+                      onClick={() => handleDeleteClick(comment.id)}
+                      className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                      title="댓글 삭제"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
                 </div>
                 <p className="text-gray-700 whitespace-pre-line break-words leading-relaxed">
                   {comment.text}
@@ -209,6 +258,31 @@ const IssueComments: React.FC<IssueCommentsProps> = ({ issue, user, isReadOnly =
         )}
       </div>
 
+      {/* 댓글 삭제 확인 모달 */}
+      <Dialog open={showDeleteModal} onOpenChange={setShowDeleteModal}>
+        <DialogContent className="sm:max-w-[425px] z-[10020]">
+          <DialogHeader>
+            <DialogTitle>댓글 삭제</DialogTitle>
+            <DialogDescription>
+              정말 이 댓글을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <button
+              onClick={handleDeleteCancel}
+              className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium"
+            >
+              취소
+            </button>
+            <button
+              onClick={handleDeleteConfirm}
+              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"
+            >
+              삭제
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
