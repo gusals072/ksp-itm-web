@@ -88,7 +88,6 @@ const CreateIssue: React.FC = () => {
     // 현재는 Context API 사용
     addIssue({
       ...formData,
-      tags: [], // 태그 기능 제거
       reporterId: user?.id || '',
       reporterName: user?.name || '',
       cc: selectedCC,

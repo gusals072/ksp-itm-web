@@ -16,6 +16,7 @@ import {
   File,
   Download,
   RotateCcw,
+  RotateCw,
   Ticket,
   ArrowBigRightDash
 } from 'lucide-react';
@@ -44,7 +45,7 @@ interface IssueDetailModalProps {
 
 const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, onClose, onIssueChange }) => {
   const navigate = useNavigate();
-  const { issues, updateIssueStatus, deleteIssue, updateIssue, updateIssueAssignee, user, addMeetingAgenda, meetingAgendas } = useApp();
+  const { issues, updateIssueStatus, deleteIssue, updateIssue, updateIssueAssignee, reopenTicket, user, addMeetingAgenda, meetingAgendas, closedTickets } = useApp();
 
   // 모달 스택 관리 (이전 이슈 ID들의 히스토리)
   const [modalStack, setModalStack] = useState<string[]>([]);
@@ -71,6 +72,7 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
   const [showAgendaNoteModal, setShowAgendaNoteModal] = useState(false);
   const [showStartProcessingModal, setShowStartProcessingModal] = useState(false);
   const [showRevertToPendingModal, setShowRevertToPendingModal] = useState(false);
+  const [showReopenModal, setShowReopenModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [relatedIssuesSlideIndex, setRelatedIssuesSlideIndex] = useState(0);
   const [showCompletionAnimation, setShowCompletionAnimation] = useState(false);
@@ -105,6 +107,7 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
       setMeetingNote('');
       setShowStartProcessingModal(false);
       setShowRevertToPendingModal(false);
+      setShowReopenModal(false);
       setShowEditModal(false);
       setShowCompletionAnimation(false);
       setIsClosing(false);
@@ -247,6 +250,28 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
     setShowMeetingModal(false);
     setMeetingNote('');
     onClose(); // 회의 안건 등록 시 모달 자동 닫기
+  };
+
+  // 티켓 재오픈 확인 모달 표시
+  const handleReopenTicketClick = () => {
+    setShowReopenModal(true);
+  };
+
+  // 티켓 재오픈 핸들러
+  const handleReopenTicket = () => {
+    if (!issue) return;
+    
+    setShowReopenModal(false);
+    
+    // closedTickets에서 해당 티켓 찾기
+    const closedTicket = closedTickets.find(t => t.issueId === issue.id);
+    if (closedTicket) {
+      reopenTicket(closedTicket.id);
+    } else {
+      // 이미 issues에 있는 경우: reopened 플래그 설정하고 상태를 PENDING으로 변경, 등록일을 재오픈 날짜로 변경
+      updateIssue(issue.id, { reopened: true, createdAt: new Date() });
+      updateIssueStatus(issue.id, IssueStatus.PENDING);
+    }
   };
 
   // 회의 안건 등록 권한 체크 (super_admin, 담당자, 생성자, 대표)
@@ -748,11 +773,19 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
                 <div className="space-y-6 overflow-y-auto pr-2">
                 {/* 상태 표시 및 완료 버튼 */}
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 w-full">
-                  <h3 className="text-base font-semibold text-gray-800 mb-4">티켓 상태</h3>
+                  <div className="flex items-center gap-2 mb-4">
+                    <h3 className="text-base font-semibold text-gray-800">티켓 상태</h3>
+                    {/* 재오픈 배지 */}
+                    {issue.reopened && (
+                      <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800 border border-orange-300">
+                        재오픈됨
+                      </span>
+                    )}
+                  </div>
                   
                   {/* 현재 상태 표시 */}
                   <div className="mb-4">
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between mb-2">
                       <span className="text-xs text-gray-600">현재 상태</span>
                       <div className="relative flex items-center">
                         {/* 상태 아이콘 영역 - 슬라이드 전환 애니메이션 */}
@@ -824,6 +857,26 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
                   {/* 버튼 영역 - 상태에 따라 슬라이드 전환 효과 */}
                   <div className="border-t border-gray-200 pt-4 relative overflow-hidden min-h-[60px]">
                     <AnimatePresence mode="wait" initial={false}>
+                      {/* 재오픈 버튼 (완료된 티켓일 때만) */}
+                      {issue.status === IssueStatus.RESOLVED && user && (user.role === 'super_admin' || user.id === issue.reporterId || isUserInCC()) && (
+                        <motion.div
+                          key="reopen-button"
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          transition={{ duration: 0.3 }}
+                          className="flex justify-center"
+                        >
+                          <button
+                            onClick={handleReopenTicketClick}
+                            className="flex items-center gap-2 px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+                          >
+                            <RotateCw className="w-4 h-4" />
+                            재오픈
+                          </button>
+                        </motion.div>
+                      )}
+
                       {issue.status === IssueStatus.PENDING && (user?.role === 'super_admin' || isUserInCC()) && (
                         <motion.div
                           key="pending-button"
@@ -882,7 +935,9 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
                     {issue.status === IssueStatus.PENDING && (!issue.cc || issue.cc.length === 0) && '참조자가 배정되지 않았습니다.'}
                     {issue.status === IssueStatus.IN_PROGRESS && '티켓을 완료하려면 완료 처리 버튼을 클릭하세요.'}
                     {issue.status === IssueStatus.MEETING && '주간 회의에서 처리될 예정입니다.'}
-                    {issue.status === IssueStatus.RESOLVED && '이 티켓은 완료되었습니다.'}
+                    {issue.status === IssueStatus.RESOLVED && !issue.reopened && '이 티켓은 완료되었습니다.'}
+                    {issue.status === IssueStatus.RESOLVED && issue.reopened && '이 티켓은 재오픈되었습니다.'}
+                    {issue.reopened && issue.status !== IssueStatus.RESOLVED && '재오픈된 티켓입니다. 이슈 제기 상태부터 다시 시작합니다.'}
                   </div>
 
                   {/* 회의 안건 첨언 확인 버튼 */}
@@ -942,7 +997,7 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
 
             {/* 댓글 섹션 */}
             <div className="mt-6 border-t border-gray-200 pt-6">
-              <IssueComments issue={issue} user={user} isReadOnly={issue.status === IssueStatus.RESOLVED} />
+              <IssueComments issue={issue} user={user} isReadOnly={issue.status === IssueStatus.RESOLVED && !issue.reopened} />
             </div>
               </motion.div>
             )}
@@ -992,6 +1047,41 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
             >
               <CheckCircle2 className="w-4 h-4" />
               완료하기
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 재오픈 확인 모달 */}
+      <Dialog open={showReopenModal} onOpenChange={setShowReopenModal}>
+        <DialogContent className="sm:max-w-[500px] z-[10002]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <RotateCw className="w-5 h-5 text-orange-600" />
+              티켓 재오픈
+            </DialogTitle>
+            <DialogDescription>
+              정말 티켓을 재오픈하시겠습니까?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-sm text-gray-700">
+              재오픈된 티켓은 이슈 제기 상태부터 다시 시작하며, 재오픈 상태는 계속 유지됩니다.
+            </p>
+          </div>
+          <DialogFooter>
+            <button
+              onClick={() => setShowReopenModal(false)}
+              className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+            >
+              취소
+            </button>
+            <button
+              onClick={handleReopenTicket}
+              className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-medium flex items-center gap-2"
+            >
+              <RotateCw className="w-4 h-4" />
+              재오픈하기
             </button>
           </DialogFooter>
         </DialogContent>

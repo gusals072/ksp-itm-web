@@ -100,7 +100,6 @@ const CreateIssueModal: React.FC<CreateIssueModalProps> = ({ isOpen, onClose }) 
 
     addIssue({
       ...formData,
-      tags: [],
       reporterId: user?.id || '',
       reporterName: user?.name || '',
       cc: selectedCC,

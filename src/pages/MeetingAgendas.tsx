@@ -91,7 +91,6 @@ const DetailView: React.FC<{
           </div>
           {ticket.category && (
             <div className="flex items-center gap-2 text-xs md:text-sm">
-              <Tag className="w-3.5 h-3.5 md:w-4 md:h-4 text-gray-400 flex-shrink-0" />
               <span className="text-gray-600">카테고리:</span>
               <span className="text-gray-800 font-medium truncate">{ticket.category}</span>
             </div>

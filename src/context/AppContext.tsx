@@ -17,6 +17,7 @@ interface AppContextType {
   deleteIssue: (issueId: string) => void;
   updateIssueStatus: (issueId: string, status: IssueStatus, closedReason?: string) => void;
   updateIssueAssignee: (issueId: string, assigneeId: string, assigneeName: string) => void;
+  reopenTicket: (closedTicketId: string) => void;
 
   // Meeting Agendas
   meetingAgendas: MeetingAgenda[];
@@ -209,7 +210,6 @@ const dummyIssues: Issue[] = [
     readLevel: 'DAERI',
     createdAt: new Date('2026-01-07'),
     updatedAt: new Date('2026-01-08'),
-    tags: ['설비', '센서', '개선'],
     category: '설비관리',
     attachments: [
       { id: 'att1', name: '누수감지시스템_현황보고서.pdf', size: 2048576, type: 'application/pdf' },
@@ -234,7 +234,6 @@ const dummyIssues: Issue[] = [
     createdAt: new Date('2026-01-05'),
     updatedAt: new Date('2026-01-10'),
     meetingDate: new Date('2026-01-12'),
-    tags: ['시스템', '보고서', '자동화'],
     category: '시스템개선',
     attachments: [
       { id: 'att3', name: '수질모니터링_데이터샘플.xlsx', size: 1024000, type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' },
@@ -259,7 +258,6 @@ const dummyIssues: Issue[] = [
     readLevel: 'JUIM',
     createdAt: new Date('2026-01-12'),
     updatedAt: new Date('2026-01-12'),
-    tags: ['민원', '악취', '시설'],
     category: '시설확충'
   },
   {
@@ -279,7 +277,6 @@ const dummyIssues: Issue[] = [
     createdAt: new Date('2026-01-01'),
     updatedAt: new Date('2026-01-09'),
     resolvedDate: new Date('2026-01-09'),
-    tags: ['데이터', '관로', '유지보수'],
     category: '데이터관리'
   },
   {
@@ -299,7 +296,6 @@ const dummyIssues: Issue[] = [
     readLevel: 'SAWON',
     createdAt: new Date('2026-01-10'),
     updatedAt: new Date('2026-01-11'),
-    tags: ['소음', '시설', '민원'],
     category: '시설확충',
     attachments: [
       { id: 'att5', name: '소음측정_보고서.pdf', size: 1536000, type: 'application/pdf' }
@@ -322,7 +318,6 @@ const dummyIssues: Issue[] = [
     readLevel: 'SAWON',
     createdAt: new Date('2026-01-11'),
     updatedAt: new Date('2026-01-11'),
-    tags: ['모바일', '인증', '개선'],
     category: '시스템개선'
   },
   {
@@ -342,7 +337,6 @@ const dummyIssues: Issue[] = [
     readLevel: 'GWAJANG',
     createdAt: new Date('2026-01-08'),
     updatedAt: new Date('2026-01-12'),
-    tags: ['전력', '모니터링', '비용절감'],
     category: '시스템개선',
     attachments: [
       { id: 'att6', name: '전력모니터링_제안서.pdf', size: 2560000, type: 'application/pdf' },
@@ -366,7 +360,6 @@ const dummyIssues: Issue[] = [
     readLevel: 'SAWON',
     createdAt: new Date('2026-01-13'),
     updatedAt: new Date('2026-01-13'),
-    tags: ['점검', '예방', '체계'],
     category: '설비관리'
   },
   {
@@ -387,7 +380,6 @@ const dummyIssues: Issue[] = [
     readLevel: 'CHAJANG',
     createdAt: new Date('2026-01-06'),
     updatedAt: new Date('2026-01-12'),
-    tags: ['급수', '압력', '개선'],
     category: '설비관리',
     attachments: [
       { id: 'att8', name: '급수압_측정데이터.xlsx', size: 512000, type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }
@@ -411,7 +403,6 @@ const dummyIssues: Issue[] = [
     createdAt: new Date('2025-12-28'),
     updatedAt: new Date('2026-01-05'),
     resolvedDate: new Date('2026-01-05'),
-    tags: ['매뉴얼', '재해', '개정'],
     category: '기타'
   },
   {
@@ -433,7 +424,6 @@ const dummyIssues: Issue[] = [
     createdAt: new Date('2026-01-09'),
     updatedAt: new Date('2026-01-11'),
     meetingDate: new Date('2026-01-15'),
-    tags: ['수질', '자동화', '장비'],
     category: '시설확충',
     attachments: [
       { id: 'att9', name: '장비_사양서.pdf', size: 3072000, type: 'application/pdf' },
@@ -457,7 +447,6 @@ const dummyIssues: Issue[] = [
     readLevel: 'SANGMU',
     createdAt: new Date('2026-01-14'),
     updatedAt: new Date('2026-01-14'),
-    tags: ['앱', 'UI/UX', '개선'],
     category: '시스템개선'
   },
   {
@@ -477,7 +466,6 @@ const dummyIssues: Issue[] = [
     readLevel: 'BUJANG',
     createdAt: new Date('2026-01-04'),
     updatedAt: new Date('2026-01-11'),
-    tags: ['필터', '최적화', '비용'],
     category: '설비관리',
     attachments: [
       { id: 'att11', name: '필터_사용량_분석.xlsx', size: 640000, type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }
@@ -501,7 +489,6 @@ const dummyIssues: Issue[] = [
     createdAt: new Date('2025-12-30'),
     updatedAt: new Date('2026-01-08'),
     resolvedDate: new Date('2026-01-08'),
-    tags: ['안전', '교육', '개편'],
     category: '기타'
   },
   {
@@ -522,7 +509,6 @@ const dummyIssues: Issue[] = [
     readLevel: 'GWAJANG',
     createdAt: new Date('2026-01-15'),
     updatedAt: new Date('2026-01-15'),
-    tags: ['백업', '보안', '이중화'],
     category: '시스템개선'
   }
 ];
@@ -762,7 +748,6 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         assigneeName: issue.assigneeName,
         cc: issue.cc,
         category: issue.category,
-        tags: issue.tags,
         createdAt: issue.createdAt,
         meetingAgendaId,
         meetingDate: issue.meetingDate
@@ -787,7 +772,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       [IssueStatus.PENDING]: '이슈 제기',
       [IssueStatus.IN_PROGRESS]: '처리 중',
       [IssueStatus.MEETING]: '회의 예정',
-      [IssueStatus.RESOLVED]: '완료됨'
+      [IssueStatus.RESOLVED]: '완료됨',
     }[status] || status;
 
     const notifyUsers = [
@@ -881,6 +866,65 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     setMeetingAgendas(prev => prev.filter(agenda => agenda.issueId !== issueId));
     // 관련된 내재화도 삭제
     setInternalizations(prev => prev.filter(internalization => internalization.issueId !== issueId));
+  };
+
+  // 티켓 재오픈 함수
+  const reopenTicket = (closedTicketId: string) => {
+    // closedTickets에서 티켓 찾기
+    const closedTicket = closedTickets.find(t => t.id === closedTicketId);
+    if (!closedTicket) return;
+
+    // issues에 이미 존재하는지 확인
+    const existingIssue = issues.find(i => i.id === closedTicket.issueId);
+    const reopenDate = new Date();
+    if (existingIssue) {
+      // 이미 존재하면 reopened 플래그 설정하고 상태를 PENDING으로 변경, 등록일을 재오픈 날짜로 변경
+      updateIssue(closedTicket.issueId, { reopened: true, createdAt: reopenDate });
+      updateIssueStatus(closedTicket.issueId, IssueStatus.PENDING);
+    } else {
+      // issues에 복원 (reopened 플래그 설정, 상태는 PENDING, 등록일은 재오픈 날짜)
+      const reopenedIssue: Issue = {
+        id: closedTicket.issueId,
+        title: closedTicket.issueTitle,
+        description: closedTicket.issueDescription,
+        status: IssueStatus.PENDING,
+        priority: closedTicket.priority,
+        reporterId: closedTicket.reporterId,
+        reporterName: closedTicket.reporterName,
+        assigneeId: closedTicket.assigneeId,
+        assigneeName: closedTicket.assigneeName,
+        cc: closedTicket.cc,
+        readLevel: Rank.SAWON, // 기본값 (실제로는 closedTicket에 저장되어야 함)
+        createdAt: reopenDate,
+        updatedAt: new Date(),
+        meetingDate: closedTicket.meetingDate,
+        category: closedTicket.category,
+        relatedIssues: [],
+        attachments: [],
+        reopened: true
+      };
+      setIssues(prev => [reopenedIssue, ...prev]);
+    }
+
+    // closedTickets에서 제거
+    setClosedTickets(prev => prev.filter(t => t.id !== closedTicketId));
+
+    // 알림 전송
+    const notifyUsers = [
+      closedTicket.reporterId,
+      ...(closedTicket.cc || []).map(cc => cc.id)
+    ].filter((id, index, self) => self.indexOf(id) === index);
+
+    notifyUsers.forEach(userId => {
+      addNotification({
+        type: 'STATUS_CHANGED',
+        title: '티켓이 재오픈되었습니다',
+        message: `"${closedTicket.issueTitle}" 티켓이 재오픈되었습니다.`,
+        issueId: closedTicket.issueId,
+        issueTitle: closedTicket.issueTitle,
+        userId
+      });
+    });
   };
 
   const addMeetingAgenda = (agenda: Omit<MeetingAgenda, 'id'>) => {
@@ -1038,6 +1082,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         deleteIssue,
         updateIssueStatus,
         updateIssueAssignee,
+        reopenTicket,
         meetingAgendas,
         addMeetingAgenda,
         updateMeetingAgenda,

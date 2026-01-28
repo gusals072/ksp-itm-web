@@ -7,7 +7,6 @@ import {
   ArrowLeft,
   User,
   Calendar,
-  Tag as TagIcon,
   CheckCircle2,
   Paperclip,
   MoreVertical,
@@ -276,25 +275,6 @@ const IssueDetail: React.FC = () => {
             </div>
           </div>
 
-          {/* 태그 */}
-          {issue.tags.length > 0 && (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-              <div className="flex items-center space-x-2 mb-4">
-                <TagIcon className="w-5 h-5 text-gray-600" />
-                <h3 className="text-lg font-semibold text-gray-800">태그</h3>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {issue.tags.map((tag, index) => (
-                  <span
-                    key={index}
-                    className="px-3 py-1.5 bg-water-blue-50 text-water-blue-700 rounded-full text-sm"
-                  >
-                    #{tag}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
 
           {/* 코멘트 및 첨부파일 (더미) */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">

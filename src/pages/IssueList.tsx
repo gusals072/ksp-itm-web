@@ -42,7 +42,8 @@ const IssueList: React.FC = () => {
       );
 
       // 상태 필터
-      const matchesStatus = filterStatus === 'all' || issue.status === filterStatus;
+      const matchesStatus = filterStatus === 'all' || 
+        (filterStatus === 'reopened' ? issue.reopened === true : issue.status === filterStatus);
 
       // 우선순위 필터
       const matchesPriority = filterPriority === 'all' || issue.priority === filterPriority;
@@ -286,7 +287,7 @@ const IssueList: React.FC = () => {
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-2">상태</label>
                 <div className="flex flex-wrap gap-2">
-                  {['all', 'PENDING', 'IN_PROGRESS'].map((status) => (
+                  {['all', 'PENDING', 'IN_PROGRESS', 'reopened'].map((status) => (
                     <button
                       key={status}
                       onClick={() => setFilterStatus(status)}
@@ -532,22 +533,16 @@ const IssueList: React.FC = () => {
                     <p className="text-sm text-gray-500 truncate mt-1">
                       {issue.description}
                     </p>
-                    {/* 태그 */}
-                    <div className="flex flex-wrap gap-1 mt-2">
-                      {issue.tags.map((tag, idx) => (
-                        <span
-                          key={idx}
-                          className="px-2 py-0.5 bg-water-blue-50 text-water-blue-700 text-xs rounded-md"
-                        >
-                          #{tag}
-                        </span>
-                      ))}
-                    </div>
                   </div>
                 </div>
 
                 {/* 상태 */}
-                <div className="col-span-2">
+                <div className="col-span-2 flex items-center gap-2">
+                  {issue.reopened && (
+                    <span className="px-2 py-1 text-xs font-medium rounded-full bg-orange-100 text-orange-800 border border-orange-300">
+                      재오픈
+                    </span>
+                  )}
                   <span
                     className={`px-3 py-1 text-sm font-medium rounded-full border ${getStatusColor(issue.status)}`}
                   >

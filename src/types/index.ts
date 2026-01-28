@@ -3,14 +3,16 @@ export type IssueStatus =
   | 'PENDING'        // 이슈 제기
   | 'IN_PROGRESS'    // 처리 중
   | 'MEETING'        // 회의 예정
-  | 'RESOLVED';      // 완료됨
+  | 'RESOLVED'       // 완료됨
+  | 'REOPENED';      // 재오픈됨
 
 // 이슈 상태 상수
 export const IssueStatus = {
   PENDING: 'PENDING' as IssueStatus,
   IN_PROGRESS: 'IN_PROGRESS' as IssueStatus,
   MEETING: 'MEETING' as IssueStatus,
-  RESOLVED: 'RESOLVED' as IssueStatus
+  RESOLVED: 'RESOLVED' as IssueStatus,
+  REOPENED: 'REOPENED' as IssueStatus
 } as const;
 
 // 우선순위 타입
@@ -115,7 +117,7 @@ export interface Issue {
   meetingDate?: Date;      // 주간 회의 예정일
   resolvedDate?: Date;     // 완료일
   internalizedDate?: Date; // 내재화 완료일
-  tags: string[];
+  reopened?: boolean;      // 재오픈 여부 (재오픈된 티켓은 true)
   category: string;
   relatedIssues?: string[]; // 연관된 이슈 ID 목록
   attachments?: Array<{ // 첨부 파일
@@ -170,7 +172,6 @@ export interface ClosedTicket {
     name: string;
   }>;
   category: string;
-  tags: string[];
   createdAt: Date; // 원본 이슈 생성일
   // 회의 안건 관련 정보 (source가 'meeting'인 경우)
   meetingAgendaId?: string;
@@ -189,7 +190,6 @@ export interface CreateIssueForm {
   description: string;
   priority: Priority;
   category: string;
-  tags: string[];
 }
 
 // 의견 타입
