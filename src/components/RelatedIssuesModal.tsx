@@ -135,7 +135,7 @@ const RelatedIssuesModal: React.FC<RelatedIssuesModalProps> = ({
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-[800px] max-h-[85vh] flex flex-col p-0">
+        <DialogContent className="sm:max-w-[800px] max-h-[85vh] flex flex-col p-0 z-[10015]">
           <DialogHeader className="px-6 pt-6 pb-4 border-b border-gray-200">
             <DialogTitle className="flex items-center gap-2">
               <LinkIcon className="w-5 h-5 text-water-blue-600" />
