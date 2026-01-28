@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { IssueStatus, Priority, RankLevel, type Issue } from '../types';
+import { IssueStatus, Priority, type Issue } from '../types';
 import { Search, Plus, User as UserIcon, Calendar, AlertCircle, Clock, Filter, X, SlidersHorizontal, ChevronDown, ChevronUp } from 'lucide-react';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
@@ -9,11 +8,12 @@ import { isOverdue, getDaysSinceCreation } from '../utils/ticket';
 import { isTerminalState } from '../constants/ticket';
 import { motion, AnimatePresence } from 'framer-motion';
 import IssueDetailModal from '../components/IssueDetailModal';
+import CreateIssueModal from '../components/CreateIssueModal';
 
 const IssueList: React.FC = () => {
-  const navigate = useNavigate();
   const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const { issues, user } = useApp();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
@@ -255,7 +255,7 @@ const IssueList: React.FC = () => {
 
             {/* 이슈 등록 버튼 */}
             <button
-              onClick={() => navigate('/issues/new')}
+              onClick={() => setIsCreateModalOpen(true)}
               className="flex items-center space-x-2 px-6 py-3 bg-water-blue-600 text-white rounded-lg hover:bg-water-blue-700 transition-colors font-semibold shadow-sm"
             >
               <Plus className="w-5 h-5" />
@@ -658,6 +658,12 @@ const IssueList: React.FC = () => {
           setSelectedIssueId(newIssueId);
           setIsModalOpen(true);
         }}
+      />
+
+      {/* 이슈 등록 모달 */}
+      <CreateIssueModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
       />
     </motion.div>
   );

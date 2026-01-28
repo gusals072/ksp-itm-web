@@ -296,13 +296,6 @@ const MeetingAgendas: React.FC = () => {
   return (
     <div className="flex flex-col bg-gray-50 h-screen max-h-[90vh] my-4 mx-auto max-w-[1800px] rounded-lg shadow-sm overflow-hidden">
       {/* 헤더 */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4 flex-shrink-0">
-        <div className="flex items-center gap-3 mb-2">
-          <CalendarIcon className="w-6 h-6 text-blue-600" />
-          <h1 className="text-2xl font-bold text-gray-800">회의 안건</h1>
-        </div>
-        <p className="text-sm text-gray-600">회의가 필요한 안건 또는 2주 이상 해결되지 않은 티켓들이 자동으로 이동되었습니다.</p>
-      </div>
 
       {/* 메인 컨텐츠 영역 - 듀얼 패널 */}
       <div className="flex-1 flex flex-col md:flex-row overflow-hidden min-h-0">

@@ -202,7 +202,7 @@ export function AssigneeAssignment({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl w-full h-[80vh] flex flex-col p-0" hideClose>
+      <DialogContent className="max-w-5xl w-full h-[80vh] flex flex-col p-0 z-[10010]" hideClose>
         <DialogHeader className="px-6 pt-6 pb-4 border-b">
           <div className="flex items-center justify-between">
             <div>

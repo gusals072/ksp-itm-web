@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { IssueStatus, Priority, RankLevel, Rank } from '../types';
+import EditIssueModal from '../components/EditIssueModal';
 import {
   ArrowLeft,
   User,
@@ -39,6 +40,7 @@ const IssueDetail: React.FC = () => {
   const [showCompletionModal, setShowCompletionModal] = useState(false);
   const [completionReason, setCompletionReason] = useState('');
   const [showAssignmentModal, setShowAssignmentModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   const handleDelete = () => {
     if (issue) {
@@ -168,17 +170,16 @@ const IssueDetail: React.FC = () => {
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
-      {/* 담당자/참조자 배정 모달 (z-index 최상위) - 배정되지 않은 경우에만 표시 */}
-      {issue && !issue.assigneeId && showAssignmentModal && (
-        <div className="fixed inset-0 z-[9999] bg-black/20 flex items-center justify-center">
-          <AssigneeAssignment
-            ticketId={issue.id}
-            currentAssignee={null}
-            currentCC={[]}
-            onAssignmentChange={handleAssignmentComplete}
-            isModal={true}
-          />
-        </div>
+      {/* 담당자/참조자 배정 모달 - 배정되지 않은 경우에만 표시 */}
+      {issue && !issue.assigneeId && (
+        <AssigneeAssignment
+          ticketId={issue.id}
+          currentAssignee={null}
+          currentCC={[]}
+          onAssignmentChange={handleAssignmentComplete}
+          isOpen={showAssignmentModal}
+          onClose={() => setShowAssignmentModal(false)}
+        />
       )}
 
       {/* 헤더 */}
@@ -210,7 +211,7 @@ const IssueDetail: React.FC = () => {
           )}
           {/* 수정 버튼 */}
           <button
-            onClick={() => navigate(`/issues/${id}/edit`)}
+            onClick={() => setShowEditModal(true)}
             className="flex items-center space-x-2 px-4 py-2 bg-water-blue-600 text-white rounded-lg hover:bg-water-blue-700 transition-colors font-semibold shadow-sm"
           >
             <Edit className="w-4 h-4" />
@@ -492,6 +493,15 @@ const IssueDetail: React.FC = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* 이슈 수정 모달 */}
+      {id && (
+        <EditIssueModal
+          issueId={id}
+          isOpen={showEditModal}
+          onClose={() => setShowEditModal(false)}
+        />
+      )}
     </div>
   );
 };

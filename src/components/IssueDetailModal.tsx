@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
+import EditIssueModal from './EditIssueModal';
 import { IssueStatus, Priority, RankLevel, Rank } from '../types';
 import {
   User,
@@ -70,6 +71,7 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
   const [showAgendaNoteModal, setShowAgendaNoteModal] = useState(false);
   const [showStartProcessingModal, setShowStartProcessingModal] = useState(false);
   const [showRevertToPendingModal, setShowRevertToPendingModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [relatedIssuesSlideIndex, setRelatedIssuesSlideIndex] = useState(0);
   const [showCompletionAnimation, setShowCompletionAnimation] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
@@ -103,6 +105,7 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
       setMeetingNote('');
       setShowStartProcessingModal(false);
       setShowRevertToPendingModal(false);
+      setShowEditModal(false);
       setShowCompletionAnimation(false);
       setIsClosing(false);
       setIsMessageClosing(false);
@@ -478,10 +481,7 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
                 {/* 수정 버튼 (완료된 티켓에서는 숨김, 참조자 또는 생성자만 가능) */}
                 {issue.status !== IssueStatus.RESOLVED && user && (user.id === issue.reporterId || isUserInCC()) && (
                   <button
-                    onClick={() => {
-                      onClose();
-                      navigate(`/issues/${issue.id}/edit`);
-                    }}
+                    onClick={() => setShowEditModal(true)}
                     className="flex items-center space-x-2 px-4 py-2 bg-water-blue-600 text-white rounded-lg hover:bg-water-blue-700 transition-colors font-semibold shadow-sm"
                   >
                     <Edit className="w-4 h-4" />
@@ -994,7 +994,7 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
 
       {/* 회의 안건 첨언 확인 모달 */}
       <Dialog open={showAgendaNoteModal} onOpenChange={setShowAgendaNoteModal}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[500px] z-[10010]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Send className="w-5 h-5 text-purple-600" />
@@ -1177,6 +1177,19 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* 이슈 수정 모달 */}
+      {issue && (
+        <EditIssueModal
+          issueId={issue.id}
+          isOpen={showEditModal}
+          onClose={() => setShowEditModal(false)}
+          onSuccess={() => {
+            // 수정 성공 시 이슈 상세 모달 새로고침을 위해 닫았다가 다시 열기
+            // 또는 상태를 다시 로드하도록 처리
+          }}
+        />
+      )}
     </>
   );
 };

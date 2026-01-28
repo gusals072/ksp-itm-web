@@ -11,8 +11,6 @@ import Header from './components/Header';
 import LoginPage from './pages/LoginPage';
 import Dashboard from './pages/Dashboard';
 import IssueList from './pages/IssueList';
-import CreateIssue from './pages/CreateIssue';
-import EditIssue from './pages/EditIssue';
 import MeetingAgendas from './pages/MeetingAgendas';
 import Internalizations from './pages/Internalizations';
 import UserManagement from './pages/UserManagement';
@@ -36,8 +34,6 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const path = window.location.pathname;
     if (path === '/dashboard') return '대시보드';
     if (path === '/issues') return '이슈 목록';
-    if (path === '/issues/new') return '이슈 등록';
-    if (path.includes('/edit')) return '이슈 수정';
     if (path === '/meetings') return '회의 안건';
     if (path === '/internalizations') return '완료된 티켓';
     if (path === '/admin/users') return '유저 관리';
@@ -99,29 +95,6 @@ function App() {
                   </ProtectedRoute>
                 }
               />
-
-              <Route
-                path="/issues/new"
-                element={
-                  <ProtectedRoute>
-                    <MainLayout>
-                      <CreateIssue />
-                    </MainLayout>
-                  </ProtectedRoute>
-                }
-              />
-
-              <Route
-                path="/issues/:id/edit"
-                element={
-                  <ProtectedRoute>
-                    <MainLayout>
-                      <EditIssue />
-                    </MainLayout>
-                  </ProtectedRoute>
-                }
-              />
-
 
               <Route
                 path="/meetings"
