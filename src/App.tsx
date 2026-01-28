@@ -30,14 +30,14 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 // 메인 레이아웃 컴포넌트
 const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const getPageTitle = () => {
-    const path = window.location.pathname;
-    if (path === '/dashboard') return '대시보드';
+    const path = window.location.pathname.replace('/ksp-itm-web', '') || '/dashboard';
+    if (path === '/dashboard' || path === '/') return '대시보드';
     if (path === '/issues') return '이슈 목록';
     if (path === '/meetings') return '회의 안건';
     if (path === '/internalizations') return '완료된 티켓';
-    if (path === '/admin/users') return '유저 관리';
-    if (path === '/admin/site') return '사이트 관리';
-    return 'K-SMARTPIA 이슈 티켓 매니지먼트 시스템';
+    if (path.startsWith('/admin/users')) return '유저 관리';
+    if (path.startsWith('/admin/site')) return '사이트 관리';
+    return '대시보드';
   };
 
   return (

@@ -25,6 +25,7 @@ const Header: React.FC<HeaderProps> = ({ title, onMenuClick }) => {
   const [showNotificationModal, setShowNotificationModal] = useState(false);
 
 
+
   // 사용자 통계 계산
   const userStats = user ? {
     reported: issues.filter(i => i.reporterId === user.id).length,
