@@ -4,7 +4,6 @@ import { Priority, Rank } from '../types';
 import { Save, X, Upload, Link as LinkIcon, Paperclip, File } from 'lucide-react';
 import { AssigneeAssignment } from './AssigneeAssignment';
 import RelatedIssuesModal from './RelatedIssuesModal';
-import { toast } from 'react-toastify';
 import {
   Dialog,
   DialogContent,
@@ -107,7 +106,6 @@ const CreateIssueModal: React.FC<CreateIssueModalProps> = ({ isOpen, onClose }) 
       relatedIssues: selectedRelatedIssues.length > 0 ? selectedRelatedIssues : undefined
     });
 
-    toast.success('이슈가 성공적으로 등록되었습니다.');
     onClose();
   };
 

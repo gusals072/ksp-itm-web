@@ -1,8 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Provider } from 'react-redux';
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
 import { AppProvider } from './context/AppContext';
 import { ReactQueryProvider } from './lib/ReactQueryProvider';
 import { store } from './store/store';
@@ -145,18 +143,6 @@ function App() {
               {/* 404 처리 - 인증 여부와 관계없이 표시 */}
               <Route path="*" element={<NotFound />} />
             </Routes>
-            <ToastContainer
-              position="top-right"
-              autoClose={5000}
-              hideProgressBar={false}
-              newestOnTop={false}
-              closeOnClick
-              rtl={false}
-              pauseOnFocusLoss
-              draggable
-              pauseOnHover
-              theme="light"
-            />
           </AppProvider>
         </Router>
       </Provider>

@@ -1,5 +1,4 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { toast } from 'react-toastify'
 import type { TicketStatusType } from '../constants/ticket'
 
 // API 호출 시뮬레이션 - 실제로는 axios나 fetch 사용
@@ -33,7 +32,6 @@ export const useUpdateTicketStatus = () => {
     },
     onError: (error) => {
       console.error('Status update failed:', error)
-      toast.error('티켓 상태 변경에 실패했습니다.')
     },
   })
 }
@@ -51,7 +49,6 @@ export const useDeleteTicket = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tickets'] })
-      toast.success('티켓이 성공적으로 삭제되었습니다.')
     },
     onError: (error) => {
       console.error('Delete failed:', error)
@@ -89,7 +86,6 @@ export const useAssignTicket = () => {
     },
     onError: (error) => {
       console.error('Assignment failed:', error)
-      toast.error('담당자/참조자 배정에 실패했습니다.')
     },
   })
 }
@@ -109,11 +105,9 @@ export const useCreateTicket = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tickets'] })
-      toast.success('티켓이 성공적으로 생성되었습니다.')
     },
     onError: (error) => {
       console.error('Create failed:', error)
-      toast.error('티켓 생성에 실패했습니다.')
     },
   })
 }

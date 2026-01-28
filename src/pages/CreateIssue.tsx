@@ -5,7 +5,6 @@ import { Priority, Rank, RankLabel } from '../types';
 import { ArrowLeft, Save, X, Upload, User, Users, Link as LinkIcon, Paperclip, File } from 'lucide-react';
 import { AssigneeAssignment } from '../components/AssigneeAssignment';
 import RelatedIssuesModal from '../components/RelatedIssuesModal';
-import { toast } from 'react-toastify';
 
 const CreateIssue: React.FC = () => {
   const navigate = useNavigate();
@@ -95,7 +94,6 @@ const CreateIssue: React.FC = () => {
       relatedIssues: selectedRelatedIssues.length > 0 ? selectedRelatedIssues : undefined
     });
 
-    toast.success('이슈가 성공적으로 등록되었습니다.');
     navigate('/issues');
   };
 
