@@ -1,15 +1,13 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { IssueStatus, Priority } from '../types';
-import { Archive, FileText, User, Calendar, Tag, CheckCircle2, Search, Filter } from 'lucide-react';
+import { Archive, FileText, User, CheckCircle2, Search, Filter } from 'lucide-react';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { motion } from 'framer-motion';
 import IssueDetailModal from '../components/IssueDetailModal';
 
 const Internalizations: React.FC = () => {
-  const navigate = useNavigate();
   const { closedTickets, user } = useApp();
   const [filterStatus, setFilterStatus] = useState<'all' | IssueStatus>('all');
   const [filterSource, setFilterSource] = useState<'all' | 'issue' | 'meeting'>('all');
@@ -113,14 +111,14 @@ const Internalizations: React.FC = () => {
 
   return (
     <motion.div
-      className="p-6"
+      className="p-3 md:p-6 w-full"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: "easeOut" }}
     >
       {/* 검색 및 필터 */}
       <motion.div
-        className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6"
+        className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 md:p-4 mb-4 md:mb-6"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1, duration: 0.4 }}
@@ -128,23 +126,23 @@ const Internalizations: React.FC = () => {
         <div className="flex flex-col lg:flex-row gap-4">
           {/* 검색창 */}
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <Search className="absolute left-2 md:left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 md:w-5 md:h-5 text-gray-400" />
             <input
               type="text"
               placeholder="제목, 설명, 종료 사유로 검색..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-water-blue-500 focus:border-transparent outline-none"
+              className="w-full pl-8 md:pl-10 pr-3 md:pr-4 py-1.5 md:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-water-blue-500 focus:border-transparent outline-none text-xs md:text-sm"
             />
           </div>
 
           {/* 상태 필터 */}
-          <div className="flex items-center gap-2">
-            <Filter className="w-5 h-5 text-gray-400" />
+          <div className="flex items-center gap-1.5 md:gap-2">
+            <Filter className="w-4 h-4 md:w-5 md:h-5 text-gray-400 flex-shrink-0" />
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value as 'all' | IssueStatus)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-water-blue-500 focus:border-transparent outline-none bg-white"
+              className="px-2 md:px-4 py-1.5 md:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-water-blue-500 focus:border-transparent outline-none bg-white text-xs md:text-sm"
             >
               <option value="all">전체 상태</option>
               <option value={IssueStatus.RESOLVED}>완료됨</option>
@@ -152,11 +150,11 @@ const Internalizations: React.FC = () => {
           </div>
 
           {/* 출처 필터 */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 md:gap-2">
             <select
               value={filterSource}
               onChange={(e) => setFilterSource(e.target.value as 'all' | 'issue' | 'meeting')}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-water-blue-500 focus:border-transparent outline-none bg-white"
+              className="px-2 md:px-4 py-1.5 md:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-water-blue-500 focus:border-transparent outline-none bg-white text-xs md:text-sm"
             >
               <option value="all">전체 출처</option>
               <option value="issue">이슈 목록</option>
@@ -166,130 +164,124 @@ const Internalizations: React.FC = () => {
         </div>
       </motion.div>
 
-      {/* 완료된 티켓 목록 */}
+      {/* 완료된 티켓 목록 - 게시판 형식 */}
       <motion.div
-        className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
+        className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2, duration: 0.4 }}
       >
-        {filteredTickets.map((ticket, index) => (
-          <motion.div
-            key={ticket.id}
-            className="bg-white rounded-lg border-2 border-gray-200 shadow-md hover:shadow-lg transition-all hover:border-water-blue-400 cursor-pointer flex flex-col"
-            onClick={() => {
-              setSelectedIssueId(ticket.issueId);
-              setIsModalOpen(true);
-            }}
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ delay: 0.3 + index * 0.05, duration: 0.4 }}
-            whileHover={{ scale: 1.02, y: -5 }}
-          >
-            <div className="p-4 flex flex-col flex-1">
-              {/* 티켓 헤더 */}
-              <div className="mb-3 pb-3 border-b-2 border-gray-100">
-                <div className="flex items-start justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <div className="flex-shrink-0 w-8 h-8 bg-water-blue-100 rounded-full flex items-center justify-center">
-                      <Archive className="w-4 h-4 text-water-blue-600" />
+        {/* 테이블 헤더 */}
+        <div className="bg-gray-50 border-b border-gray-200">
+          <div className="grid grid-cols-12 gap-4 px-4 md:px-6 py-3 md:py-4 text-xs md:text-sm font-semibold text-gray-600 uppercase tracking-wide">
+            <div className="col-span-1 hidden md:block">번호</div>
+            <div className="col-span-6 md:col-span-4">제목</div>
+            <div className="col-span-2 hidden lg:block">등록자</div>
+            <div className="col-span-2 md:col-span-1">우선순위</div>
+            <div className="col-span-2 md:col-span-1">출처</div>
+            <div className="col-span-2 md:col-span-1">등록일</div>
+            <div className="col-span-2 md:col-span-1">종료일</div>
+            <div className="col-span-1 hidden xl:block">상태</div>
+          </div>
+        </div>
+
+        {/* 테이블 본문 */}
+        {filteredTickets.length > 0 ? (
+          <div className="divide-y divide-gray-200">
+            {filteredTickets.map((ticket, index) => (
+              <motion.div
+                key={ticket.id}
+                className="grid grid-cols-12 gap-4 px-4 md:px-6 py-3 md:py-4 hover:bg-gray-50 cursor-pointer transition-colors"
+                onClick={() => {
+                  setSelectedIssueId(ticket.issueId);
+                  setIsModalOpen(true);
+                }}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.3 + index * 0.02, duration: 0.3 }}
+              >
+                {/* 번호 */}
+                <div className="col-span-1 hidden md:flex items-center">
+                  <span className="text-xs md:text-sm text-gray-500 font-medium">{index + 1}</span>
+                </div>
+
+                {/* 제목 */}
+                <div className="col-span-6 md:col-span-4 flex items-center min-w-0">
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <div className={`w-2 h-2 md:w-2.5 md:h-2.5 rounded-full flex-shrink-0 ${getPriorityColor(ticket.priority)}`} />
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-xs md:text-sm font-semibold text-gray-800 hover:text-water-blue-600 transition-colors truncate">
+                        {ticket.issueTitle}
+                      </h3>
+                      {ticket.issueDescription && (
+                        <p className="text-xs text-gray-500 truncate mt-0.5 hidden lg:block">
+                          {ticket.issueDescription}
+                        </p>
+                      )}
                     </div>
-                    <span
-                      className={`px-2.5 py-1 text-xs font-bold rounded-full border flex items-center gap-1 ${getStatusColor(ticket.finalStatus)}`}
-                    >
-                      {getStatusIcon(ticket.finalStatus)}
-                      {getStatusText(ticket.finalStatus)}
-                    </span>
                   </div>
                 </div>
-                <h3 className="text-sm font-bold text-gray-800 hover:text-water-blue-600 transition-colors line-clamp-2 mb-1">
-                  {ticket.issueTitle}
-                </h3>
-                <p className="text-xs text-gray-600 line-clamp-2">{ticket.issueDescription}</p>
-              </div>
 
-              {/* 티켓 정보 */}
-              <div className="space-y-1.5 mb-3 flex-1">
-                <div className="flex items-center justify-between text-xs text-gray-600">
-                  <div className="flex items-center gap-2">
-                    <User className="w-3.5 h-3.5 text-water-blue-500 flex-shrink-0" />
-                    <span className="truncate">담당자: {ticket.assigneeName || '미지정'}</span>
+                {/* 등록자 */}
+                <div className="col-span-2 hidden lg:flex items-center">
+                  <div className="flex items-center gap-1.5">
+                    <User className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                    <span className="text-xs md:text-sm text-gray-700 truncate">{ticket.reporterName}</span>
                   </div>
+                </div>
+
+                {/* 우선순위 */}
+                <div className="col-span-2 md:col-span-1 flex items-center">
                   <div className="flex items-center gap-1">
                     <div className={`w-2 h-2 rounded-full ${getPriorityColor(ticket.priority)}`}></div>
-                    <span className="text-xs">{getPriorityText(ticket.priority)}</span>
+                    <span className="text-xs md:text-sm text-gray-700 hidden sm:inline">{getPriorityText(ticket.priority)}</span>
                   </div>
                 </div>
-                <div className="flex items-center space-x-2 text-xs text-gray-600">
-                  <Calendar className="w-3.5 h-3.5 text-water-blue-500 flex-shrink-0" />
-                  <span className="truncate">종료일: {format(new Date(ticket.closedDate), 'yyyy-MM-dd', { locale: ko })}</span>
-                </div>
-                <div className="flex items-center space-x-2 text-xs text-gray-600">
-                  <FileText className="w-3.5 h-3.5 text-water-blue-500 flex-shrink-0" />
-                  <span className="truncate">출처: {getSourceText(ticket.source)}</span>
-                </div>
-                {ticket.category && (
-                  <div className="flex items-center space-x-2 text-xs text-gray-600">
-                    <Tag className="w-3.5 h-3.5 text-water-blue-500 flex-shrink-0" />
-                    <span className="truncate">카테고리: {ticket.category}</span>
-                  </div>
-                )}
-                {ticket.tags && ticket.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mt-2">
-                    {ticket.tags.slice(0, 3).map((tag, idx) => (
-                      <span
-                        key={idx}
-                        className="px-2 py-0.5 bg-water-blue-50 text-water-blue-700 text-xs rounded-md"
-                      >
-                        #{tag}
-                      </span>
-                    ))}
-                    {ticket.tags.length > 3 && (
-                      <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-md">
-                        +{ticket.tags.length - 3}
-                      </span>
-                    )}
-                  </div>
-                )}
-                {ticket.closedReason && (
-                  <div className="bg-gray-50 border-l-4 border-water-blue-300 rounded p-2 mt-2">
-                    <p className="text-xs font-medium text-gray-700 mb-1">
-                      완료 방법
-                    </p>
-                    <p className="text-xs text-gray-600 line-clamp-3">{ticket.closedReason}</p>
-                  </div>
-                )}
-              </div>
 
-              {/* 하단 정보 */}
-              <div className="pt-3 border-t-2 border-gray-100">
-                <div className="flex items-center justify-between text-xs text-gray-500">
-                  <span>등록일: {format(new Date(ticket.createdAt), 'yyyy-MM-dd', { locale: ko })}</span>
-                  <span>등록자: {ticket.reporterName}</span>
+                {/* 출처 */}
+                <div className="col-span-2 md:col-span-1 flex items-center">
+                  <span className="text-xs md:text-sm text-gray-700 truncate">{getSourceText(ticket.source)}</span>
                 </div>
-              </div>
-            </div>
-          </motion.div>
-        ))}
+
+                {/* 등록일 */}
+                <div className="col-span-2 md:col-span-1 flex items-center">
+                  <span className="text-xs md:text-sm text-gray-600">
+                    {format(new Date(ticket.createdAt), 'yyyy-MM-dd', { locale: ko })}
+                  </span>
+                </div>
+
+                {/* 종료일 */}
+                <div className="col-span-2 md:col-span-1 flex items-center">
+                  <span className="text-xs md:text-sm text-gray-600 font-medium">
+                    {format(new Date(ticket.closedDate), 'yyyy-MM-dd', { locale: ko })}
+                  </span>
+                </div>
+
+                {/* 상태 */}
+                <div className="col-span-1 hidden xl:flex items-center">
+                  <span
+                    className={`px-2 py-1 text-xs font-medium rounded-full border flex items-center gap-1 ${getStatusColor(ticket.finalStatus)}`}
+                  >
+                    {getStatusIcon(ticket.finalStatus)}
+                    <span className="hidden 2xl:inline">{getStatusText(ticket.finalStatus)}</span>
+                  </span>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        ) : (
+          <div className="p-12 text-center">
+            <Archive className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">완료된 티켓이 없습니다</h3>
+            <p className="text-gray-500">
+              {searchTerm || filterStatus !== 'all' || filterSource !== 'all'
+                ? '검색 조건에 맞는 완료된 티켓이 없습니다.'
+                : '아직 완료된 티켓이 없습니다. 이슈 목록이나 주간 회의에서 티켓을 종료하면 여기에 보관됩니다.'}
+            </p>
+          </div>
+        )}
       </motion.div>
 
-      {/* 결과 없음 */}
-      {filteredTickets.length === 0 && (
-        <motion.div
-          className="text-center py-12 bg-white rounded-xl shadow-sm border border-gray-200"
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.3, duration: 0.4 }}
-        >
-          <Archive className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-xl font-semibold text-gray-800 mb-2">완료된 티켓이 없습니다</h3>
-          <p className="text-gray-500">
-            {searchTerm || filterStatus !== 'all' || filterSource !== 'all'
-              ? '검색 조건에 맞는 완료된 티켓이 없습니다.'
-              : '아직 완료된 티켓이 없습니다. 이슈 목록이나 주간 회의에서 티켓을 종료하면 여기에 보관됩니다.'}
-          </p>
-        </motion.div>
-      )}
 
       {/* 이슈 상세 모달 */}
       <IssueDetailModal
