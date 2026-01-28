@@ -15,6 +15,7 @@ import MeetingAgendas from './pages/MeetingAgendas';
 import Internalizations from './pages/Internalizations';
 import UserManagement from './pages/UserManagement';
 import SiteManagement from './pages/SiteManagement';
+import NotFound from './pages/NotFound';
 import { useApp } from './context/AppContext';
 
 // 보호된 라우트 컴포넌트
@@ -56,7 +57,7 @@ function App() {
   return (
     <ReactQueryProvider>
       <Provider store={store}>
-        <Router>
+        <Router basename="/ksp-itm-web">
           <AppProvider>
             <Routes>
               {/* 로그인 페이지 */}
@@ -141,8 +142,8 @@ function App() {
                 }
               />
 
-              {/* 404 처리 */}
-              <Route path="*" element={<Navigate to="/" replace />} />
+              {/* 404 처리 - 인증 여부와 관계없이 표시 */}
+              <Route path="*" element={<NotFound />} />
             </Routes>
             <ToastContainer
               position="top-right"
