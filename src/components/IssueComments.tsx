@@ -94,39 +94,41 @@ const IssueComments: React.FC<IssueCommentsProps> = ({ issue, user, isReadOnly =
 
         {/* 댓글 목록 (스크롤 가능) */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          {/* 댓글 목록 */}
-          {comments.map(comment => (
-            <div key={comment.id} className="flex space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-water-blue-500 to-water-teal-500 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0">
+          {/* 댓글 목록 - 생성일 기준 내림차순 정렬 (최신 것부터) */}
+          {[...comments].sort((a, b) => {
+            const dateA = new Date(a.createdAt).getTime();
+            const dateB = new Date(b.createdAt).getTime();
+            return dateB - dateA;
+          }).map(comment => (
+            <div key={comment.id} className="flex items-start gap-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-water-blue-500 to-water-teal-500 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0 mt-0.5">
                 {comment.authorName.charAt(0)}
               </div>
-              <div className="flex-1">
-                <div className="rounded-lg p-2">
-                  <div className="flex items-center space-x-2">
-                    <span className="font-medium text-gray-800">{comment.authorName}</span>
-                    <span className="text-gray-400">•</span>
-                    <span className="text-sm text-gray-500">
-                      {format(new Date(comment.createdAt), 'yyyy-MM-dd HH:mm', { locale: ko })}
-                    </span>
-                  </div>
-                  <p className="text-gray-700 mt-1 whitespace-pre-line">
-                    {comment.text}
-                  </p>
-                  {/* 첨부 파일 표시 */}
-                  {comment.attachments && comment.attachments.length > 0 && (
-                    <div className="mt-2 space-y-1">
-                      {comment.attachments.map((attachment) => (
-                        <div key={attachment.id} className="flex items-center space-x-2 text-xs text-gray-600">
-                          <File className="w-3 h-3" />
-                          <span>{attachment.name}</span>
-                          <span className="text-gray-400">
-                            ({formatFileSize(attachment.size)})
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="font-medium text-gray-800">{comment.authorName}</span>
+                  <span className="text-gray-400">•</span>
+                  <span className="text-sm text-gray-500">
+                    {format(new Date(comment.createdAt), 'yyyy-MM-dd HH:mm', { locale: ko })}
+                  </span>
                 </div>
+                <p className="text-gray-700 whitespace-pre-line break-words leading-relaxed">
+                  {comment.text}
+                </p>
+                {/* 첨부 파일 표시 */}
+                {comment.attachments && comment.attachments.length > 0 && (
+                  <div className="mt-2 space-y-1">
+                    {comment.attachments.map((attachment) => (
+                      <div key={attachment.id} className="flex items-center gap-2 text-xs text-gray-600">
+                        <File className="w-3 h-3" />
+                        <span>{attachment.name}</span>
+                        <span className="text-gray-400">
+                          ({formatFileSize(attachment.size)})
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           ))}
