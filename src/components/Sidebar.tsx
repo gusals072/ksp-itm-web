@@ -59,7 +59,7 @@ const Sidebar: React.FC = () => {
   };
 
   return (
-    <div className="w-64 bg-gradient-to-b from-water-blue-900 to-water-blue-950 text-white h-screen fixed left-0 top-0 flex flex-col shadow-xl">
+    <div className="hidden md:flex w-64 bg-gradient-to-b from-water-blue-900 to-water-blue-950 text-white h-screen fixed left-0 top-0 flex-col shadow-xl z-40">
       {/* 로고 */}
       <div className="p-6 border-b border-water-blue-800">
         <div className="flex items-center space-x-3">

@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { Priority, IssueStatus, RankLevel } from '../types';
-import { Calendar as CalendarIcon, CheckCircle2, FileText, Clock, Search, Filter, ArrowUpDown, X } from 'lucide-react';
+import { Calendar as CalendarIcon, CheckCircle2, FileText, Clock, Search, Filter, ArrowUpDown, X, User, Paperclip, Link as LinkIcon, Tag } from 'lucide-react';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { getDaysSinceCreation } from '../utils/ticket';
@@ -18,53 +18,29 @@ import IssueDetailModal from '../components/IssueDetailModal';
 // 리스트 아이템 컴포넌트
 const AgendaListItem: React.FC<{
   ticket: any;
-  agenda: any;
   isSelected: boolean;
   onClick: () => void;
   getPriorityColor: (priority: Priority) => string;
   getPriorityText: (priority: Priority) => string;
   index: number;
-}> = ({ ticket, agenda, isSelected, onClick, getPriorityColor, getPriorityText, index }) => {
-  const daysSinceCreation = getDaysSinceCreation(new Date(ticket.createdAt));
-
-  return (
-      <div
+}> = ({ ticket, isSelected, onClick, getPriorityColor, getPriorityText, index }) => {
+      return (
+    <div
       onClick={onClick}
-      className={`p-5 border-b border-gray-200 cursor-pointer transition-colors ${
+      className={`p-3 md:p-4 border-b border-gray-200 cursor-pointer transition-colors ${
         isSelected
           ? 'bg-blue-50 border-l-4 border-l-blue-600'
           : 'bg-white hover:bg-gray-50'
       }`}
     >
-      <div className="flex items-start justify-between mb-3">
-        <div className="flex items-center gap-3 flex-1 min-w-0">
-          <div className={`w-3 h-3 rounded-full flex-shrink-0 ${getPriorityColor(ticket.priority)}`} />
-          <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium flex-shrink-0">
-            {getPriorityText(ticket.priority)}
-          </span>
-          <span className="text-sm text-gray-500 flex-shrink-0">#{index + 1}</span>
-        </div>
+      <div className="flex items-center gap-2 md:gap-3 mb-1.5 md:mb-2">
+        <div className={`w-2.5 h-2.5 md:w-3 md:h-3 rounded-full flex-shrink-0 ${getPriorityColor(ticket.priority)}`} />
+        <span className="px-1.5 md:px-2 py-0.5 md:py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium flex-shrink-0">
+          {getPriorityText(ticket.priority)}
+        </span>
+        <span className="text-xs text-gray-500 flex-shrink-0 font-medium">#{index + 1}</span>
       </div>
-
-      <h3 className="text-base font-semibold text-gray-800 mb-2 line-clamp-1">{ticket.title}</h3>
-      
-      <p className="text-sm text-gray-600 mb-3 line-clamp-2">{ticket.description}</p>
-
-      {agenda?.notes && (
-        <div className="bg-purple-50 border-l-4 border-purple-400 rounded-lg px-3 py-2 mb-3">
-          <p className="text-xs font-medium text-purple-700 mb-1">회의 안건 첨언</p>
-          <p className="text-sm text-purple-900 line-clamp-1">{agenda.notes}</p>
-        </div>
-      )}
-
-      <div className="flex items-center gap-4 text-sm text-gray-500">
-        <div className="flex items-center gap-1.5">
-          <Clock className="w-4 h-4" />
-          <span>{daysSinceCreation}일 경과</span>
-        </div>
-        <span>{ticket.reporterName}</span>
-        <span>{format(new Date(ticket.createdAt), 'yyyy-MM-dd', { locale: ko })}</span>
-      </div>
+      <h3 className="text-xs md:text-sm font-semibold text-gray-800 line-clamp-2">{ticket.title}</h3>
     </div>
   );
 };
@@ -74,67 +50,147 @@ const DetailView: React.FC<{
   ticket: any;
   agenda: any;
   onComplete: (ticketId: string) => void;
-  onDetail: (ticketId: string) => void;
   getPriorityColor: (priority: Priority) => string;
   getPriorityText: (priority: Priority) => string;
   index: number;
-}> = ({ ticket, agenda, onComplete, onDetail, getPriorityColor, getPriorityText, index }) => {
+}> = ({ ticket, agenda, onComplete, getPriorityColor, getPriorityText, index }) => {
   const daysSinceCreation = getDaysSinceCreation(new Date(ticket.createdAt));
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full overflow-y-auto">
       {/* 헤더 */}
-      <div className="border-b border-gray-200 pb-4 mb-5 flex-shrink-0">
-        <div className="flex items-center gap-3 mb-3">
-          <div className={`w-3 h-3 rounded-full ${getPriorityColor(ticket.priority)}`} />
-          <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+      <div className="border-b border-gray-200 pb-3 md:pb-4 mb-4 md:mb-5 flex-shrink-0">
+        <div className="flex items-center gap-2 md:gap-3 mb-2 md:mb-3 flex-wrap">
+          <div className={`w-2.5 h-2.5 md:w-3 md:h-3 rounded-full ${getPriorityColor(ticket.priority)}`} />
+          <span className="px-2 md:px-3 py-0.5 md:py-1 bg-blue-100 text-blue-800 rounded-full text-xs md:text-sm font-medium">
             {getPriorityText(ticket.priority)}
           </span>
-          <span className="text-sm text-gray-500 font-medium">#{index + 1}</span>
+          <span className="text-xs md:text-sm text-gray-500 font-medium">#{index + 1}</span>
         </div>
-        <h2 className="text-2xl font-bold text-gray-800 mb-3">{ticket.title}</h2>
-        <div className="flex items-center gap-4 text-sm text-gray-600">
-          <div className="flex items-center gap-1.5">
-            <Clock className="w-4 h-4" />
-            <span>{daysSinceCreation}일 경과</span>
+        <h2 className="text-lg md:text-2xl font-bold text-gray-800 mb-3 md:mb-4">{ticket.title}</h2>
+      </div>
+
+      {/* 기본 정보 */}
+      <div className="mb-4 md:mb-5 flex-shrink-0">
+        <h3 className="text-xs md:text-sm font-semibold text-gray-700 mb-2 md:mb-3">기본 정보</h3>
+        <div className="bg-white rounded-lg p-3 md:p-4 border border-gray-200 space-y-2 md:space-y-3">
+          <div className="flex items-center gap-2 text-xs md:text-sm">
+            <User className="w-3.5 h-3.5 md:w-4 md:h-4 text-gray-400 flex-shrink-0" />
+            <span className="text-gray-600">등록자:</span>
+            <span className="text-gray-800 font-medium truncate">{ticket.reporterName}</span>
           </div>
-          <span>등록자: {ticket.reporterName}</span>
-          <span>{format(new Date(ticket.createdAt), 'yyyy년 MM월 dd일', { locale: ko })}</span>
+          <div className="flex items-center gap-2 text-xs md:text-sm">
+            <CalendarIcon className="w-3.5 h-3.5 md:w-4 md:h-4 text-gray-400 flex-shrink-0" />
+            <span className="text-gray-600">생성일:</span>
+            <span className="text-gray-800">{format(new Date(ticket.createdAt), 'yyyy년 MM월 dd일 HH:mm', { locale: ko })}</span>
+          </div>
+          <div className="flex items-center gap-2 text-xs md:text-sm">
+            <Clock className="w-3.5 h-3.5 md:w-4 md:h-4 text-gray-400 flex-shrink-0" />
+            <span className="text-gray-600">경과일:</span>
+            <span className="text-gray-800 font-medium">{daysSinceCreation}일</span>
+          </div>
+          {ticket.category && (
+            <div className="flex items-center gap-2 text-xs md:text-sm">
+              <Tag className="w-3.5 h-3.5 md:w-4 md:h-4 text-gray-400 flex-shrink-0" />
+              <span className="text-gray-600">카테고리:</span>
+              <span className="text-gray-800 font-medium truncate">{ticket.category}</span>
+            </div>
+          )}
         </div>
       </div>
 
       {/* 설명 */}
-      <div className="mb-5 flex-shrink-0">
-        <h3 className="text-sm font-semibold text-gray-700 mb-2">설명</h3>
-        <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-          <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap line-clamp-4">{ticket.description}</p>
+      <div className="mb-4 md:mb-5 flex-shrink-0">
+        <h3 className="text-xs md:text-sm font-semibold text-gray-700 mb-2">설명</h3>
+        <div className="bg-white rounded-lg p-3 md:p-4 border border-gray-200">
+          <p className="text-xs md:text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{ticket.description}</p>
         </div>
       </div>
 
-      {/* 회의 안건 첨언 */}
-      {agenda?.notes && (
-        <div className="mb-5 flex-shrink-0">
-          <h3 className="text-sm font-semibold text-gray-700 mb-2">회의 안건 첨언</h3>
-          <div className="bg-purple-50 border-l-4 border-purple-400 rounded-lg p-4">
-            <p className="text-sm text-purple-900 whitespace-pre-wrap line-clamp-3">{agenda.notes}</p>
+      {/* 참조자 */}
+      {ticket.cc && ticket.cc.length > 0 && (
+        <div className="mb-4 md:mb-5 flex-shrink-0">
+          <h3 className="text-xs md:text-sm font-semibold text-gray-700 mb-2">참조자</h3>
+          <div className="bg-white rounded-lg p-3 md:p-4 border border-gray-200">
+            <div className="flex flex-wrap gap-1.5 md:gap-2">
+              {ticket.cc.map((cc: any) => (
+                <span
+                  key={cc.id}
+                  className="inline-flex items-center gap-1 px-2 md:px-3 py-0.5 md:py-1 bg-blue-50 text-blue-700 rounded-full text-xs md:text-sm"
+                >
+                  <User className="w-3 h-3 flex-shrink-0" />
+                  <span className="truncate">{cc.name}</span>
+                </span>
+              ))}
+            </div>
           </div>
         </div>
       )}
 
-      {/* 액션 버튼 */}
-      <div className="flex gap-3 mt-auto pt-5 border-t border-gray-200 flex-shrink-0">
-        <button
-          onClick={() => onDetail(ticket.id)}
-          className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium"
-        >
-          <FileText className="w-4 h-4" />
-          상세보기
-        </button>
+      {/* 첨부 파일 */}
+      {ticket.attachments && ticket.attachments.length > 0 && (
+        <div className="mb-4 md:mb-5 flex-shrink-0">
+          <h3 className="text-xs md:text-sm font-semibold text-gray-700 mb-2">첨부 파일</h3>
+          <div className="bg-white rounded-lg p-3 md:p-4 border border-gray-200">
+            <div className="space-y-1.5 md:space-y-2">
+              {ticket.attachments.map((attachment: any) => (
+                <div key={attachment.id} className="flex items-center gap-2 text-xs md:text-sm text-gray-700">
+                  <Paperclip className="w-3.5 h-3.5 md:w-4 md:h-4 text-gray-400 flex-shrink-0" />
+                  <span className="truncate flex-1 min-w-0">{attachment.name}</span>
+                  {attachment.size && (
+                    <span className="text-xs text-gray-500 flex-shrink-0">
+                      ({(attachment.size / 1024 / 1024).toFixed(2)} MB)
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 연관 이슈 */}
+      {ticket.relatedIssues && ticket.relatedIssues.length > 0 && (
+        <div className="mb-4 md:mb-5 flex-shrink-0">
+          <h3 className="text-xs md:text-sm font-semibold text-gray-700 mb-2">연관 이슈</h3>
+          <div className="bg-white rounded-lg p-3 md:p-4 border border-gray-200">
+            <div className="space-y-1.5 md:space-y-2">
+              {ticket.relatedIssues.map((relatedIssueId: string) => {
+                // 실제로는 issues 배열에서 찾아야 하지만, 여기서는 ID만 표시
+                return (
+                  <div key={relatedIssueId} className="flex items-center gap-2 text-xs md:text-sm text-gray-700">
+                    <LinkIcon className="w-3.5 h-3.5 md:w-4 md:h-4 text-gray-400 flex-shrink-0" />
+                    <span className="truncate">이슈 ID: {relatedIssueId}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 회의 안건 첨언 */}
+      {agenda?.notes && (
+        <div className="mb-4 md:mb-5 flex-shrink-0">
+          <h3 className="text-xs md:text-sm font-semibold text-gray-700 mb-2">회의 안건 첨언</h3>
+          <div className="bg-purple-50 border-l-4 border-purple-400 rounded-lg p-3 md:p-4">
+            <p className="text-xs md:text-sm text-purple-900 whitespace-pre-wrap leading-relaxed">{agenda.notes}</p>
+          </div>
+          {agenda?.meetingDate && (
+            <p className="text-xs text-gray-500 mt-2">
+              등록일: {format(new Date(agenda.meetingDate), 'yyyy년 MM월 dd일 HH:mm', { locale: ko })}
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* 완료 버튼 */}
+      <div className="mt-auto pt-4 md:pt-5 border-t border-gray-200 flex-shrink-0">
         <button
           onClick={() => onComplete(ticket.id)}
-          className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 md:py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-xs md:text-sm font-medium shadow-sm"
         >
-          <CheckCircle2 className="w-4 h-4" />
+          <CheckCircle2 className="w-4 h-4 md:w-5 md:h-5" />
           완료 처리
         </button>
       </div>
@@ -156,9 +212,12 @@ const MeetingAgendas: React.FC = () => {
   const [sortBy, setSortBy] = useState<'date' | 'priority' | 'title'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
-  // 권한 체크 함수: 참조자 또는 대표급 이상만 조회 가능
+  // 권한 체크 함수: super_admin 또는 참조자 또는 대표급 이상만 조회 가능
   const canViewMeetingAgenda = (issue: any) => {
     if (!user) return false;
+    
+    // 총괄 관리자는 모든 티켓 조회 가능
+    if (user.role === 'super_admin') return true;
     
     // 참조자인지 확인
     const isReferenced = issue.cc?.some((ccUser: any) => ccUser.id === user.id);
@@ -258,10 +317,6 @@ const MeetingAgendas: React.FC = () => {
     setShowCompleteModal(true);
   };
 
-  const handleDetail = (ticketId: string) => {
-    setSelectedIssueId(ticketId);
-    setIsModalOpen(true);
-  };
 
   const getPriorityColor = (priority: Priority) => {
     switch (priority) {
@@ -294,7 +349,7 @@ const MeetingAgendas: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col bg-gray-50 h-screen max-h-[90vh] my-4 mx-auto max-w-[1800px] rounded-lg shadow-sm overflow-hidden">
+    <div className="flex flex-col bg-gray-50 h-screen max-h-[90vh] my-2 md:my-4 mx-2 md:mx-4 rounded-lg shadow-sm overflow-hidden">
       {/* 헤더 */}
 
       {/* 메인 컨텐츠 영역 - 듀얼 패널 */}
@@ -302,16 +357,16 @@ const MeetingAgendas: React.FC = () => {
         {/* 왼쪽 패널 - 리스트 뷰 */}
         <div className="w-full md:w-1/2 lg:w-2/5 xl:w-1/3 md:border-r border-b md:border-b-0 border-gray-200 bg-white flex flex-col flex-shrink-0">
           {/* 검색 및 필터 영역 */}
-          <div className="p-4 border-b border-gray-200 bg-gray-50 flex-shrink-0">
+          <div className="p-3 md:p-4 border-b border-gray-200 bg-gray-50 flex-shrink-0">
             {/* 검색창 */}
-            <div className="relative mb-3">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <div className="relative mb-2 md:mb-3">
+              <Search className="absolute left-2 md:left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 md:w-5 md:h-5 text-gray-400" />
               <input
                 type="text"
                 placeholder="제목, 설명으로 검색..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-9 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
+                className="w-full pl-8 md:pl-10 pr-7 md:pr-9 py-2 md:py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-xs md:text-sm"
               />
               {searchTerm && (
                 <button
@@ -324,12 +379,12 @@ const MeetingAgendas: React.FC = () => {
             </div>
 
             {/* 정렬 */}
-            <div className="flex items-center gap-2">
-              <Filter className="w-5 h-5 text-gray-400" />
+            <div className="flex items-center gap-1.5 md:gap-2">
+              <Filter className="w-4 h-4 md:w-5 md:h-5 text-gray-400 flex-shrink-0" />
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as 'date' | 'priority' | 'title')}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white"
+                className="flex-1 px-2 md:px-3 py-1.5 md:py-2 border border-gray-300 rounded-lg text-xs md:text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white"
               >
                 <option value="date">날짜순</option>
                 <option value="priority">우선순위순</option>
@@ -337,10 +392,10 @@ const MeetingAgendas: React.FC = () => {
               </select>
               <button
                 onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                className="p-2 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors"
+                className="p-1.5 md:p-2 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors flex-shrink-0"
                 title={sortOrder === 'asc' ? '내림차순' : '오름차순'}
               >
-                <ArrowUpDown className="w-4 h-4 text-gray-600" />
+                <ArrowUpDown className="w-3.5 h-3.5 md:w-4 md:h-4 text-gray-600" />
               </button>
             </div>
           </div>
@@ -349,12 +404,10 @@ const MeetingAgendas: React.FC = () => {
           <div className="flex-1 overflow-y-auto">
             {filteredAndSortedTickets.length > 0 ? (
               filteredAndSortedTickets.map((ticket, index) => {
-                const agenda = meetingAgendas.find(a => a.issueId === ticket.id);
                 return (
                   <AgendaListItem
                     key={ticket.id}
                     ticket={ticket}
-                    agenda={agenda}
                     isSelected={selectedId === ticket.id}
                     onClick={() => setSelectedId(ticket.id)}
                     getPriorityColor={getPriorityColor}
@@ -377,12 +430,11 @@ const MeetingAgendas: React.FC = () => {
         {/* 오른쪽 패널 - 상세 뷰 */}
         <div className="flex-1 bg-gray-50 hidden md:flex overflow-hidden">
           {selectedTicket ? (
-            <div className="w-full p-6 flex flex-col">
+            <div className="w-full p-4 md:p-6 flex flex-col">
               <DetailView
                 ticket={selectedTicket}
                 agenda={selectedAgenda}
                 onComplete={handleComplete}
-                onDetail={handleDetail}
                 getPriorityColor={getPriorityColor}
                 getPriorityText={getPriorityText}
                 index={selectedIndex}
@@ -416,7 +468,6 @@ const MeetingAgendas: React.FC = () => {
                 ticket={selectedTicket}
                 agenda={selectedAgenda}
                 onComplete={handleComplete}
-                onDetail={handleDetail}
                 getPriorityColor={getPriorityColor}
                 getPriorityText={getPriorityText}
                 index={selectedIndex}

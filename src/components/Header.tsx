@@ -48,32 +48,32 @@ const Header: React.FC<HeaderProps> = ({ title, onMenuClick }) => {
 
 
   return (
-    <header className="fixed top-0 left-64 right-0 h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 shadow-sm z-50">
+    <header className="fixed top-0 left-0 md:left-64 right-0 h-14 md:h-16 bg-white border-b border-gray-200 flex items-center justify-between px-3 md:px-6 shadow-sm z-50">
       {/* 왼쪽: 제목과 메뉴 버튼 */}
-      <div className="flex items-center space-x-4">
+      <div className="flex items-center space-x-2 md:space-x-4">
         {onMenuClick && (
           <button
             onClick={onMenuClick}
-            className="lg:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="md:hidden p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
           >
             <Menu className="w-5 h-5 text-gray-600" />
           </button>
         )}
         <div>
-          <h1 className="text-xl font-bold text-gray-800">{title}</h1>
+          <h1 className="text-base md:text-xl font-bold text-gray-800 truncate">{title}</h1>
         </div>
       </div>
 
       {/* 오른쪽: 알림 및 프로필 */}
-      <div className="flex items-center space-x-4">
+      <div className="flex items-center space-x-2 md:space-x-4">
         {/* 알림 */}
         <button
           onClick={() => setShowNotificationModal(true)}
-          className="relative p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          className="relative p-1.5 md:p-2 hover:bg-gray-100 rounded-lg transition-colors"
         >
-          <Bell className="w-5 h-5 text-gray-600" />
+          <Bell className="w-4 h-4 md:w-5 md:h-5 text-gray-600" />
           {user && notifications.filter(n => n.userId === user.id && !n.read).length > 0 && (
-            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+            <span className="absolute top-0.5 right-0.5 md:top-1 md:right-1 w-1.5 h-1.5 md:w-2 md:h-2 bg-red-500 rounded-full"></span>
           )}
         </button>
         {user && (
@@ -97,16 +97,16 @@ const Header: React.FC<HeaderProps> = ({ title, onMenuClick }) => {
         )}
 
         {/* 사용자 정보 및 프로필 */}
-        <div className="pl-4 border-l border-gray-200">
+        <div className="pl-2 md:pl-4 border-l border-gray-200">
           <button
             onClick={() => setShowProfileModal(true)}
-            className="flex items-center space-x-3 hover:opacity-80 transition-opacity"
+            className="flex items-center space-x-2 md:space-x-3 hover:opacity-80 transition-opacity"
           >
             <div className="text-right hidden sm:block">
-              <p className="text-sm font-medium text-gray-800">{user?.name}</p>
+              <p className="text-xs md:text-sm font-medium text-gray-800">{user?.name}</p>
               <p className="text-xs text-gray-500">{getRoleText(user?.role || '')}</p>
             </div>
-            <div className="w-10 h-10 bg-gradient-to-br from-water-blue-500 to-water-teal-500 rounded-full flex items-center justify-center text-white font-bold relative overflow-hidden">
+            <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-water-blue-500 to-water-teal-500 rounded-full flex items-center justify-center text-white font-bold relative overflow-hidden text-sm md:text-base">
               {user?.name.charAt(0)}
             </div>
           </button>

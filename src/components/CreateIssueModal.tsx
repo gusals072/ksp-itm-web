@@ -124,7 +124,7 @@ const CreateIssueModal: React.FC<CreateIssueModalProps> = ({ isOpen, onClose }) 
 
   return (
     <Dialog open={isOpen} onOpenChange={handleCancel}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto z-[10005]">
+      <DialogContent className="max-w-[95vw] md:max-w-5xl max-h-[95vh] md:max-h-[90vh] overflow-y-auto z-[10005] mx-2 md:mx-auto">
         <VisuallyHidden>
           <DialogTitle>새 이슈 등록</DialogTitle>
           <DialogDescription>새로운 이슈를 등록하고 관리하세요.</DialogDescription>

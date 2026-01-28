@@ -130,7 +130,7 @@ const Dashboard: React.FC = () => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: "easeOut" }}
     >
-      <div className="max-w-[1920px] mx-auto space-y-4">
+      <div className="w-full space-y-4">
         {/* 상단: 환영 메시지 + 통계 카드 */}
         <motion.div
           className="grid grid-cols-1 lg:grid-cols-6 gap-4"

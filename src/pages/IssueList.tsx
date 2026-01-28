@@ -194,31 +194,31 @@ const IssueList: React.FC = () => {
 
   return (
     <motion.div
-      className="p-6 bg-gray-50 min-h-screen"
+      className="p-3 md:p-6 bg-gray-50 min-h-screen w-full"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: "easeOut" }}
     >
       {/* 검색 및 필터 */}
       <motion.div
-        className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6"
+        className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6 mb-4 md:mb-6"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1, duration: 0.4 }}
       >
         {/* 검색 및 기본 필터 */}
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-3 md:gap-4">
           {/* 상단: 검색창과 주요 액션 */}
-          <div className="flex flex-col lg:flex-row gap-4 items-center">
+          <div className="flex flex-col lg:flex-row gap-3 md:gap-4 items-stretch lg:items-center">
             {/* 검색창 */}
             <div className="flex-1 w-full relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <Search className="absolute left-2 md:left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 md:w-5 md:h-5 text-gray-400" />
               <input
                 type="text"
                 placeholder="제목, 설명으로 검색..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-water-blue-500 focus:border-water-blue-500 outline-none text-base transition-all"
+                className="w-full pl-8 md:pl-10 pr-3 md:pr-4 py-2 md:py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-water-blue-500 focus:border-water-blue-500 outline-none text-sm md:text-base transition-all"
               />
               {searchTerm && (
                 <button
@@ -233,33 +233,35 @@ const IssueList: React.FC = () => {
             {/* 필터 접기/펼치기 버튼 */}
             <button
               onClick={() => setIsFilterExpanded(!isFilterExpanded)}
-              className={`flex items-center space-x-2 px-4 py-3 rounded-lg transition-all font-medium ${
+              className={`flex items-center space-x-1.5 md:space-x-2 px-3 md:px-4 py-2 md:py-3 rounded-lg transition-all font-medium text-sm md:text-base ${
                 isFilterExpanded
                   ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   : 'bg-water-blue-100 text-water-blue-700 hover:bg-water-blue-200'
               }`}
             >
-              <Filter className="w-5 h-5" />
-              <span>{isFilterExpanded ? '필터 접기' : '필터 펼치기'}</span>
+              <Filter className="w-4 h-4 md:w-5 md:h-5" />
+              <span className="hidden sm:inline">{isFilterExpanded ? '필터 접기' : '필터 펼치기'}</span>
+              <span className="sm:hidden">필터</span>
               {!isFilterExpanded && activeFilterCount > 0 && (
-                <span className="px-2 py-0.5 bg-water-blue-600 text-white rounded-full text-xs font-semibold">
+                <span className="px-1.5 md:px-2 py-0.5 bg-water-blue-600 text-white rounded-full text-xs font-semibold">
                   {activeFilterCount}
                 </span>
               )}
               {isFilterExpanded ? (
-                <ChevronUp className="w-4 h-4" />
+                <ChevronUp className="w-3.5 h-3.5 md:w-4 md:h-4" />
               ) : (
-                <ChevronDown className="w-4 h-4" />
+                <ChevronDown className="w-3.5 h-3.5 md:w-4 md:h-4" />
               )}
             </button>
 
             {/* 이슈 등록 버튼 */}
             <button
               onClick={() => setIsCreateModalOpen(true)}
-              className="flex items-center space-x-2 px-6 py-3 bg-water-blue-600 text-white rounded-lg hover:bg-water-blue-700 transition-colors font-semibold shadow-sm"
+              className="flex items-center space-x-1.5 md:space-x-2 px-4 md:px-6 py-2 md:py-3 bg-water-blue-600 text-white rounded-lg hover:bg-water-blue-700 transition-colors font-semibold shadow-sm text-sm md:text-base"
             >
-              <Plus className="w-5 h-5" />
-              <span>이슈 등록</span>
+              <Plus className="w-4 h-4 md:w-5 md:h-5" />
+              <span className="hidden sm:inline">이슈 등록</span>
+              <span className="sm:hidden">등록</span>
             </button>
           </div>
 

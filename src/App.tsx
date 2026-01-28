@@ -44,9 +44,9 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
     <div className="flex min-h-screen bg-gray-50">
       <Sidebar />
-      <div className="flex-1 ml-64">
+      <div className="flex-1 ml-0 md:ml-64">
         <Header title={getPageTitle()} />
-        <main className="pt-16">{children}</main>
+        <main className="pt-14 md:pt-16">{children}</main>
       </div>
     </div>
   );

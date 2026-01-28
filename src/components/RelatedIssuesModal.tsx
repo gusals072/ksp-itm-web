@@ -28,9 +28,11 @@ const RelatedIssuesModal: React.FC<RelatedIssuesModalProps> = ({
   const [previewIssueId, setPreviewIssueId] = useState<string | null>(null);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
 
-  // 권한 체크: 본인이 확인 가능한 이슈만 필터링
+  // 권한 체크: super_admin은 모든 이슈 조회 가능, 그 외는 본인이 확인 가능한 이슈만
   const canViewIssue = (issue: Issue) => {
     if (!currentUser) return false;
+    // 총괄 관리자는 모든 이슈 조회 가능
+    if (currentUser.role === 'super_admin') return true;
     return (
       issue.reporterId === currentUser.id ||
       issue.cc?.some(ccUser => ccUser.id === currentUser.id)
