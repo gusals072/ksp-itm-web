@@ -15,7 +15,8 @@ import {
   File,
   Download,
   RotateCcw,
-  Ticket
+  Ticket,
+  ArrowBigRightDash
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
@@ -73,6 +74,25 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
   const [showCompletionAnimation, setShowCompletionAnimation] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const [isMessageClosing, setIsMessageClosing] = useState(false);
+  const [previousStatus, setPreviousStatus] = useState<IssueStatus | null>(null);
+  
+  // 상태 변경 추적 - 이전 상태를 저장하여 애니메이션 방향 결정
+  useEffect(() => {
+    if (issue) {
+      // 초기 로드 시에만 현재 상태로 설정
+      if (previousStatus === null) {
+        setPreviousStatus(issue.status);
+      } else if (previousStatus !== issue.status) {
+        // 상태가 변경되었을 때는 이전 상태를 유지 (애니메이션 방향 결정용)
+        // 애니메이션 완료 후 이전 상태 업데이트
+        const timer = setTimeout(() => {
+          setPreviousStatus(issue.status);
+        }, 500); // 애니메이션 완료 후 업데이트
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [issue?.status, previousStatus]);
+  
   // 모달이 닫힐 때 상태 초기화
   useEffect(() => {
     if (!isOpen) {
@@ -88,6 +108,7 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
       setIsMessageClosing(false);
       setModalStack([]);
       setCurrentIssueId(null);
+      setPreviousStatus(null);
     }
   }, [isOpen]);
 
@@ -735,9 +756,15 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
                             {issue.status === IssueStatus.PENDING && (
                               <motion.div
                                 key="ticket-icon"
-                                initial={{ opacity: 0, x: -20 }}
+                                initial={{ 
+                                  opacity: 0, 
+                                  x: previousStatus === IssueStatus.IN_PROGRESS ? 20 : -20 
+                                }}
                                 animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: 20 }}
+                                exit={{ 
+                                  opacity: 0, 
+                                  x: 20 
+                                }}
                                 transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1], delay: 0.05 }}
                                 className="absolute inset-0 flex items-center justify-center"
                               >
@@ -746,28 +773,20 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
                             )}
                             {issue.status === IssueStatus.IN_PROGRESS && (
                               <motion.div
-                                key="spinner-icon"
-                                initial={{ opacity: 0, x: -20 }}
+                                key="arrow-icon"
+                                initial={{ 
+                                  opacity: 0, 
+                                  x: previousStatus === IssueStatus.PENDING ? -20 : 20 
+                                }}
                                 animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: 20 }}
+                                exit={{ 
+                                  opacity: 0, 
+                                  x: -20 
+                                }}
                                 transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1], delay: 0.05 }}
                                 className="absolute inset-0 flex items-center justify-center"
                               >
-                                <div className="relative w-8 h-8">
-                                  <svg className="w-8 h-8 animate-spin" viewBox="0 0 40 40">
-                                    <circle
-                                      cx="20"
-                                      cy="20"
-                                      r="16"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      strokeWidth="4"
-                                      strokeLinecap="round"
-                                      strokeDasharray="80 40"
-                                      className="text-blue-600"
-                                    />
-                                  </svg>
-                                </div>
+                                <ArrowBigRightDash className="w-8 h-8 text-blue-600" />
                               </motion.div>
                             )}
                           </AnimatePresence>
@@ -776,9 +795,16 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
                           <AnimatePresence mode="wait" initial={false}>
                             <motion.span
                               key={issue.status}
-                              initial={{ opacity: 0, x: -20 }}
+                              initial={{ 
+                                opacity: 0, 
+                                x: previousStatus === IssueStatus.IN_PROGRESS && issue.status === IssueStatus.PENDING ? 20 : 
+                                   previousStatus === IssueStatus.PENDING && issue.status === IssueStatus.IN_PROGRESS ? -20 : -20
+                              }}
                               animate={{ opacity: 1, x: 0 }}
-                              exit={{ opacity: 0, x: 20 }}
+                              exit={{ 
+                                opacity: 0, 
+                                x: previousStatus === IssueStatus.IN_PROGRESS ? -20 : 20
+                              }}
                               transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1], delay: 0.1 }}
                               className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(issue.status)} block text-center`}
                             >
@@ -796,9 +822,15 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
                       {issue.status === IssueStatus.PENDING && isUserInCC() && (
                         <motion.div
                           key="pending-button"
-                          initial={{ opacity: 0, x: -20 }}
+                          initial={{ 
+                            opacity: 0, 
+                            x: previousStatus === IssueStatus.IN_PROGRESS ? 20 : -20 
+                          }}
                           animate={{ opacity: 1, x: 0 }}
-                          exit={{ opacity: 0, x: 20 }}
+                          exit={{ 
+                            opacity: 0, 
+                            x: -20 
+                          }}
                           transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1], delay: 0.15 }}
                           className="flex justify-center"
                         >
@@ -815,9 +847,15 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
                       {issue.status === IssueStatus.IN_PROGRESS && isUserInCC() && (
                         <motion.div
                           key="complete-button"
-                          initial={{ opacity: 0, x: 0 }}
+                          initial={{ 
+                            opacity: 0, 
+                            x: previousStatus === IssueStatus.PENDING ? -20 : 20 
+                          }}
                           animate={{ opacity: 1, x: 0 }}
-                          exit={{ opacity: 0, x: 20 }}
+                          exit={{ 
+                            opacity: 0, 
+                            x: 20 
+                          }}
                           transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1], delay: 0.15 }}
                           className="flex justify-center"
                         >
