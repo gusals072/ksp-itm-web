@@ -38,7 +38,6 @@ const AgendaListItem: React.FC<{
         <span className="px-1.5 md:px-2 py-0.5 md:py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium flex-shrink-0">
           {getPriorityText(ticket.priority)}
         </span>
-        <span className="text-xs text-gray-500 flex-shrink-0 font-medium">#{index + 1}</span>
       </div>
       <h3 className="text-xs md:text-sm font-semibold text-gray-800 line-clamp-2">{ticket.title}</h3>
     </div>
