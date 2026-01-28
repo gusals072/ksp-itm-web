@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { CheckCircle2, File, Send, Paperclip } from 'lucide-react';
+import { File, Send, Paperclip } from 'lucide-react';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import type { Issue, Opinion } from '../types';
@@ -94,23 +94,6 @@ const IssueComments: React.FC<IssueCommentsProps> = ({ issue, user, isReadOnly =
 
         {/* 댓글 목록 (스크롤 가능) */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          {/* 이슈 생성 알림 */}
-          <div className="flex space-x-3">
-            <div className="w-10 h-10 bg-water-blue-100 rounded-full flex items-center justify-center text-water-blue-600 flex-shrink-0">
-              <CheckCircle2 className="w-5 h-5" />
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center space-x-2">
-                <span className="font-medium text-gray-800">{issue.reporterName}</span>
-                <span className="text-gray-400">•</span>
-                <span className="text-sm text-gray-500">
-                  {format(new Date(issue.createdAt), 'yyyy-MM-dd HH:mm', { locale: ko })}
-                </span>
-              </div>
-              <p className="text-gray-600 mt-1">이슈가 생성되었습니다.</p>
-            </div>
-          </div>
-
           {/* 댓글 목록 */}
           {comments.map(comment => (
             <div key={comment.id} className="flex space-x-3">
