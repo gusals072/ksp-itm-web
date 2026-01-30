@@ -1,8 +1,10 @@
 import React, { useState, useRef } from 'react';
-import { X, User, Mail, Building, Shield, Camera, Upload, Image as ImageIcon, Link2 } from 'lucide-react';
+import { X, User, Mail, Building, Shield, Camera, Upload, Image as ImageIcon, Link2, Lock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { User as UserType, IssueStatus } from '../types';
+import { useApp } from '../context/AppContext';
 import EmailVerificationModal from './EmailVerificationModal';
+import PasswordChangeModal from './PasswordChangeModal';
 
 interface ProfileSlideModalProps {
   isOpen: boolean;
@@ -24,8 +26,10 @@ const ProfileSlideModal: React.FC<ProfileSlideModalProps> = ({
   userStats,
   onUpdateLinkedEmail
 }) => {
+  const { updatePassword } = useApp();
   const [showImageUploadModal, setShowImageUploadModal] = useState(false);
   const [showEmailVerificationModal, setShowEmailVerificationModal] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [profileImage, setProfileImage] = useState<string | null>(
     user ? localStorage.getItem(`profileImage_${user.id}`) : null
@@ -279,6 +283,18 @@ const ProfileSlideModal: React.FC<ProfileSlideModalProps> = ({
                   )}
                 </div>
               </div>
+
+              {/* 비밀번호 변경 */}
+              <div className="p-6 border-t border-gray-200">
+                <h4 className="text-sm font-semibold text-gray-800 mb-3">비밀번호 변경</h4>
+                <button
+                  onClick={() => setShowPasswordModal(true)}
+                  className="w-full flex items-center justify-center space-x-2 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  <Lock className="w-4 h-4" />
+                  <span>비밀번호 변경</span>
+                </button>
+              </div>
             </motion.div>
           </>
         )}
@@ -358,6 +374,16 @@ const ProfileSlideModal: React.FC<ProfileSlideModalProps> = ({
             }
             return false;
           }}
+        />
+      )}
+
+      {/* 비밀번호 변경 모달 */}
+      {user && (
+        <PasswordChangeModal
+          isOpen={showPasswordModal}
+          onClose={() => setShowPasswordModal(false)}
+          userId={user.id}
+          onSubmit={updatePassword}
         />
       )}
     </>

@@ -38,6 +38,7 @@ interface AppContextType {
   markNotificationAsRead: (notificationId: string) => void;
   markAllNotificationsAsRead: () => void;
   updateUserLinkedEmail: (userId: string, email: string) => void;
+  updatePassword: (userId: string, currentPassword: string, newPassword: string) => Promise<{ success: boolean; message?: string }>;
   sendEmailNotification: (to: string, subject: string, body: string) => Promise<void>;
 }
 
@@ -675,13 +676,17 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     return () => clearInterval(interval);
   }, []);
 
-  const login = async (username: string, _password: string): Promise<boolean> => {
+  const login = async (username: string, password: string): Promise<boolean> => {
     // 실제 백엔드 연동 시 API 호출
     // 현재는 더미 데이터 사용
     const foundUser = dummyUsers.find(u => u.username === username);
     if (foundUser) {
       setUser(foundUser);
       localStorage.setItem('user', JSON.stringify(foundUser));
+      // 데모용: 비밀번호 변경 시 현재 비밀번호 검증을 위해 저장 (실서비스에서는 제거)
+      if (password) {
+        localStorage.setItem(`itm_password_${foundUser.id}`, password);
+      }
       return true;
     }
     return false;
@@ -1047,6 +1052,24 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     console.log(`[임시] 사용자 ${userId}의 이메일이 ${email}로 연동되었습니다.`);
   };
 
+  const updatePassword = async (
+    userId: string,
+    currentPassword: string,
+    newPassword: string
+  ): Promise<{ success: boolean; message?: string }> => {
+    // TODO: 백엔드 API 호출 (PATCH /api/users/{userId}/password)
+    // 데모: localStorage에 저장된 비밀번호와 비교
+    const storedPassword = localStorage.getItem(`itm_password_${userId}`);
+    if (storedPassword !== null && storedPassword !== currentPassword) {
+      return { success: false, message: '현재 비밀번호가 일치하지 않습니다.' };
+    }
+    if (newPassword.length < 6) {
+      return { success: false, message: '새 비밀번호는 6자 이상이어야 합니다.' };
+    }
+    localStorage.setItem(`itm_password_${userId}`, newPassword);
+    return { success: true };
+  };
+
   // 이메일 전송 함수 (임시 구현)
   const sendEmailNotification = async (to: string, subject: string, body: string): Promise<void> => {
     // TODO: 백엔드 API 호출 - mailplug 연동
@@ -1095,6 +1118,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         markNotificationAsRead,
         markAllNotificationsAsRead,
         updateUserLinkedEmail,
+        updatePassword,
         sendEmailNotification
       }}
     >
