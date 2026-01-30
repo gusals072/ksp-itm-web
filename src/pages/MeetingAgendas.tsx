@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { Priority, IssueStatus, RankLevel } from '../types';
-import { Calendar as CalendarIcon, CheckCircle2, FileText, Clock, Search, Filter, ArrowUpDown, X, User, Paperclip, Link as LinkIcon, Tag } from 'lucide-react';
+import { Calendar as CalendarIcon, CheckCircle2, FileText, Clock, Search, Filter, ArrowUpDown, X, User, Paperclip, Link as LinkIcon, Tag, ExternalLink } from 'lucide-react';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { getDaysSinceCreation } from '../utils/ticket';
@@ -49,16 +49,19 @@ const DetailView: React.FC<{
   ticket: any;
   agenda: any;
   onComplete: (ticketId: string) => void;
+  onViewDetail?: (ticketId: string) => void;
   getPriorityColor: (priority: Priority) => string;
   getPriorityText: (priority: Priority) => string;
   index: number;
-}> = ({ ticket, agenda, onComplete, getPriorityColor, getPriorityText, index }) => {
+}> = ({ ticket, agenda, onComplete, onViewDetail, getPriorityColor, getPriorityText, index }) => {
   const daysSinceCreation = getDaysSinceCreation(new Date(ticket.createdAt));
 
   return (
-    <div className="flex flex-col h-full overflow-y-auto">
+    <div className="flex flex-col h-full min-h-0">
+      {/* 스크롤 영역: 헤더 ~ 회의 안건 첨언 */}
+      <div className="flex-1 min-h-0 overflow-y-auto">
       {/* 헤더 */}
-      <div className="border-b border-gray-200 pb-3 md:pb-4 mb-4 md:mb-5 flex-shrink-0">
+      <div className="border-b border-gray-200 pb-3 md:pb-4 mb-4 md:mb-5">
         <div className="flex items-center gap-2 md:gap-3 mb-2 md:mb-3 flex-wrap">
           <div className={`w-2.5 h-2.5 md:w-3 md:h-3 rounded-full ${getPriorityColor(ticket.priority)}`} />
           <span className="px-2 md:px-3 py-0.5 md:py-1 bg-blue-100 text-blue-800 rounded-full text-xs md:text-sm font-medium">
@@ -70,7 +73,7 @@ const DetailView: React.FC<{
       </div>
 
       {/* 기본 정보 */}
-      <div className="mb-4 md:mb-5 flex-shrink-0">
+      <div className="mb-4 md:mb-5">
         <h3 className="text-xs md:text-sm font-semibold text-gray-700 mb-2 md:mb-3">기본 정보</h3>
         <div className="bg-white rounded-lg p-3 md:p-4 border border-gray-200 space-y-2 md:space-y-3">
           <div className="flex items-center gap-2 text-xs md:text-sm">
@@ -98,7 +101,7 @@ const DetailView: React.FC<{
       </div>
 
       {/* 설명 */}
-      <div className="mb-4 md:mb-5 flex-shrink-0">
+      <div className="mb-4 md:mb-5">
         <h3 className="text-xs md:text-sm font-semibold text-gray-700 mb-2">설명</h3>
         <div className="bg-white rounded-lg p-3 md:p-4 border border-gray-200">
           <p className="text-xs md:text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{ticket.description}</p>
@@ -107,7 +110,7 @@ const DetailView: React.FC<{
 
       {/* 참조자 */}
       {ticket.cc && ticket.cc.length > 0 && (
-        <div className="mb-4 md:mb-5 flex-shrink-0">
+        <div className="mb-4 md:mb-5">
           <h3 className="text-xs md:text-sm font-semibold text-gray-700 mb-2">참조자</h3>
           <div className="bg-white rounded-lg p-3 md:p-4 border border-gray-200">
             <div className="flex flex-wrap gap-1.5 md:gap-2">
@@ -127,7 +130,7 @@ const DetailView: React.FC<{
 
       {/* 첨부 파일 */}
       {ticket.attachments && ticket.attachments.length > 0 && (
-        <div className="mb-4 md:mb-5 flex-shrink-0">
+        <div className="mb-4 md:mb-5">
           <h3 className="text-xs md:text-sm font-semibold text-gray-700 mb-2">첨부 파일</h3>
           <div className="bg-white rounded-lg p-3 md:p-4 border border-gray-200">
             <div className="space-y-1.5 md:space-y-2">
@@ -149,7 +152,7 @@ const DetailView: React.FC<{
 
       {/* 연관 이슈 */}
       {ticket.relatedIssues && ticket.relatedIssues.length > 0 && (
-        <div className="mb-4 md:mb-5 flex-shrink-0">
+        <div className="mb-4 md:mb-5">
           <h3 className="text-xs md:text-sm font-semibold text-gray-700 mb-2">연관 이슈</h3>
           <div className="bg-white rounded-lg p-3 md:p-4 border border-gray-200">
             <div className="space-y-1.5 md:space-y-2">
@@ -169,7 +172,7 @@ const DetailView: React.FC<{
 
       {/* 회의 안건 첨언 */}
       {agenda?.notes && (
-        <div className="mb-4 md:mb-5 flex-shrink-0">
+        <div className="mb-4 md:mb-5">
           <h3 className="text-xs md:text-sm font-semibold text-gray-700 mb-2">회의 안건 첨언</h3>
           <div className="bg-purple-50 border-l-4 border-purple-400 rounded-lg p-3 md:p-4">
             <p className="text-xs md:text-sm text-purple-900 whitespace-pre-wrap leading-relaxed">{agenda.notes}</p>
@@ -182,8 +185,20 @@ const DetailView: React.FC<{
         </div>
       )}
 
-      {/* 완료 버튼 */}
-      <div className="mt-auto pt-4 md:pt-5 border-t border-gray-200 flex-shrink-0">
+      </div>
+
+      {/* 상세보기 / 완료 버튼 (하단 고정) */}
+      <div className="flex-shrink-0 pt-4 md:pt-5 border-t border-gray-200 bg-gray-50 space-y-2">
+        {onViewDetail && (
+          <button
+            type="button"
+            onClick={() => onViewDetail(ticket.id)}
+            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 md:py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-xs md:text-sm font-medium"
+          >
+            <ExternalLink className="w-4 h-4 md:w-5 md:h-5" />
+            상세보기
+          </button>
+        )}
         <button
           onClick={() => onComplete(ticket.id)}
           className="w-full flex items-center justify-center gap-2 px-4 py-2.5 md:py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-xs md:text-sm font-medium shadow-sm"
@@ -426,13 +441,17 @@ const MeetingAgendas: React.FC = () => {
         </div>
 
         {/* 오른쪽 패널 - 상세 뷰 */}
-        <div className="flex-1 bg-gray-50 hidden md:flex overflow-hidden">
+        <div className="flex-1 bg-gray-50 hidden md:flex overflow-hidden min-h-0">
           {selectedTicket ? (
-            <div className="w-full p-4 md:p-6 flex flex-col">
+            <div className="w-full p-4 md:p-6 flex flex-col min-h-0">
               <DetailView
                 ticket={selectedTicket}
                 agenda={selectedAgenda}
                 onComplete={handleComplete}
+                onViewDetail={(ticketId) => {
+                  setSelectedIssueId(ticketId);
+                  setIsModalOpen(true);
+                }}
                 getPriorityColor={getPriorityColor}
                 getPriorityText={getPriorityText}
                 index={selectedIndex}
@@ -451,8 +470,8 @@ const MeetingAgendas: React.FC = () => {
 
         {/* 모바일 상세 뷰 (모달 방식) */}
         {selectedTicket && (
-          <div className="md:hidden fixed inset-0 bg-white z-50 overflow-y-auto">
-            <div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between z-10">
+          <div className="md:hidden fixed inset-0 bg-white z-50 flex flex-col overflow-hidden">
+            <div className="flex-shrink-0 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
               <h2 className="text-lg font-semibold text-gray-800">상세 정보</h2>
               <button
                 onClick={() => setSelectedId(null)}
@@ -461,11 +480,15 @@ const MeetingAgendas: React.FC = () => {
                 <X className="w-5 h-5 text-gray-600" />
               </button>
             </div>
-            <div className="p-4">
+            <div className="flex-1 min-h-0 p-4 flex flex-col">
               <DetailView
                 ticket={selectedTicket}
                 agenda={selectedAgenda}
                 onComplete={handleComplete}
+                onViewDetail={(ticketId) => {
+                  setSelectedIssueId(ticketId);
+                  setIsModalOpen(true);
+                }}
                 getPriorityColor={getPriorityColor}
                 getPriorityText={getPriorityText}
                 index={selectedIndex}

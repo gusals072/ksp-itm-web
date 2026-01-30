@@ -447,7 +447,7 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ issueId, isOpen, on
       {/* 메인 이슈 상세 모달 */}
       <Dialog open={isOpen} onOpenChange={handleClose}>
         <DialogContent 
-          className="max-w-[95vw] md:max-w-[calc(100vw-20rem)] lg:max-w-[calc(100vw-22rem)] xl:max-w-[1600px] max-h-[95vh] md:max-h-[90vh] overflow-y-auto p-0 flex flex-col z-[10000] mx-2 md:mx-4" 
+          className="issue-detail-modal max-w-[95vw] md:max-w-[calc(100vw-20rem)] lg:max-w-[calc(100vw-22rem)] xl:max-w-[1600px] max-h-[95vh] md:max-h-[90vh] overflow-y-auto p-0 flex flex-col z-[10000] mx-2 md:mx-4" 
           id="issue-detail-modal" 
           hideClose
           overlayOpacity={isClosing ? 0 : 1}

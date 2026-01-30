@@ -122,14 +122,21 @@ const DialogContent = React.forwardRef<
           "fixed grid w-full gap-4 border border-gray-200 bg-white p-6 shadow-lg rounded-lg",
           className
         )}
-        {...(className?.includes('max-w-4xl') || className?.includes('max-w-[1344px]') || className?.includes('max-w-[1050px]') || className?.includes('max-w-[900px]') ? {
-          // 이슈 상세 모달 및 의견 모달: scale만 사용
+        {...(className?.includes('issue-detail-modal') ? {
+          // 이슈 상세 모달: 화면 중앙, scale + 슬라이드 아웃
+          initial: { opacity: 0, scale: 0.95, x: '-50%', y: '-50%' },
+          animate: isClosing
+            ? { opacity: 0, x: 100 }
+            : { opacity: 1, scale: 1, x: '-50%', y: '-50%' },
+          exit: { opacity: 0, x: 100 }
+        } : className?.includes('max-w-4xl') || className?.includes('max-w-[1344px]') || className?.includes('max-w-[1050px]') || className?.includes('max-w-[900px]') ? {
+          // 의견 모달 등: scale만 사용
           initial: { opacity: 0, scale: 0.95 },
           animate: className?.includes('max-w-[1344px]') && isClosing
-            ? { opacity: 0, x: 100 } // 이슈 상세 모달은 슬라이드 아웃
+            ? { opacity: 0, x: 100 }
             : { opacity: 1, scale: 1 },
           exit: className?.includes('max-w-[1344px]') 
-            ? { opacity: 0, x: 100 } // 이슈 상세 모달은 슬라이드 아웃
+            ? { opacity: 0, x: 100 }
             : { opacity: 0, scale: 0.95 }
         } : {
           // 주소록 모달 등: scale + 중앙 정렬 (x, y 사용)
@@ -138,17 +145,19 @@ const DialogContent = React.forwardRef<
           exit: { opacity: 0, scale: 0.95, x: '-50%', y: '-50%' }
         })}
         transition={{ 
-          duration: className?.includes('max-w-[1344px]') ? 0.3 : 0.2, 
+          duration: className?.includes('issue-detail-modal') || className?.includes('max-w-[1344px]') ? 0.3 : 0.2, 
           ease: "easeOut" 
         }}
         style={{
           // z-index를 인라인 스타일로 직접 설정하여 우선순위 보장 (CSS 클래스보다 우선)
           zIndex: contentZIndex || (hasHighZIndex ? 9999 : 50),
-          ...(className?.includes('max-w-4xl') || className?.includes('max-w-[1344px]') ? {
-            // 이슈 상세 모달: 중앙 정렬
-            // max-w-[1344px] = 84rem
-            // 전체 화면 기준 중앙: 50% - 42rem (84rem / 2)
-            // 사이드바(16rem) 고려: 50% - 42rem + 8rem = 50% - 34rem
+          ...(className?.includes('issue-detail-modal') ? {
+            // 이슈 상세 모달: 좌측 사이드바(16rem) 제외한 콘텐츠 영역 중앙
+            // 콘텐츠 영역 중심 = 16rem + (100% - 16rem) / 2 = 50% + 8rem
+            left: 'calc(50% + 7.1rem)',
+            top: '50%'
+          } : className?.includes('max-w-4xl') || className?.includes('max-w-[1344px]') ? {
+            // 기타 대형 모달
             left: 'calc(50% - 34rem)',
             top: '5%',
             transform: 'translateY(-50%)'
