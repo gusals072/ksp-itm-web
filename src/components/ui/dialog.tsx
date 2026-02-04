@@ -5,6 +5,20 @@ import { motion } from "framer-motion"
 
 import { cn } from "../../lib/utils"
 
+// 좁은 화면(사이드바 숨김, md 미만) 여부 — 모달을 뷰포트 중앙에 배치하기 위함
+function useIsNarrowViewport() {
+  const [isNarrow, setIsNarrow] = React.useState(
+    typeof window !== "undefined" ? !window.matchMedia("(min-width: 768px)").matches : false
+  )
+  React.useEffect(() => {
+    const mql = window.matchMedia("(min-width: 768px)")
+    const handler = () => setIsNarrow(!mql.matches)
+    mql.addEventListener("change", handler)
+    return () => mql.removeEventListener("change", handler)
+  }, [])
+  return isNarrow
+}
+
 const Dialog = DialogPrimitive.Root
 
 const DialogTrigger = DialogPrimitive.Trigger
@@ -46,6 +60,7 @@ const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   DialogContentProps
 >(({ className, children, hideClose = false, overlayOpacity, isClosing = false, ...props }, ref) => {
+  const isNarrow = useIsNarrowViewport()
   // z-index가 높게 설정된 경우 overlay도 함께 높임
   const hasHighZIndex = className?.includes('z-[');
   // z-index 값을 추출하여 overlay는 content보다 1 낮게 설정
@@ -53,7 +68,20 @@ const DialogContent = React.forwardRef<
   const contentZIndex = zIndexMatch ? parseInt(zIndexMatch[1]) : undefined;
   const overlayZIndex = contentZIndex ? `z-[${contentZIndex - 1}]` : (hasHighZIndex ? 'z-[9999]' : undefined);
   const finalOverlayOpacity = overlayOpacity !== undefined ? overlayOpacity : 1;
-  
+
+  // 좁은 화면: 항상 뷰포트 중앙 (translate로 정확히 중앙 정렬)
+  const positionStyle = isNarrow
+    ? { left: '50%' as const, top: '50%' as const, transform: 'translate(-50%, -50%)' as const }
+    : (className?.includes('issue-detail-modal')
+      ? { left: 'calc(50% + 7.1rem)' as const, top: '50%' as const }
+      : className?.includes('max-w-4xl') || className?.includes('max-w-[1344px]')
+        ? { left: 'calc(50% - 34rem)' as const, top: '5%' as const, transform: 'translateY(-50%)' as const }
+        : className?.includes('max-w-[1050px]')
+          ? { left: 'calc(50% - 32.8125rem)' as const, top: '50%' as const, transform: 'translateY(-50%)' as const }
+          : className?.includes('max-w-[900px]')
+            ? { left: 'calc(50% - 28.125rem)' as const, top: '50%' as const, transform: 'translateY(-50%)' as const }
+            : { left: 'calc(50% + 8rem)' as const, top: '50%' as const })
+
   return (
   <DialogPortal>
     {overlayZIndex ? (
@@ -151,35 +179,7 @@ const DialogContent = React.forwardRef<
         style={{
           // z-index를 인라인 스타일로 직접 설정하여 우선순위 보장 (CSS 클래스보다 우선)
           zIndex: contentZIndex || (hasHighZIndex ? 9999 : 50),
-          ...(className?.includes('issue-detail-modal') ? {
-            // 이슈 상세 모달: 좌측 사이드바(16rem) 제외한 콘텐츠 영역 중앙
-            // 콘텐츠 영역 중심 = 16rem + (100% - 16rem) / 2 = 50% + 8rem
-            left: 'calc(50% + 7.1rem)',
-            top: '50%'
-          } : className?.includes('max-w-4xl') || className?.includes('max-w-[1344px]') ? {
-            // 기타 대형 모달
-            left: 'calc(50% - 34rem)',
-            top: '5%',
-            transform: 'translateY(-50%)'
-          } : className?.includes('max-w-[1050px]') ? {
-            // 의견 상세 모달: 1050px (65.625rem)
-            // 화면 정중앙에 배치 (이슈 상세 모달 위에 완전히 오버레이)
-            // 전체 화면 기준 중앙: 50% - 32.8125rem (65.625rem / 2)
-            left: 'calc(50% - 32.8125rem)',
-            top: '50%',
-            transform: 'translateY(-50%)'
-          } : className?.includes('max-w-[900px]') ? {
-            // 의견 추가 모달: 900px (56.25rem)
-            // 화면 정중앙에 배치 (이슈 상세 모달 위에 완전히 오버레이)
-            // 전체 화면 기준 중앙: 50% - 28.125rem (56.25rem / 2)
-            left: 'calc(50% - 28.125rem)',
-            top: '50%',
-            transform: 'translateY(-50%)'
-          } : {
-            // 주소록 모달 등 다른 모달: 중앙 정렬 (framer-motion의 x, y로 처리)
-            left: 'calc(50% + 8rem)', // 사이드바(16rem)의 절반인 8rem을 더해서 콘텐츠 영역 중앙에 위치
-            top: '50%'
-          })
+          ...positionStyle
         }}
       >
         {children}

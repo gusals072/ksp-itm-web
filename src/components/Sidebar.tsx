@@ -9,11 +9,17 @@ import {
   Droplets,
   LogOut,
   Users,
-  Settings
+  Settings,
+  X
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
-const Sidebar: React.FC = () => {
+interface SidebarProps {
+  isMobileOpen?: boolean;
+  onMobileClose?: () => void;
+}
+
+const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen = false, onMobileClose }) => {
   const location = useLocation();
   const { user, logout } = useApp();
 
@@ -58,20 +64,48 @@ const Sidebar: React.FC = () => {
     return location.pathname === path || location.pathname.startsWith(path + '/');
   };
 
+  const handleNavClick = () => {
+    onMobileClose?.();
+  };
+
   return (
-    <div className="hidden md:flex w-64 bg-gradient-to-b from-water-blue-900 to-water-blue-950 text-white h-screen fixed left-0 top-0 flex-col shadow-xl z-40">
-      {/* 로고 */}
-      <div className="p-6 border-b border-water-blue-800">
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-water-blue-400 to-water-teal-400 rounded-lg flex items-center justify-center">
-            <Droplets className="w-6 h-6" />
+    <>
+      {/* 모바일: 백드롭 (클릭 시 사이드바 닫기) */}
+      <div
+        role="button"
+        tabIndex={0}
+        aria-label="사이드바 닫기"
+        className={`fixed inset-0 bg-black/50 z-[60] transition-opacity duration-200 md:hidden ${isMobileOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+        onClick={onMobileClose}
+        onKeyDown={(e) => e.key === 'Escape' && onMobileClose?.()}
+      />
+
+      {/* 사이드바: 모바일에서 슬라이드, 데스크톱에서 항상 표시 */}
+      <div
+        className={`fixed left-0 top-0 w-64 bg-gradient-to-b from-water-blue-900 to-water-blue-950 text-white h-screen flex-col shadow-xl z-[70] flex transform transition-transform duration-200 ease-out -translate-x-full md:translate-x-0 ${isMobileOpen ? 'translate-x-0' : ''}`}
+      >
+        {/* 로고 + 모바일 닫기 버튼 */}
+        <div className="p-6 border-b border-water-blue-800 flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-water-blue-400 to-water-teal-400 rounded-lg flex items-center justify-center">
+              <Droplets className="w-6 h-6" />
+            </div>
+            <div>
+              <h1 className="text-lg font-bold">K-SMARTPIA</h1>
+              <p className="text-xs text-water-blue-300">TICKET MANAGEMENT SYSTEM</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-lg font-bold">K-SMARTPIA</h1>
-            <p className="text-xs text-water-blue-300">TICKET MANAGEMENT SYSTEM</p>
-          </div>
+          {onMobileClose && (
+            <button
+              type="button"
+              onClick={onMobileClose}
+              className="md:hidden p-2 -m-2 text-water-blue-200 hover:text-white hover:bg-water-blue-800 rounded-lg transition-colors"
+              aria-label="메뉴 닫기"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          )}
         </div>
-      </div>
 
       {/* 네비게이션 */}
       <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
@@ -79,6 +113,7 @@ const Sidebar: React.FC = () => {
           <NavLink
             key={item.path}
             to={item.path}
+            onClick={handleNavClick}
             className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all group ${
               isActive(item.path)
                 ? 'bg-water-blue-700 text-white shadow-lg'
@@ -102,6 +137,7 @@ const Sidebar: React.FC = () => {
               <NavLink
                 key={item.path}
                 to={item.path}
+                onClick={handleNavClick}
                 className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all group ${
                   isActive(item.path)
                     ? 'bg-water-blue-700 text-white shadow-lg'
@@ -138,6 +174,7 @@ const Sidebar: React.FC = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 

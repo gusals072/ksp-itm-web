@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { Priority, IssueStatus, RankLevel } from '../types';
-import { Calendar as CalendarIcon, CheckCircle2, FileText, Clock, Search, Filter, ArrowUpDown, X, User, Paperclip, Link as LinkIcon, Tag, ExternalLink } from 'lucide-react';
+import { Calendar as CalendarIcon, CheckCircle2, FileText, Clock, Search, Filter, ArrowUpDown, X, User, Paperclip, Link as LinkIcon, Tag, ExternalLink, ArrowLeft } from 'lucide-react';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { getDaysSinceCreation } from '../utils/ticket';
@@ -292,15 +292,32 @@ const MeetingAgendas: React.FC = () => {
   const selectedAgenda = selectedTicket ? meetingAgendas.find(a => a.issueId === selectedTicket.id) : null;
   const selectedIndex = selectedTicket ? filteredAndSortedTickets.findIndex(t => t.id === selectedId) : -1;
 
-  // 첫 번째 아이템 자동 선택
+  // 좁은 화면( md 미만 ) 여부 — 좁을 땐 목록부터 보이도록 자동 선택 안 함
+  const [isNarrowViewport, setIsNarrowViewport] = useState(
+    typeof window !== 'undefined' ? !window.matchMedia('(min-width: 768px)').matches : true
+  );
   useEffect(() => {
+    const mql = window.matchMedia('(min-width: 768px)');
+    const handler = () => setIsNarrowViewport(!mql.matches);
+    mql.addEventListener('change', handler);
+    return () => mql.removeEventListener('change', handler);
+  }, []);
+
+  // 넓은 화면에서만 첫 번째 아이템 자동 선택. 좁은 화면에서는 목록만 보이게 시작
+  useEffect(() => {
+    if (isNarrowViewport) {
+      // 좁은 화면: 자동 선택만 하지 않음. 선택된 아이템이 목록에서 빠졌을 때만 해제
+      if (selectedId && !filteredAndSortedTickets.find(t => t.id === selectedId)) {
+        setSelectedId(null);
+      }
+      return;
+    }
     if (!selectedId && filteredAndSortedTickets.length > 0) {
       setSelectedId(filteredAndSortedTickets[0].id);
     } else if (selectedId && !filteredAndSortedTickets.find(t => t.id === selectedId)) {
-      // 선택된 아이템이 필터링에서 제외된 경우 첫 번째 아이템 선택
       setSelectedId(filteredAndSortedTickets.length > 0 ? filteredAndSortedTickets[0].id : null);
     }
-  }, [filteredAndSortedTickets, selectedId]);
+  }, [filteredAndSortedTickets, selectedId, isNarrowViewport]);
 
   const handleCompleteConfirm = () => {
     if (!selectedTicketId) {
@@ -365,10 +382,10 @@ const MeetingAgendas: React.FC = () => {
     <div className="flex flex-col bg-gray-50 h-screen max-h-[90vh] my-2 md:my-4 mx-2 md:mx-4 rounded-lg shadow-sm overflow-hidden">
       {/* 헤더 */}
 
-      {/* 메인 컨텐츠 영역 - 듀얼 패널 */}
-      <div className="flex-1 flex flex-col md:flex-row overflow-hidden min-h-0">
-        {/* 왼쪽 패널 - 리스트 뷰 */}
-        <div className="w-full md:w-1/2 lg:w-2/5 xl:w-1/3 md:border-r border-b md:border-b-0 border-gray-200 bg-white flex flex-col flex-shrink-0">
+      {/* 메인 컨텐츠 영역 - 듀얼 패널 (좁은 화면에서도 좌측 목록 유지) */}
+      <div className="flex-1 flex flex-col md:flex-row overflow-hidden min-h-0 min-w-0">
+        {/* 왼쪽 패널 - 리스트 뷰: 최소 너비 보장으로 md 구간에서 사라지지 않음 */}
+        <div className="w-full min-w-0 flex-1 flex flex-col min-h-0 md:min-h-0 md:flex-shrink-0 md:min-w-[260px] md:w-1/2 lg:w-2/5 xl:w-1/3 md:border-r border-b md:border-b-0 border-gray-200 bg-white">
           {/* 검색 및 필터 영역 */}
           <div className="p-3 md:p-4 border-b border-gray-200 bg-gray-50 flex-shrink-0">
             {/* 검색창 */}
@@ -440,8 +457,8 @@ const MeetingAgendas: React.FC = () => {
           </div>
         </div>
 
-        {/* 오른쪽 패널 - 상세 뷰 */}
-        <div className="flex-1 bg-gray-50 hidden md:flex overflow-hidden min-h-0">
+        {/* 오른쪽 패널 - 상세 뷰 (md 이상에서만 나란히 표시) */}
+        <div className="flex-1 min-w-0 bg-gray-50 hidden md:flex overflow-hidden min-h-0">
           {selectedTicket ? (
             <div className="w-full p-4 md:p-6 flex flex-col min-h-0">
               <DetailView
@@ -468,14 +485,23 @@ const MeetingAgendas: React.FC = () => {
           )}
         </div>
 
-        {/* 모바일 상세 뷰 (모달 방식) */}
+        {/* 모바일 상세 뷰 (전체 화면 오버레이, 사이드바/헤더 위에 표시해 버튼 클릭 가능) */}
         {selectedTicket && (
-          <div className="md:hidden fixed inset-0 bg-white z-50 flex flex-col overflow-hidden">
-            <div className="flex-shrink-0 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-gray-800">상세 정보</h2>
+          <div className="md:hidden fixed inset-0 bg-white z-[80] flex flex-col overflow-hidden">
+            <div className="flex-shrink-0 bg-white border-b border-gray-200 px-3 py-3 flex items-center gap-2">
               <button
                 onClick={() => setSelectedId(null)}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                className="flex items-center gap-1.5 p-2 -ml-1 hover:bg-gray-100 rounded-lg transition-colors text-gray-700 flex-shrink-0"
+                aria-label="목록으로 돌아가기"
+              >
+                <ArrowLeft className="w-5 h-5" />
+                <span className="text-sm font-medium">목록</span>
+              </button>
+              <h2 className="text-sm font-semibold text-gray-800 truncate flex-1 min-w-0">{selectedTicket.title}</h2>
+              <button
+                onClick={() => setSelectedId(null)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
+                aria-label="닫기"
               >
                 <X className="w-5 h-5 text-gray-600" />
               </button>

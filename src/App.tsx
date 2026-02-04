@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Provider } from 'react-redux';
 import { AppProvider } from './context/AppContext';
@@ -29,6 +29,8 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 
 // 메인 레이아웃 컴포넌트
 const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   const getPageTitle = () => {
     const path = window.location.pathname.replace('/ksp-itm-web', '') || '/dashboard';
     if (path === '/dashboard' || path === '/') return '대시보드';
@@ -42,9 +44,9 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
   return (
     <div className="flex min-h-screen bg-gray-50">
-      <Sidebar />
-      <div className="flex-1 ml-0 md:ml-64">
-        <Header title={getPageTitle()} />
+      <Sidebar isMobileOpen={sidebarOpen} onMobileClose={() => setSidebarOpen(false)} />
+      <div className="flex-1 ml-0 md:ml-64 min-w-0">
+        <Header title={getPageTitle()} onMenuClick={() => setSidebarOpen(true)} />
         <main className="pt-14 md:pt-16">{children}</main>
       </div>
     </div>
