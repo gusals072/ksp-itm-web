@@ -484,9 +484,73 @@ const IssueList: React.FC = () => {
         </div>
       </motion.div>
 
-      {/* 이슈 테이블 (Jira 스타일) */}
+      {/* 모바일: 카드형 목록 (좁은 화면에서 가독성 확보) */}
+      <div className="md:hidden space-y-3">
+        {filteredIssues.length > 0 ? (
+          filteredIssues.map((issue, index) => {
+            const overdueInfo = getOverdueStatus(issue);
+            return (
+              <motion.div
+                key={issue.id}
+                onClick={() => handleRowClick(issue.id)}
+                className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 active:bg-blue-50 cursor-pointer transition-colors text-left"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.03, duration: 0.25 }}
+              >
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <span className="text-xs font-mono text-gray-500">#{issue.id}</span>
+                  <div className="flex items-center gap-1.5 flex-shrink-0">
+                    {issue.reopened && (
+                      <span className="px-1.5 py-0.5 text-xs font-medium rounded-full bg-orange-100 text-orange-800">재오픈</span>
+                    )}
+                    <span className={`px-2 py-0.5 text-xs font-medium rounded-full border ${getStatusColor(issue.status)}`}>
+                      {getStatusText(issue.status)}
+                    </span>
+                    <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${getPriorityColor(issue.priority)}`} title={getPriorityText(issue.priority)} />
+                  </div>
+                </div>
+                <h3 className="font-semibold text-gray-800 line-clamp-2 mb-1">{issue.title}</h3>
+                <p className="text-sm text-gray-500 line-clamp-2 mb-3">{issue.description}</p>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-600">
+                  <span className="flex items-center gap-1">
+                    <UserIcon className="w-3.5 h-3.5 text-gray-400" />
+                    {issue.reporterName}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    {!issue.cc || issue.cc.length === 0 ? '참조자 미지정' : issue.cc.length === 1 ? issue.cc[0].name : `${issue.cc[0].name} 외 ${issue.cc.length - 1}명`}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Calendar className="w-3.5 h-3.5 text-gray-400" />
+                    {format(new Date(issue.createdAt), 'MM.dd', { locale: ko })}
+                  </span>
+                  {overdueInfo && (
+                    <span className={`px-1.5 py-0.5 rounded text-xs font-medium border ${overdueInfo.className} flex items-center gap-1`}>
+                      {overdueInfo.icon}
+                      {overdueInfo.text}
+                    </span>
+                  )}
+                </div>
+              </motion.div>
+            );
+          })
+        ) : (
+          <motion.div
+            className="bg-white rounded-xl shadow-sm border border-gray-200 text-center py-12 px-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3 }}
+          >
+            <AlertCircle className="w-14 h-14 text-gray-300 mx-auto mb-3" />
+            <h3 className="text-lg font-semibold text-gray-800 mb-1">검색 결과가 없습니다</h3>
+            <p className="text-sm text-gray-500">다른 검색어나 필터를 시도해보세요.</p>
+          </motion.div>
+        )}
+      </div>
+
+      {/* 데스크톱: 이슈 테이블 (Jira 스타일) */}
       <motion.div
-        className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
+        className="hidden md:block bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2, duration: 0.4 }}
@@ -517,26 +581,17 @@ const IssueList: React.FC = () => {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.3 + index * 0.03, duration: 0.3 }}
               >
-                {/* 이슈ID */}
                 <div className="col-span-1">
-                  <div className="text-gray-500 font-medium font-mono">
-                    {issue.id}
-                  </div>
+                  <div className="text-gray-500 font-medium font-mono">{issue.id}</div>
                 </div>
-
-                {/* 제목 */}
                 <div className="col-span-4">
                   <div className="flex-1">
                     <h3 className="font-semibold text-gray-800 hover:text-water-blue-600 transition-colors truncate">
                       {issue.title}
                     </h3>
-                    <p className="text-sm text-gray-500 truncate mt-1">
-                      {issue.description}
-                    </p>
+                    <p className="text-sm text-gray-500 truncate mt-1">{issue.description}</p>
                   </div>
                 </div>
-
-                {/* 상태 */}
                 <div className="col-span-2 flex items-center gap-2">
                   {issue.reopened && (
                     <span className="px-2 py-1 text-xs font-medium rounded-full bg-orange-100 text-orange-800 border border-orange-300">
@@ -549,8 +604,6 @@ const IssueList: React.FC = () => {
                     {getStatusText(issue.status)}
                   </span>
                 </div>
-
-                {/* 우선순위 (색상 + 텍스트) */}
                 <div className="col-span-1">
                   <div className="flex items-center space-x-2">
                     <div
@@ -560,36 +613,24 @@ const IssueList: React.FC = () => {
                     <span className="text-sm text-gray-600">{getPriorityText(issue.priority)}</span>
                   </div>
                 </div>
-
-                {/* 참조자 */}
                 <div className="col-span-1">
                   <div className="flex items-center space-x-1">
                     <UserIcon className="w-4 h-4 text-gray-400" />
                     <span className="text-sm text-gray-700">
-                      {(() => {
-                        if (!issue.cc || issue.cc.length === 0) {
-                          return '미지정';
-                        } else if (issue.cc.length === 1) {
-                          return issue.cc[0].name;
-                        } else {
-                          return `${issue.cc[0].name}외 ${issue.cc.length - 1}명`;
-                        }
-                      })()}
+                      {!issue.cc || issue.cc.length === 0
+                        ? '미지정'
+                        : issue.cc.length === 1
+                          ? issue.cc[0].name
+                          : `${issue.cc[0].name}외 ${issue.cc.length - 1}명`}
                     </span>
                   </div>
                 </div>
-
-                {/* 등록자 */}
                 <div className="col-span-1">
                   <div className="flex items-center space-x-1">
                     <UserIcon className="w-4 h-4 text-gray-400" />
-                    <span className="text-sm text-gray-700">
-                      {issue.reporterName}
-                    </span>
+                    <span className="text-sm text-gray-700">{issue.reporterName}</span>
                   </div>
                 </div>
-
-                {/* 등록일 */}
                 <div className="col-span-1">
                   <div className="flex items-center space-x-1">
                     <Calendar className="w-4 h-4 text-gray-400" />
@@ -598,8 +639,6 @@ const IssueList: React.FC = () => {
                     </span>
                   </div>
                 </div>
-
-                {/* Overdue Status */}
                 <div className="col-span-1">
                   {(() => {
                     const overdueInfo = getOverdueStatus(issue);
