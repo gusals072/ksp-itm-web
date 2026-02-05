@@ -97,4 +97,4 @@ src/
 
 ## 문의
 
-버그·기능 제안은 [GitHub Issues](https://github.com/OWNER/ksp-itm-web/issues)를 이용해 주세요. (OWNER는 실제 조직/계정명으로 변경)
+버그·기능 제안은 [GitHub Issues](https://github.com/gusals072/ksp-itm-web/issues)를 이용해 주세요.
