@@ -91,7 +91,7 @@ src/
 ## 배포 (GitHub Pages)
 
 `main` 브랜치에 푸시하면 GitHub Actions로 빌드 후 **GitHub Pages**에 자동 배포됩니다.  
-배포 URL은 `https://<사용자 또는 조직>.github.io/ksp-itm-web/` 형태입니다. (Repository → Settings → Pages에서 확인)
+배포 URL은 `https://gusals072.github.io/ksp-itm-web/` 형태입니다. (Repository → Settings → Pages에서 확인)
 
 ---
 
