@@ -33,12 +33,10 @@
 ### 설치
 
 ```bash
-git clone https://github.com/OWNER/ksp-itm-web.git
+git clone https://github.com/gusals072/ksp-itm-web.git
 cd ksp-itm-web
 npm install
 ```
-
-> OWNER는 실제 GitHub 사용자명 또는 조직명으로 바꾸세요.
 
 ### 개발 서버 실행
 
